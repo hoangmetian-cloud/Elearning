@@ -1242,7 +1242,8 @@
       const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi chuyên nghiệp. Dựa trên yêu cầu của tôi:
 "${userReq}"
 
-LƯU Ý QUAN TRỌNG: Trong nội dung câu hỏi ("text"), TUYỆT ĐỐI KHÔNG nhắc lại yêu cầu của giáo viên, chỉ ghi nội dung đề bài sạch sẽ dành cho học sinh. Công thức Toán bọc trong dấu $...$ và dùng \\prime thay cho dấu '.
+LƯU Ý QUAN TRỌNG: Trong nội dung câu hỏi ("text"), TUYỆT ĐỐI KHÔNG nhắc lại yêu cầu của giáo viên, chỉ ghi nội dung đề bài sạch sẽ dành cho học sinh.Chuỗi JSON không được gặp lỗi cú pháp do bị cắt ngang ở cuối chuỗi ("Desp) và chứa các ký tự gạch chéo ngược không hợp lệ ("\_\_\_\_\_\_"). Trong JSON, dấu gạch chéo ngược "\" được dùng làm ký tự thoát (escape character), do đó việc viết "\_" sẽ khiến trình phân tích cú pháp báo lỗi Invalid "\escape."
+Tạo ra phiên bản JSON đã sửa toàn bộ lỗi cú pháp
 
 Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết chữ nào bên ngoài khối JSON):
 
