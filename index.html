@@ -11,7 +11,8 @@
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
       },
       svg: { fontCache: 'global' }
     };
@@ -672,6 +673,71 @@
     let isCurrentStudentGuest = false;
     let timerInterval = null;
     let secondsRemaining = 0;
+    
+// ==================== BỘ LỌC TỰ ĐỘNG SỬA LỖI HIỂN THỊ LATEX ====================
+    // Khắc phục triệt để lỗi thiếu dấu $ mở đầu (VD: \lim_{n\to\infty}u_n=1$ hoặc \dfrac{c}{a}=6$)
+    // và lỗi lặp chữ "Câu 1. " ở đầu câu hỏi
+    function formatMathText(str, stripPrefix = false) {
+      if (str === null || str === undefined) return "";
+      let s = String(str).trim();
+
+      // Tự động xóa chữ "Câu 1.", "Câu 2:" bị lặp ở đầu câu hỏi nếu AI lỡ sinh ra
+      if (stripPrefix) {
+        s = s.replace(/^Câu\s+\d+\s*[:.]\s*/i, "");
+      }
+
+      // Khôi phục các lệnh LaTeX bị lỗi do ký tự thoát JSON (\f, \t, \b, \r)
+      s = s.replace(/\x08egin/g, "\\begin")
+           .replace(/\x08ar/g, "\\bar")
+           .replace(/\x08eta/g, "\\beta")
+           .replace(/\x08igg/g, "\\bigg")
+           .replace(/\x0c/g, "\\f")
+           .replace(/\t(o|imes|ext|heta|an|riangle|au|op|frac)/g, "\\t$1")
+           .replace(/\r(ight|ho|angle)/g, "\\r$1");
+
+      // Sửa các biểu thức có lệnh LaTeX kết thúc bằng dấu $ nhưng bị thiếu dấu $ mở đầu
+      // Ví dụ: "bằng \dfrac{c}{a}=\dfrac{6}{1}=6$." hoặc "\lim_{n\to\infty}u_n=1$."
+      s = s.replace(/(^|[\s(:;])(\\[a-zA-Z]+[^$]*?)\$/g, "$1$$$2$");
+
+      // Nếu sau khi xử lý mà tổng số dấu $ vẫn bị lẻ:
+      const dollarMatches = s.match(/\$/g);
+      if (dollarMatches && dollarMatches.length % 2 !== 0) {
+        // Nếu chuỗi bắt đầu bằng lệnh \ hoặc chứa lệnh \ trước dấu $ đầu tiên thì thêm $ vào ngay trước lệnh \
+        const firstDollarIdx = s.indexOf("$");
+        const firstSlashIdx = s.indexOf("\\");
+        if (firstSlashIdx !== -1 && firstSlashIdx < firstDollarIdx) {
+          s = s.slice(0, firstSlashIdx) + "$" + s.slice(firstSlashIdx);
+        } else {
+          s = s + "$";
+        }
+      }
+
+      // Nếu toàn bộ dòng có chứa lệnh toán học (\lim, \dfrac, \frac, \sqrt, \int, \sum) mà hoàn toàn không có dấu $ hay \( nào
+      if (!s.includes("$") && !s.includes("\\(") && !s.includes("\\[")) {
+        if (/\\(lim|dfrac|frac|sqrt|int|sum|infty|to|ge|le|ne|pm|Leftrightarrow|Rightarrow|Delta|alpha|beta|pi|sin|cos|tan|log|ln)\b/.test(s)) {
+          // Bọc tự động đoạn biểu thức toán học từ lệnh \ đến trước dấu chấm câu cuối
+          s = s.replace(/(\\[a-zA-Z]+[^\n.]*)/g, "$$$1$");
+        }
+      }
+
+      return s;
+    }
+
+    function sanitizeQuestionObject(q) {
+      if (!q) return q;
+      q.text = formatMathText(q.text || "", true);
+      q.solution = formatMathText(q.solution || "", false);
+      if (Array.isArray(q.options)) {
+        q.options = q.options.map(opt => formatMathText(opt, false));
+      }
+      if (Array.isArray(q.statements)) {
+        q.statements = q.statements.map(st => ({
+          ...st,
+          text: formatMathText(st.text || "", false)
+        }));
+      }
+      return q;
+    }
 
     window.onload = async () => {
       const savedLocal = localStorage.getItem('edusmart_v6_data') || localStorage.getItem('edusmart_v5_data');
@@ -863,7 +929,7 @@
         loggedInParentStudent = matchedAccount.name;
         document.getElementById('parentLockScreen').classList.add('hidden');
         document.getElementById('parentUnlockedContent').classList.remove('hidden');
-        document.getElementById('parentStudentBanner').innerText = `phụ huynh em: ${matchedAccount.name}`;
+        document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
         renderParentView();
       } else {
         alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con, nếu phụ huynh không nhớ xin vui lòng nhắn lại giáo viên phụ trách môn học của con.");
@@ -1005,7 +1071,7 @@
         return;
       }
       box.classList.remove('hidden');
-      box.innerHTML = `<div class="text-[10px] font-bold text-emerald-700 uppercase mb-1">Xem trước hiển thị LaTeX:</div><div>${val.replace(/\n/g, '<br>')}</div>`;
+      box.innerHTML = `<div class="text-[10px] font-bold text-emerald-700 uppercase mb-1">Xem trước hiển thị LaTeX:</div><div>${formatMathText(val).replace(/\n/g, '<br>')}</div>`;
       triggerMathJax();
     }
 
@@ -1102,9 +1168,9 @@
 
     function addQuestionToDraft() {
       const type = document.getElementById('qType').value;
-      const text = document.getElementById('qText').value.trim();
+      const text = formatMathText(document.getElementById('qText').value.trim(), true);
       let points = parseFloat(document.getElementById('qPoints').value) || 1;
-      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải của giáo viên.";
+      const solution = formatMathText(document.getElementById('qSolution').value.trim() || "Xem lời giải của giáo viên.", false);
       const solutionImage = currentDraftSolutionImage;
 
       if (!text) { alert("Vui lòng nhập nội dung câu hỏi!"); return; }
@@ -1112,10 +1178,10 @@
       let newQuestionObj = null;
 
       if (type === 'mcq') {
-        const a = document.getElementById('optA').value.trim() || "Đáp án A";
-        const b = document.getElementById('optB').value.trim() || "Đáp án B";
-        const c = document.getElementById('optC').value.trim() || "Đáp án C";
-        const d = document.getElementById('optD').value.trim() || "Đáp án D";
+        const a = formatMathText(document.getElementById('optA').value.trim() || "Đáp án A");
+        const b = formatMathText(document.getElementById('optB').value.trim() || "Đáp án B");
+        const c = formatMathText(document.getElementById('optC').value.trim() || "Đáp án C");
+        const d = formatMathText(document.getElementById('optD').value.trim() || "Đáp án D");
         const correct = parseInt(document.getElementById('qCorrect').value);
         newQuestionObj = { type: 'mcq', text, options: [a, b, c, d], correct, points, solution, solutionImage };
       } else if (type === 'tf') {
@@ -1125,7 +1191,7 @@
         const r4 = parseFloat(document.getElementById('tf_rule_4').value) || 1.0;
         const tfRules = [0, r1, r2, r3, r4];
         const statements = [0, 1, 2, 3].map(i => ({
-          text: document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`,
+          text: formatMathText(document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`),
           answer: document.getElementById('tf_ans_' + i).value === 'true'
         }));
         points = r4;
@@ -1243,7 +1309,10 @@
 "${userReq}"
 
 LƯU Ý QUAN TRỌNG: Trong nội dung câu hỏi ("text"), TUYỆT ĐỐI KHÔNG nhắc lại yêu cầu của giáo viên, chỉ ghi nội dung đề bài sạch sẽ dành cho học sinh.Chuỗi JSON không được gặp lỗi cú pháp do bị cắt ngang ở cuối chuỗi ("Desp) và chứa các ký tự gạch chéo ngược không hợp lệ ("\_\_\_\_\_\_"). Trong JSON, dấu gạch chéo ngược "\" được dùng làm ký tự thoát (escape character), do đó việc viết "\_" sẽ khiến trình phân tích cú pháp báo lỗi Invalid "\escape."
-Tạo ra phiên bản JSON đã sửa toàn bộ lỗi cú pháp
+Tạo ra phiên bản JSON đã sửa toàn bộ lỗi cú pháp, 1. Trong nội dung câu hỏi ("text"), KHÔNG ghi "Câu 1.", "Câu 2." ở đầu, và TUYỆT ĐỐI KHÔNG nhắc lại yêu cầu của giáo viên.
+2. Mọi công thức Toán học PHẢI được bọc đầy đủ cả dấu $ mở đầu và dấu $ kết thúc (ví dụ: $\\lim_{n\\to\\infty} u_n = 1$, $\\dfrac{c}{a} = 6$). Tuyệt đối không được quên dấu $ ở đầu công thức.
+3. Trong chuỗi JSON, mọi dấu gạch chéo ngược của LaTeX PHẢI viết nhân đôi là \\\\ (ví dụ: \\\\dfrac, \\\\lim, \\\\to, \\\\infty, \\\\sqrt, \\\\prime).
+4. Thay thế toàn bộ dấu ' đạo hàm bằng \\\\prime (ví dụ: f^{\\\\prime}(x)).
 
 Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết chữ nào bên ngoài khối JSON):
 
@@ -1304,7 +1373,11 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
       }
 
-      raw = raw.replace(/\\{2,3}/g, '\\\\');
+      // Bảo vệ toàn bộ các lệnh LaTeX chỉ có 1 dấu \ trong chuỗi JSON (bao gồm cả \frac, \to, \begin, \right, \lim...)
+      raw = raw.replace(/\\{2,}/g, '\\\\');
+      raw = raw.replace(/(?<!\\)\\(?![\\"/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+      // Đặc biệt bảo vệ các lệnh LaTeX bắt đầu bằng b, f, n, r, t khỏi bị JSON.parse biến thành ký tự điều khiển
+      raw = raw.replace(/(?<!\\)\\(frac|forall|begin|bar|beta|bigg|binom|neq|nabla|nu|not|ni|right|rho|rangle|Rightarrow|to|times|text|theta|tan|triangle|tau|top|tfrac)/g, '\\\\$1');
       raw = raw.replace(/,(\s*[}\]])/g, '$1');
 
       try {
@@ -1319,6 +1392,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
         // Chuẩn hóa quy tắc điểm Đúng/Sai cho các câu nạp từ AI
         parsed.forEach(q => {
+          sanitizeQuestionObject(q);
           if (q.type === 'tf' && (!q.tfRules || q.tfRules.length !== 5)) {
             q.tfRules = [0, 0.1, 0.25, 0.5, q.points || 1.0];
             q.points = q.tfRules[4];
@@ -1361,10 +1435,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             <div class="space-y-1 flex-1">
               <div>
                 <span class="font-bold text-blue-700">Câu ${idx+1} (${q.points}đ):</span>
-                <span class="text-slate-800">${q.text}</span>
+                <span class="text-slate-800">${formatMathText(q.text, true)}</span>
               </div>
               ${tfDetail}
-              <div class="text-[11px] text-emerald-700"><b>Bài chữa:</b> ${q.solution}</div>
+              <div class="text-[11px] text-emerald-700"><b>Bài chữa:</b> ${formatMathText(q.solution)}</div>
               ${q.solutionImage ? `<img src="${q.solutionImage}" class="h-14 rounded border mt-1">` : ''}
             </div>
             <div class="flex flex-col gap-1.5 items-end">
@@ -1400,7 +1474,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       document.getElementById('examTime').value = ex.time || 25;
       document.getElementById('examRoster').value = (ex.roster || []).join(', ');
 
-      draftQuestions = JSON.parse(JSON.stringify(ex.questions || []));
+      draftQuestions = JSON.parse(JSON.stringify(ex.questions || [])).map(q => sanitizeQuestionObject(q));
       cancelEditDraftQuestion();
 
       document.getElementById('examFormHeader').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-1"></i> Đang Sửa Đề: <span class="text-amber-700">${ex.title}</span>`;
@@ -1439,6 +1513,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (!title) { alert("Vui lòng nhập Tên bài kiểm tra!"); return; }
       if (draftQuestions.length === 0) { alert("Hãy thêm ít nhất 1 câu hỏi vào đề!"); return; }
 
+      const cleanedQuestions = draftQuestions.map(q => sanitizeQuestionObject(q));
       if (editingPublishedExamId) {
         const exIdx = appData.exams.findIndex(e => e.id === editingPublishedExamId);
         if (exIdx !== -1) {
@@ -1446,7 +1521,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           appData.exams[exIdx].subject = subject;
           appData.exams[exIdx].time = time;
           appData.exams[exIdx].roster = roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name);
-          appData.exams[exIdx].questions = [...draftQuestions];
+          appData.exams[exIdx].questions = [...cleanedQuestions];
         }
         cancelEditPublishedExam();
         renderAll();
@@ -1460,7 +1535,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           time,
           createdAt: new Date().toLocaleString('vi-VN'),
           roster: roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name),
-          questions: [...draftQuestions]
+          questions: [...cleanedQuestions]
         };
 
         appData.exams.unshift(newExam);
@@ -1575,18 +1650,19 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
       const qContainer = document.getElementById('activeQuestionsContainer');
       qContainer.innerHTML = exam.questions.map((q, idx) => {
+        const cleanQText = formatMathText(q.text, true);
         if (q.type === 'mcq') {
           return `
             <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
               <div class="font-bold text-slate-800 text-sm">
                 <span class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-blue-700 font-semibold">(Trắc nghiệm - ${q.points} điểm):</span> ${q.text}
+                <span class="text-blue-700 font-semibold">(Trắc nghiệm - ${q.points} điểm):</span> ${cleanQText}
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 ${q.options.map((opt, oIdx) => `
                   <label class="flex items-center gap-2.5 p-3 rounded-xl border bg-white cursor-pointer hover:border-blue-500 transition">
                     <input type="radio" name="ans_${idx}" value="${oIdx}" class="w-4 h-4 text-blue-600">
-                    <span class="text-sm text-slate-700"><b>${['A','B','C','D'][oIdx]}.</b> ${opt}</span>
+                    <span class="text-sm text-slate-700"><b>${['A','B','C','D'][oIdx]}.</b> ${formatMathText(opt)}</span>
                   </label>
                 `).join('')}
               </div>
@@ -1598,13 +1674,13 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             <div class="p-5 rounded-2xl border border-amber-200 bg-amber-50/30 space-y-3">
               <div class="font-bold text-slate-800 text-sm">
                 <span class="bg-amber-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-amber-800 font-semibold">(Đúng / Sai - Tối đa ${rules[4]}đ: Đúng 1 ý ${rules[1]}đ, 2 ý ${rules[2]}đ, 3 ý ${rules[3]}đ, 4 ý ${rules[4]}đ):</span> ${q.text}
+                <span class="text-amber-800 font-semibold">(Đúng / Sai - Tối đa ${rules[4]}đ: Đúng 1 ý ${rules[1]}đ, 2 ý ${rules[2]}đ, 3 ý ${rules[3]}đ, 4 ý ${rules[4]}đ):</span> ${cleanQText}
               </div>
               <div class="space-y-2">
                 ${(q.statements || []).map((st, sIdx) => `
                   <div class="flex flex-wrap justify-between items-center gap-2 p-3 bg-white rounded-xl border">
                     <span class="text-sm text-slate-800 flex-1">
-                      <b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}
+                      <b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}
                     </span>
                     <div class="flex gap-3">
                       <label class="flex items-center gap-1 text-xs font-bold text-emerald-700 cursor-pointer bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
@@ -1624,7 +1700,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             <div class="p-5 rounded-2xl border border-emerald-200 bg-emerald-50/30 space-y-2.5">
               <div class="font-bold text-slate-800 text-sm">
                 <span class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-emerald-800 font-semibold">(Trả lời ngắn - ${q.points} điểm):</span> ${q.text}
+                <span class="text-emerald-800 font-semibold">(Trả lời ngắn - ${q.points} điểm):</span> ${cleanQText}
               </div>
               <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn..." 
                 class="w-full sm:w-80 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:outline-none focus:border-emerald-600">
@@ -1636,7 +1712,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="flex flex-wrap justify-between items-start gap-2">
                 <div class="font-bold text-slate-800 text-sm flex-1">
                   <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                  <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${q.text}
+                  <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${cleanQText}
                 </div>
                 <label class="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5">
                   <i class="fa-solid fa-camera"></i> Chụp / Tải ảnh bài làm
@@ -1702,8 +1778,9 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       currentExam.questions.forEach((q, idx) => {
         const qMaxPts = (q.type === 'tf' && q.tfRules && q.tfRules.length === 5) ? parseFloat(q.tfRules[4]) : parseFloat(q.points);
         maxScore += qMaxPts;
-        const solutionText = q.solution || "";
+        const solutionText = formatMathText(q.solution || "");
         const solutionImg = q.solutionImage || "";
+                const cleanQText = formatMathText(q.text, true);
 
         if (q.type === 'mcq') {
           const selected = document.querySelector(`input[name="ans_${idx}"]:checked`);
@@ -1712,8 +1789,8 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
-            type: 'mcq', question: q.text, chosen: chosenIdx, correct: q.correct,
-            options: q.options, isCorrect, points: qMaxPts, earned,
+            type: 'mcq', question: cleanQText, chosen: chosenIdx, correct: q.correct,
+            options: (q.options || []).map(o => formatMathText(o)), isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
         } else if (q.type === 'tf') {
@@ -1724,14 +1801,14 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             const isRight = (chosenVal === st.answer);
             if (isRight) correctCount++;
             return {
-              text: st.text, chosen: chosenVal, answer: st.answer, isRight
+              text: formatMathText(st.text), chosen: chosenVal, answer: st.answer, isRight
             };
           });
           // Tính điểm theo tổng số ý làm đúng (1 ý = 0.1, 2 ý = 0.25, 3 ý = 0.5, 4 ý = 1.0)
           const earnedTf = Math.round(getTfScoreByCount(q, correctCount) * 100) / 100;
           autoScore += earnedTf;
           answers.push({
-            type: 'tf', question: q.text, statements: stDetails,
+            type: 'tf', question: cleanQText, statements: stDetails,
             correctCount, points: qMaxPts, earned: earnedTf,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -1743,7 +1820,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
-            type: 'short', question: q.text, studentVal, correctText: q.correctText,
+            type: 'short', question: cleanQText, studentVal, correctText: q.correctText,
             isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -1752,7 +1829,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           const essayText = document.getElementById(`ans_essay_${idx}`).value.trim();
           const essayImage = pendingStudentEssayImages[idx] || "";
           answers.push({
-            type: 'essay', question: q.text, essayText, essayImage,
+            type: 'essay', question: cleanQText, essayText, essayImage,
             points: qMaxPts, earned: 0,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -1809,8 +1886,8 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       box.innerHTML = (s.answers || []).map((a, idx) => {
         let statusHtml = '';
         if (a.type === 'mcq') {
-          const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${(a.options || [])[a.chosen] || ''}` : 'Bỏ trống';
-          const rightChar = `${['A','B','C','D'][a.correct]}. ${(a.options || [])[a.correct] || ''}`;
+          const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${formatMathText((a.options || [])[a.chosen] || '')}` : 'Bỏ trống';
+          const rightChar = `${['A','B','C','D'][a.correct]}. ${formatMathText(a.options || [])[a.correct] || '')}`;
           statusHtml = `
             <div class="mt-1">Bạn chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
             ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
@@ -1821,7 +1898,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="font-bold text-amber-800 mb-1">Đúng ${a.correctCount}/4 ý — Đạt: ${a.earned} / ${a.points} điểm:</div>
               ${(a.statements || []).map((st, sIdx) => `
                 <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
-                  <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
+                  <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
                   <span>
                     Bạn chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
                     | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
@@ -1846,10 +1923,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
         return `
           <div class="pt-3 first:pt-0 space-y-2">
-            <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
+            <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
             ${statusHtml}
             <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-              <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Chưa có lời giải.'}</div>
+              <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Chưa có lời giải.')}</div>
               ${a.solutionImage ? `
                 <div>
                   <img src="${a.solutionImage}" onclick="zoomImage('${a.solutionImage}')" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
@@ -1882,7 +1959,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (!sub) return;
       const manualScore = parseFloat(document.getElementById('grade_essay_' + subId).value) || 0;
       const comment = document.getElementById('comment_' + subId).value.trim();
-      const customSol = document.getElementById('custom_sol_' + subId).value.trim();
+      const customSol = formatMathText(document.getElementById('custom_sol_' + subId).value.trim());
 
       sub.essayScore = manualScore;
       sub.totalScore = Math.round((sub.mcqScore + manualScore) * 100) / 100;
@@ -2054,7 +2131,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                       } else {
                         return `
                           <div class="pt-2 border-t mt-2 space-y-1.5">
-                            <b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}
+                            <b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${formatMathText(a.question, true)}
                             <div class="p-2.5 bg-white border rounded-lg text-slate-800 whitespace-pre-wrap">${a.essayText || (a.essayImage ? '(Học sinh nộp bài bằng ảnh chụp bên dưới)' : '(Học sinh bỏ trống)')}</div>
                             ${a.essayImage ? `
                               <div class="pt-1">
@@ -2101,6 +2178,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           </details>
         `;
       }).join('');
+      triggerMathJax();
     }
 
     // ==================== HIỂN THỊ SỔ LIÊN LẠC CÁ NHÂN HÓA CHO PHỤ HUYNH ====================
@@ -2133,7 +2211,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
                 ${s.teacherCustomSolution ? `
                   <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
-                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ coo cho ${s.studentName}:</b>\n${s.teacherCustomSolution}
+                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ cô cho ${s.studentName}:</b>\n${formatMathText(s.teacherCustomSolution)}
                   </div>
                 ` : ''}
                 ${s.teacherCustomImage ? `
@@ -2163,8 +2241,8 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               ${(s.answers || []).map((a, idx) => {
                 let statusHtml = '';
                 if (a.type === 'mcq') {
-                  const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${(a.options || [])[a.chosen] || ''}` : 'Bỏ trống';
-                  const rightChar = `${['A','B','C','D'][a.correct]}. ${(a.options || [])[a.correct] || ''}`;
+                  const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${formatMathText((a.options || [])[a.chosen] || '')}` : 'Bỏ trống';
+                  const rightChar = `${['A','B','C','D'][a.correct]}. ${formatMathText((a.options || [])[a.correct] || '')}`;
                   statusHtml = `
                     <div class="mt-1">Con chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
                     ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
@@ -2175,7 +2253,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                       <div class="font-bold text-amber-800 mb-1">Điểm câu Đúng/Sai của con: Đúng ${a.correctCount}/4 ý — Đạt ${a.earned} / ${a.points} điểm:</div>
                       ${(a.statements || []).map((st, sIdx) => `
                         <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
-                          <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
+                          <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
                           <span>
                             Con chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
                             | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
@@ -2206,10 +2284,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
                 return `
                   <div class="pt-3 first:pt-0 space-y-2">
-                    <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
+                    <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
                     ${statusHtml}
                     <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Xem trong phần nhận xét của giáo viên.'}</div>
+                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Xem trong phần nhận xét của giáo viên.')}</div>
                       ${a.solutionImage ? `
                         <div>
                           <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải của giáo viên (Bấm để phóng to):</div>
