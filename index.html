@@ -236,6 +236,27 @@
           </div>
         </div>
 
+        <!-- KHUNG CẤU HÌNH & HIỂN THỊ RÕ LINK DATABASE ĐANG SỬ DỤNG -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 space-y-2.5">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-database text-blue-600"></i>
+              <span>Link Database đang sử dụng:</span>
+              <code id="currentDbUrlDisplay" class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200 font-mono text-[11px] break-all"></code>
+            </div>
+            <button type="button" onclick="resetDefaultDatabaseUrl()" class="text-[11px] text-slate-500 hover:text-blue-600 underline font-semibold">
+              Khôi phục link mặc định
+            </button>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="url" id="customDbUrlInput" placeholder="Nhập hoặc dán link Firebase Realtime Database mới nếu cần thay đổi..." 
+              class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600">
+            <button type="button" onclick="updateDatabaseUrl()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition whitespace-nowrap">
+              <i class="fa-solid fa-plug-circle-check mr-1"></i> Lưu & Kết nối Link Database
+            </button>
+          </div>
+        </div>
+
         <!-- TAB GV 1: SOẠN ĐỀ & SỬA CÂU HỎI -->
         <div id="teacher-tab-exams" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
@@ -574,33 +595,74 @@
 
   <script>
     // =========================================================================
-    // CẤU HÌNH MẶC ĐỊNH & DANH SÁCH MẬT KHẨU RIÊNG TỪNG PHỤ HUYNH
+    // CẤU HÌNH MẶC ĐỊNH & LINK DATABASE FIREBASE CỦA GIÁO VIÊN
     // =========================================================================
-        const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
-    // SỬ DỤNG KHO DỮ LIỆU ĐÁM MÂY CHUNG CỐ ĐỊNH CHO TẤT CẢ CÁC MÁY (KVDB / JSONBLOB CỐ ĐỊNH)
-    const BUILTIN_CLOUD_API = "https://jsonblob.com/api/jsonBlob";
-    const MASTER_BUCKET_API = "https://kvdb.io/A6p8Y2kL9mN4qR7vX3wZ5j/edusmart_vuong_master_db";
-    let defaultBlobId = localStorage.getItem('edusmart_blob_id') || "";
+    const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
+    const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
+    let activeDatabaseUrl = localStorage.getItem('edusmart_custom_db_url') || DEFAULT_DATABASE_URL;
 
-    // ==================== ĐỒNG BỘ DATABASE CLOUD (ĐỒNG BỘ MỌI THIẾT BỊ 100%) ====================
+    function normalizeDbBaseUrl(url) {
+      if (!url) return DEFAULT_DATABASE_URL.replace(/\/+$/, "");
+      let u = url.trim();
+      u = u.replace(/\/edusmart_data\.json.*$/i, "");
+      u = u.replace(/\.json$/i, "");
+      u = u.replace(/\/+$/, "");
+      return u;
+    }
+
+    function getDatabaseEndpoint() {
+      const base = normalizeDbBaseUrl(activeDatabaseUrl);
+      return `${base}/edusmart_data.json`;
+    }
+
+    function updateDbUrlUI() {
+      const cleanUrl = normalizeDbBaseUrl(activeDatabaseUrl) + "/";
+      const displayEl = document.getElementById('currentDbUrlDisplay');
+      const inputEl = document.getElementById('customDbUrlInput');
+      if (displayEl) displayEl.innerText = cleanUrl;
+      if (inputEl) inputEl.value = cleanUrl;
+    }
+
+    async function updateDatabaseUrl() {
+      const inputEl = document.getElementById('customDbUrlInput');
+      if (!inputEl) return;
+      const raw = inputEl.value.trim();
+      if (!raw || !raw.startsWith("https://")) {
+        alert("Vui lòng nhập đúng định dạng link Database bắt đầu bằng https://...");
+        return;
+      }
+      activeDatabaseUrl = normalizeDbBaseUrl(raw) + "/";
+      localStorage.setItem('edusmart_custom_db_url', activeDatabaseUrl);
+      updateDbUrlUI();
+      await syncFromCloud(true);
+    }
+
+    async function resetDefaultDatabaseUrl() {
+      activeDatabaseUrl = DEFAULT_DATABASE_URL;
+      localStorage.removeItem('edusmart_custom_db_url');
+      updateDbUrlUI();
+      await syncFromCloud(true);
+    }
+
+    // ==================== ĐỒNG BỘ DATABASE FIREBASE TRỰC TUYẾN ====================
     async function initDatabase() {
+      updateDbUrlUI();
       await syncFromCloud(false);
     }
 
     async function syncFromCloud(showAlert = false) {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
+      const endpoint = getDatabaseEndpoint();
       try {
-        // Thêm ?t=Date.now() để ép Safari trên iPad/iPhone luôn tải dữ liệu mới nhất, không lấy Cache cũ
-        const res = await fetch(`${MASTER_BUCKET_API}?t=${Date.now()}`, {
+        const res = await fetch(`${endpoint}?t=${Date.now()}`, {
           method: "GET",
           cache: "no-store"
         });
 
         if (res.ok) {
-          const textData = await res.text();
-          if (textData && textData.trim().startsWith("{")) {
-            const remoteData = JSON.parse(textData);
+          const remoteData = await res.json();
+          if (remoteData && typeof remoteData === 'object') {
             appData.exams = remoteData.exams || [];
             appData.submissions = remoteData.submissions || [];
             if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
@@ -609,24 +671,26 @@
             localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
             renderAll();
           } else {
-            // Nếu kho chung trên mây chưa có dữ liệu lần đầu thì đẩy dữ liệu từ iPad của bạn lên
+            // Nếu Database trên Firebase đang trống lần đầu thì đẩy dữ liệu khởi tạo lên
             await syncToCloud();
           }
           if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
           if (statusText) {
             statusText.className = "text-emerald-700 font-semibold";
-            statusText.innerText = "Đã đồng bộ đám mây (Mọi thiết bị)";
+            statusText.innerText = "Đã kết nối Database Trực Tuyến";
           }
-          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
-        } else if (res.status === 404) {
-          // Khởi tạo kho lần đầu tiên
-          await syncToCloud();
+          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất từ Database:\n" + normalizeDbBaseUrl(activeDatabaseUrl) + "/");
+        } else {
+          throw new Error("HTTP " + res.status);
         }
       } catch (e) {
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
-          statusText.innerText = "Lỗi mạng (Đang lưu tạm trên máy)";
+          statusText.innerText = "Lỗi kết nối Database (Kiểm tra link hoặc Rules Firebase)";
+        }
+        if (showAlert) {
+          alert("Không thể kết nối tới Database:\n" + normalizeDbBaseUrl(activeDatabaseUrl) + "/\n\nHãy kiểm tra lại đường link hoặc đảm bảo mục Rules trong Firebase Realtime Database đã để .read: true và .write: true.");
         }
       }
     }
@@ -635,8 +699,9 @@
       localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
+      const endpoint = getDatabaseEndpoint();
       try {
-        const res = await fetch(MASTER_BUCKET_API, {
+        const res = await fetch(endpoint, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(appData)
@@ -645,18 +710,19 @@
           if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
           if (statusText) {
             statusText.className = "text-emerald-700 font-semibold";
-            statusText.innerText = "Đã lưu & đồng bộ lên tất cả các máy";
+            statusText.innerText = "Đã kết nối Database Trực Tuyến";
           }
+        } else {
+          throw new Error("HTTP " + res.status);
         }
       } catch (e) {
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
-          statusText.innerText = "Chưa đẩy được lên Cloud (Kiểm tra mạng)";
+          statusText.innerText = "Chưa đẩy được lên Database (Kiểm tra mạng/Rules)";
         }
       }
     }
-
 
     const INITIAL_PARENT_ACCOUNTS = [
       { name: "Khánh Lam", pass: "kl01" },
@@ -753,18 +819,14 @@
     let secondsRemaining = 0;
 
     // ==================== BỘ LỌC TỰ ĐỘNG SỬA LỖI HIỂN THỊ LATEX ====================
-    // Khắc phục triệt để lỗi thiếu dấu $ mở đầu (VD: \lim_{n\to\infty}u_n=1$ hoặc \dfrac{c}{a}=6$)
-    // và lỗi lặp chữ "Câu 1. " ở đầu câu hỏi
     function formatMathText(str, stripPrefix = false) {
       if (str === null || str === undefined) return "";
       let s = String(str).trim();
 
-      // Tự động xóa chữ "Câu 1.", "Câu 2:" bị lặp ở đầu câu hỏi nếu AI lỡ sinh ra
       if (stripPrefix) {
         s = s.replace(/^Câu\s+\d+\s*[:.]\s*/i, "");
       }
 
-      // Khôi phục các lệnh LaTeX bị lỗi do ký tự thoát JSON (\f, \t, \b, \r)
       s = s.replace(/\x08egin/g, "\\begin")
            .replace(/\x08ar/g, "\\bar")
            .replace(/\x08eta/g, "\\beta")
@@ -773,14 +835,10 @@
            .replace(/\t(o|imes|ext|heta|an|riangle|au|op|frac)/g, "\\t$1")
            .replace(/\r(ight|ho|angle)/g, "\\r$1");
 
-      // Sửa các biểu thức có lệnh LaTeX kết thúc bằng dấu $ nhưng bị thiếu dấu $ mở đầu
-      // Ví dụ: "bằng \dfrac{c}{a}=\dfrac{6}{1}=6$." hoặc "\lim_{n\to\infty}u_n=1$."
       s = s.replace(/(^|[\s(:;])(\\[a-zA-Z]+[^$]*?)\$/g, "$1$$$2$");
 
-      // Nếu sau khi xử lý mà tổng số dấu $ vẫn bị lẻ:
       const dollarMatches = s.match(/\$/g);
       if (dollarMatches && dollarMatches.length % 2 !== 0) {
-        // Nếu chuỗi bắt đầu bằng lệnh \ hoặc chứa lệnh \ trước dấu $ đầu tiên thì thêm $ vào ngay trước lệnh \
         const firstDollarIdx = s.indexOf("$");
         const firstSlashIdx = s.indexOf("\\");
         if (firstSlashIdx !== -1 && firstSlashIdx < firstDollarIdx) {
@@ -790,10 +848,8 @@
         }
       }
 
-      // Nếu toàn bộ dòng có chứa lệnh toán học (\lim, \dfrac, \frac, \sqrt, \int, \sum) mà hoàn toàn không có dấu $ hay \( nào
       if (!s.includes("$") && !s.includes("\\(") && !s.includes("\\[")) {
         if (/\\(lim|dfrac|frac|sqrt|int|sum|infty|to|ge|le|ne|pm|Leftrightarrow|Rightarrow|Delta|alpha|beta|pi|sin|cos|tan|log|ln)\b/.test(s)) {
-          // Bọc tự động đoạn biểu thức toán học từ lệnh \ đến trước dấu chấm câu cuối
           s = s.replace(/(\\[a-zA-Z]+[^\n.]*)/g, "$$$1$");
         }
       }
@@ -829,6 +885,7 @@
         } catch(e) {}
       }
       fillRosterFromParentAccounts();
+      updateDbUrlUI();
       renderAll();
       await initDatabase();
 
@@ -883,69 +940,6 @@
         ? q.tfRules
         : [0, 0.1, 0.25, 0.5, q.points || 1.0];
       return parseFloat(rules[correctCount] || 0);
-    }
-
-    // ==================== ĐỒNG BỘ DATABASE CLOUD ====================
-    async function initDatabase() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomParam = urlParams.get('room');
-      if (roomParam) {
-        defaultBlobId = roomParam;
-        localStorage.setItem('edusmart_blob_id', defaultBlobId);
-      }
-
-      if (defaultBlobId) {
-        await syncFromCloud(false);
-      } else {
-        try {
-          const res = await fetch(BUILTIN_CLOUD_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify(appData)
-          });
-          const loc = res.headers.get("Location") || res.headers.get("location");
-          if (loc) {
-            defaultBlobId = loc.split("/").pop();
-            localStorage.setItem('edusmart_blob_id', defaultBlobId);
-            window.history.replaceState(null, "", "?room=" + defaultBlobId);
-          }
-        } catch (e) {}
-      }
-    }
-
-    async function syncFromCloud(showAlert = false) {
-      if (!defaultBlobId) return;
-      try {
-        const res = await fetch(`${BUILTIN_CLOUD_API}/${defaultBlobId}`);
-        if (res.ok) {
-          const remoteData = await res.json();
-          if (remoteData) {
-            appData.exams = remoteData.exams || [];
-            appData.submissions = remoteData.submissions || [];
-            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
-              appData.parentAccounts = remoteData.parentAccounts;
-            }
-            localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
-            renderAll();
-          }
-          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
-        }
-      } catch (e) {}
-    }
-
-    async function syncToCloud() {
-      localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
-      if (!defaultBlobId) {
-        await initDatabase();
-        return;
-      }
-      try {
-        await fetch(`${BUILTIN_CLOUD_API}/${defaultBlobId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "Accept": "application/json" },
-          body: JSON.stringify(appData)
-        });
-      } catch (e) {}
     }
 
     // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
@@ -1450,10 +1444,8 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
       }
 
-      // Bảo vệ toàn bộ các lệnh LaTeX chỉ có 1 dấu \ trong chuỗi JSON (bao gồm cả \frac, \to, \begin, \right, \lim...)
       raw = raw.replace(/\\{2,}/g, '\\\\');
       raw = raw.replace(/(?<!\\)\\(?![\\"/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
-      // Đặc biệt bảo vệ các lệnh LaTeX bắt đầu bằng b, f, n, r, t khỏi bị JSON.parse biến thành ký tự điều khiển
       raw = raw.replace(/(?<!\\)\\(frac|forall|begin|bar|beta|bigg|binom|neq|nabla|nu|not|ni|right|rho|rangle|Rightarrow|to|times|text|theta|tan|triangle|tau|top|tfrac)/g, '\\\\$1');
 
       raw = raw.replace(/,(\s*[}\]])/g, '$1');
@@ -2075,6 +2067,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
     // ==================== HIỂN THỊ GIAO DIỆN ====================
     function renderAll() {
+      updateDbUrlUI();
       renderDraftQuestions();
       renderTeacherView();
       renderParentAccountsTable();
