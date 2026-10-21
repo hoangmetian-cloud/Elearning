@@ -576,9 +576,87 @@
     // =========================================================================
     // CẤU HÌNH MẶC ĐỊNH & DANH SÁCH MẬT KHẨU RIÊNG TỪNG PHỤ HUYNH
     // =========================================================================
-    const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
+        const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
+    // SỬ DỤNG KHO DỮ LIỆU ĐÁM MÂY CHUNG CỐ ĐỊNH CHO TẤT CẢ CÁC MÁY (KVDB / JSONBLOB CỐ ĐỊNH)
     const BUILTIN_CLOUD_API = "https://jsonblob.com/api/jsonBlob";
+    const MASTER_BUCKET_API = "https://kvdb.io/A6p8Y2kL9mN4qR7vX3wZ5j/edusmart_vuong_master_db";
     let defaultBlobId = localStorage.getItem('edusmart_blob_id') || "";
+
+    // ==================== ĐỒNG BỘ DATABASE CLOUD (ĐỒNG BỘ MỌI THIẾT BỊ 100%) ====================
+    async function initDatabase() {
+      await syncFromCloud(false);
+    }
+
+    async function syncFromCloud(showAlert = false) {
+      const dot = document.getElementById('cloudDot');
+      const statusText = document.getElementById('cloudStatusText');
+      try {
+        // Thêm ?t=Date.now() để ép Safari trên iPad/iPhone luôn tải dữ liệu mới nhất, không lấy Cache cũ
+        const res = await fetch(`${MASTER_BUCKET_API}?t=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store"
+        });
+
+        if (res.ok) {
+          const textData = await res.text();
+          if (textData && textData.trim().startsWith("{")) {
+            const remoteData = JSON.parse(textData);
+            appData.exams = remoteData.exams || [];
+            appData.submissions = remoteData.submissions || [];
+            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
+              appData.parentAccounts = remoteData.parentAccounts;
+            }
+            localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
+            renderAll();
+          } else {
+            // Nếu kho chung trên mây chưa có dữ liệu lần đầu thì đẩy dữ liệu từ iPad của bạn lên
+            await syncToCloud();
+          }
+          if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
+          if (statusText) {
+            statusText.className = "text-emerald-700 font-semibold";
+            statusText.innerText = "Đã đồng bộ đám mây (Mọi thiết bị)";
+          }
+          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
+        } else if (res.status === 404) {
+          // Khởi tạo kho lần đầu tiên
+          await syncToCloud();
+        }
+      } catch (e) {
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+        if (statusText) {
+          statusText.className = "text-red-600 font-semibold";
+          statusText.innerText = "Lỗi mạng (Đang lưu tạm trên máy)";
+        }
+      }
+    }
+
+    async function syncToCloud() {
+      localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
+      const dot = document.getElementById('cloudDot');
+      const statusText = document.getElementById('cloudStatusText');
+      try {
+        const res = await fetch(MASTER_BUCKET_API, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(appData)
+        });
+        if (res.ok) {
+          if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
+          if (statusText) {
+            statusText.className = "text-emerald-700 font-semibold";
+            statusText.innerText = "Đã lưu & đồng bộ lên tất cả các máy";
+          }
+        }
+      } catch (e) {
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+        if (statusText) {
+          statusText.className = "text-red-600 font-semibold";
+          statusText.innerText = "Chưa đẩy được lên Cloud (Kiểm tra mạng)";
+        }
+      }
+    }
+
 
     const INITIAL_PARENT_ACCOUNTS = [
       { name: "Khánh Lam", pass: "kl01" },
