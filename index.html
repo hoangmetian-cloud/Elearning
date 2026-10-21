@@ -1214,9 +1214,9 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     "type": "tf",
     "text": "Nội dung câu hỏi Đúng/Sai:",
     "statements": [
-      { "text": "Mệnh đề a", "answer": true, "points": 0.5 },
-      { "text": "Mệnh đề b", "answer": false, "points": 0.5 },
-      { "text": "Mệnh đề c", "answer": true, "points": 1.0 },
+      { "text": "Mệnh đề a", "answer": true, "points": 0.1 },
+      { "text": "Mệnh đề b", "answer": false, "points": 0.25 },
+      { "text": "Mệnh đề c", "answer": true, "points": 0.5 },
       { "text": "Mệnh đề d", "answer": false, "points": 1.0 }
     ],
     "points": 3,
@@ -1250,14 +1250,19 @@ function importAIJsonQuestions() {
   let raw = pasteBox.value.trim();
   if (!raw) return;
 
-  // 1. Regex mạnh hơn để bóc tách chính xác phần bên trong dấu ```json ... ```
-  // Bất kể AI có xuống dòng hay cách ra bao nhiêu khoảng trắng
-  const match = raw.match(/```json\s*([\s\S]*?)\s*```/) || raw.match(/```\s*([\s\S]*?)\s*```/);
+  // 1. Loại bỏ các thẻ bao bọc markdown ```json nếu có
+  const match = raw.match(/```json\s*([\s\(\S\)]*?)\s*```/) || raw.match(/```\s*([\s\(\S\)]*?)\s*```/);
   if (match) {
     raw = match[1].trim();
+  } else {
+    raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```\$/, '').trim();
   }
 
-  // 2. Tự động sửa lỗi dấu phẩy dư thừa ở cuối mảng/object (Lỗi AI hay gặp nhất)
+  // 2. SỬA LỖI AI: Biến đổi các cụm 3 dấu hoặc 2 dấu gạch chéo ngược của LaTeX 
+  // về thành 2 dấu gạch chéo đúng tiêu chuẩn chuỗi JSON chứa ký tự đặc biệt.
+  raw = raw.replace(/\\{2,3}/g, '\\\\');
+
+  // 3. Tự động sửa lỗi dấu phẩy dư ở cuối mảng/object nếu có
   raw = raw.replace(/,(\s*[}\]])/g, '\$1');
 
   try {
@@ -1276,11 +1281,8 @@ function importAIJsonQuestions() {
     renderDraftQuestions();
     alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
   } catch (e) {
-    // In hẳn lỗi ra console để bạn bấm F12 lên là biết AI đang sai ở ký tự nào
-    console.error("Lỗi Parse JSON thực tế:", e);
-    console.log("Chuỗi JSON sau khi xử lý thất bại:", raw);
-    
-    alert("❌ Đoạn mã chưa đúng chuẩn JSON. Hãy kiểm tra lại dấu ngoặc hoặc dấu phẩy!");
+    console.error("Lỗi Parse thực tế:", e);
+    alert("❌ Đoạn mã chưa đúng chuẩn JSON hoặc lỗi ký tự Toán học LaTeX. Hãy kiểm tra lại!");
   }
 }
 
