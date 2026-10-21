@@ -1244,20 +1244,41 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     }
 
     function importAIJsonQuestions() {
-      let raw = document.getElementById('aiJsonPasteBox').value.trim();
-      if (!raw) return;
-      raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-      try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) throw new Error("Format error");
-        draftQuestions.push(...parsed);
-        document.getElementById('aiJsonPasteBox').value = '';
-        renderDraftQuestions();
-        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề! Bạn có thể bấm nút "Sửa" ở từng câu nếu muốn điều chỉnh thêm.`);
-      } catch (e) {
-        alert("Đoạn mã chưa đúng chuẩn JSON [ ... ]. Hãy kiểm tra lại!");
-      }
+  const pasteBox = document.getElementById('aiJsonPasteBox');
+  if (!pasteBox) return;
+
+  let raw = pasteBox.value.trim();
+  if (!raw) return;
+
+  // Xóa các thẻ markdown bọc ngoài JSON (nếu có)
+  raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```\$/, '').trim();
+
+  try {
+    const parsed = JSON.parse(raw);
+    
+    // Kiểm tra cấu hình dữ liệu phải là một mảng và không rỗng
+    if (!Array.isArray(parsed)) {
+      throw new Error("Dữ liệu không phải là một danh sách [ ... ]");
     }
+    if (parsed.length === 0) {
+      alert("⚠️ Không tìm thấy câu hỏi nào trong đoạn mã JSON của bạn!");
+      return;
+    }
+
+    // Nạp dữ liệu vào mảng tạm
+    draftQuestions.push(...parsed);
+    
+    // Xóa hộp văn bản và cập nhật giao diện
+    pasteBox.value = '';
+    renderDraftQuestions();
+    
+    alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề! Bạn có thể bấm nút "Sửa" ở từng câu nếu muốn điều chỉnh thêm.`);
+  } catch (e) {
+    alert("❌ Đoạn mã chưa đúng chuẩn JSON [ ... ]. Hãy kiểm tra lại định dạng dấu ngoặc, dấu phẩy!");
+    console.error("JSON Parse Error:", e); // Giúp bạn dễ debug hơn khi phát triển
+  }
+}
+
 
     function clearDraft() {
       if (draftQuestions.length > 0 && !confirm("Bạn muốn xóa toàn bộ câu hỏi đang có trong danh sách nháp?")) return;
