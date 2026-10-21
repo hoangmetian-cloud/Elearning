@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>EduSmart Pro V6 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
+  <title>Hệ thống học tập - Vương</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Cấu hình MathJax hiển thị LaTeX chuẩn -->
@@ -37,7 +37,7 @@
             <i class="fa-solid fa-graduation-cap text-xl"></i>
           </div>
           <div>
-            <h1 class="font-bold text-lg text-slate-800 leading-tight">EduSmart Pro</h1>
+            <h1 class="font-bold text-lg text-slate-800 leading-tight">Học tập online</h1>
             <div class="flex items-center gap-1.5 text-xs">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot" id="cloudDot"></span>
               <span class="text-emerald-700 font-semibold" id="cloudStatusText">Đã kết nối Database Trực Tuyến</span>
@@ -48,10 +48,10 @@
         <!-- Chỉ hiển thị Học Sinh & Phụ Huynh -->
         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button onclick="switchRole('student')" id="btn-student" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active">
-            <i class="fa-solid fa-user-pen mr-1"></i> Học Sinh
+            <i class="fa-solid fa-user-pen mr-1"></i> Học sinh
           </button>
           <button onclick="switchRole('parent')" id="btn-parent" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600">
-            <i class="fa-solid fa-user-shield mr-1"></i> Phụ Huynh
+            <i class="fa-solid fa-user-shield mr-1"></i> Phụ huynh
           </button>
         </div>
       </div>
@@ -64,7 +64,7 @@
         <div id="studentLobby" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
             <div>
-              <h2 class="font-bold text-lg text-slate-800">Danh Sách Đề Kiểm Tra & Bài Tập</h2>
+              <h2 class="font-bold text-lg text-slate-800">Danh sách đề kiểm tra và bài tập</h2>
               <p class="text-xs text-slate-500">Chọn đề bài bên dưới, sau đó chọn đúng tên của em trong danh sách lớp để bắt đầu làm bài.</p>
             </div>
             <button onclick="syncFromCloud(true)" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-xl font-semibold transition">
@@ -79,7 +79,7 @@
         <div id="studentSelectModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Chọn Tên Học Sinh Vào Thi</h3>
+              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Chọn tên học sinh</h3>
               <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="modalExamName" class="text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl"></div>
@@ -91,7 +91,7 @@
             <div class="flex justify-end gap-2 pt-2">
               <button onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
               <button onclick="confirmStartExam()" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
-                Bắt Đầu Tính Giờ <i class="fa-solid fa-play ml-1"></i>
+                Bắt đầu tính giờ <i class="fa-solid fa-play ml-1"></i>
               </button>
             </div>
           </div>
@@ -132,17 +132,17 @@
           <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
             <i class="fa-solid fa-user-lock"></i>
           </div>
-          <h2 class="font-bold text-lg text-slate-800">Sổ Liên Lạc Phụ Huynh Bảo Mật</h2>
+          <h2 class="font-bold text-lg text-slate-800">Sổ phụ huynh</h2>
           <p class="text-xs text-slate-500 leading-relaxed">
             Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
-            Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa chi tiết</b>.
+            Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa</b>.
           </p>
           <div class="space-y-3 pt-2">
             <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
               onkeydown="if(event.key==='Enter') unlockParentView()"
               class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
             <button onclick="unlockParentView()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow transition">
-              <i class="fa-solid fa-unlock-keyhole mr-1"></i> Xem Bài Làm & Bài Chữa Của Con
+              <i class="fa-solid fa-unlock-keyhole mr-1"></i> Xem bài làm & bài chữa của con
             </button>
           </div>
         </div>
@@ -155,7 +155,7 @@
                 <i class="fa-solid fa-user-graduate"></i>
               </div>
               <div>
-                <div class="text-xs font-bold text-emerald-600 uppercase">Hồ Sơ Học Tập Cá Nhân</div>
+                <div class="text-xs font-bold text-emerald-600 uppercase">Hồ sơ học tập</div>
                 <h2 class="font-bold text-lg text-slate-800" id="parentStudentBanner">Học sinh: ...</h2>
               </div>
             </div>
@@ -181,21 +181,21 @@
           <div class="flex items-center gap-2.5">
             <i class="fa-solid fa-shield-halved text-emerald-400 text-xl"></i>
             <div>
-              <h2 class="font-bold text-sm">Hệ Thống Quản Trị Giáo Viên</h2>
-              <p class="text-[11px] text-slate-300">Mã mở bảng GV: <b class="text-amber-300">1234</b></p>
+              <h2 class="font-bold text-sm">Hệ thống quản trị giáo viên</h2>
+              <p class="text-[11px] text-slate-300">Mã mở bảng GV: <b class="text-amber-300">27112004</b></p>
             </div>
           </div>
 
           <!-- 3 Tab con trong Bảng Giáo Viên -->
           <div class="flex flex-wrap bg-slate-900/80 p-1 rounded-xl gap-1">
             <button onclick="switchTeacherTab('exams')" id="ttab-exams" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white">
-              <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn Đề & Sửa Đề
+              <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn & sửa đề
             </button>
             <button onclick="switchTeacherTab('grading')" id="ttab-grading" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
-              <i class="fa-solid fa-check-to-slot mr-1"></i> 2. Chấm Bài & Up Bài Chữa (<span id="subCountBadge">0</span>)
+              <i class="fa-solid fa-check-to-slot mr-1"></i> 2. Chấm bài & up bài chữa (<span id="subCountBadge">0</span>)
             </button>
             <button onclick="switchTeacherTab('parents')" id="ttab-parents" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
-              <i class="fa-solid fa-users-gear mr-1"></i> 3. Bảng Quản Trị Phụ Huynh & Pass
+              <i class="fa-solid fa-users-gear mr-1"></i> 3. Bảng quản trị phụ huynh
             </button>
           </div>
 
@@ -214,7 +214,7 @@
           <div class="lg:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
               <h2 class="font-bold text-slate-800 text-base" id="examFormHeader">
-                <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra
+                <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết lập đề kiểm tra
               </h2>
               <button id="cancelEditExamBtn" onclick="cancelEditPublishedExam()" class="hidden text-xs bg-red-50 text-red-600 font-bold px-3 py-1 rounded-lg border border-red-200">
                 Hủy sửa đề cũ (Tạo đề mới)
@@ -254,7 +254,7 @@
             <div class="bg-purple-50 p-4 rounded-2xl border border-purple-200 space-y-3">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-purple-900">
-                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Trợ Lý AI Soạn Đề (Chỉ xuất câu hỏi sạch, không ghi lệnh của GV lên đề)
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Trợ lý soạn đề
                 </span>
               </div>
 
@@ -278,7 +278,7 @@
                 <div class="mt-2 space-y-2">
                   <textarea id="aiJsonPasteBox" rows="3" placeholder="Dán mã JSON AI trả về vào đây..." class="w-full p-2 border rounded-lg text-[11px] font-mono bg-slate-50"></textarea>
                   <button onclick="importAIJsonQuestions()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 rounded-lg text-xs">
-                    📥 Nạp Toàn Bộ Câu Hỏi & Bài Chữa Vào Đề
+                    📥 Nạp câu hỏi & bài chữa
                   </button>
                 </div>
               </details>
@@ -288,7 +288,7 @@
             <div id="questionEditorBox" class="border-t pt-3 space-y-3 rounded-2xl transition">
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <span class="text-xs font-bold text-slate-800" id="questionEditorTitle">
-                  <i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm Câu Hỏi & Bài Chữa (LaTeX + Ảnh)
+                  <i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm câu hỏi & bài chữa (LaTeX + Ảnh)
                 </span>
                 <select id="qType" onchange="toggleQuestionType()" class="text-xs border-2 border-blue-200 rounded-xl px-2.5 py-1.5 bg-blue-50 font-bold text-blue-800">
                   <option value="mcq">1. Trắc nghiệm 4 lựa chọn (A, B, C, D)</option>
@@ -393,10 +393,10 @@
               <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                   <label class="text-xs font-bold text-emerald-800">
-                    <i class="fa-solid fa-chalkboard-user mr-1"></i> Bài chữa chi tiết câu này (Gõ LaTeX hoặc Tải ảnh bài giải):
+                    <i class="fa-solid fa-chalkboard-user mr-1"></i> Bài chữa câu này (Gõ LaTeX hoặc tải ảnh bài giải):
                   </label>
                   <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-sm">
-                    <i class="fa-solid fa-camera mr-1"></i> Chọn ảnh bài chữa từ iPad
+                    <i class="fa-solid fa-camera mr-1"></i> Chọn ảnh bài chữa
                     <input type="file" id="qSolutionImageInput" accept="image/*" onchange="handleQuestionSolutionImage(event)" class="hidden">
                   </label>
                 </div>
@@ -422,7 +422,7 @@
                     Hủy sửa câu
                   </button>
                   <button type="button" id="saveQuestionBtn" onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
-                    <i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề
+                    <i class="fa-solid fa-plus mr-1"></i> Thêm câu này vào đề
                   </button>
                 </div>
               </div>
@@ -434,7 +434,7 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
               <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-slate-800 text-sm">
-                  <i class="fa-solid fa-list-ol text-blue-600 mr-1"></i> Các Câu Trong Đề (<span id="draftCount">0</span>)
+                  <i class="fa-solid fa-list-ol text-blue-600 mr-1"></i> Các câu trong đề (<span id="draftCount">0</span>)
                 </h3>
                 <button onclick="clearDraft()" class="text-xs text-red-500 hover:underline font-semibold">Xóa trắng</button>
               </div>
@@ -448,7 +448,7 @@
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
               <h2 class="font-bold text-slate-800 text-sm border-b pb-2 mb-3">
-                <i class="fa-solid fa-folder-open text-amber-500 mr-1"></i> Các Đề Đang Mở Trên Hệ Thống
+                <i class="fa-solid fa-folder-open text-amber-500 mr-1"></i> Các đề khả dụng trên hệ thống
               </h2>
               <div id="teacherExamsList" class="space-y-2.5"></div>
             </div>
@@ -461,7 +461,7 @@
             <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
               <div>
                 <h2 class="font-bold text-slate-800 text-base">
-                  <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Danh Sách Bài Nộp Của Học Sinh (<span id="subCount">0</span>)
+                  <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Danh sách bài của học sinh (<span id="subCount">0</span>)
                 </h2>
                 <p class="text-xs text-slate-500">Bấm vào ảnh chụp bài làm tự luận của học sinh để phóng to, chấm điểm và tải ảnh bài chữa của bạn lên.</p>
               </div>
@@ -476,29 +476,29 @@
             <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
               <div>
                 <h2 class="font-bold text-lg text-slate-800">
-                  <i class="fa-solid fa-id-card-clip text-emerald-600 mr-1"></i> Bảng Quản Trị Tài Khoản & Mật Khẩu Riêng Của Từng Phụ Huynh
+                  <i class="fa-solid fa-id-card-clip text-emerald-600 mr-1"></i> Bảng quản trị tài khoản phụ huynh
                 </h2>
                 <p class="text-xs text-slate-500">
                   Mỗi học sinh có một <b>Mật khẩu Phụ huynh riêng biệt</b>. Phụ huynh nhập mật khẩu nào thì hệ thống chỉ mở đúng hồ sơ bài làm và bài chữa của con người đó.
                 </p>
               </div>
               <button onclick="saveAllParentAccounts()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Toàn Bộ Bảng Mật Khẩu
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu bảng mật khẩu
               </button>
             </div>
 
             <!-- Thêm học sinh & mật khẩu phụ huynh mới -->
             <div class="bg-slate-50 p-4 rounded-xl border flex flex-wrap gap-3 items-end">
               <div class="flex-1 min-w-[200px]">
-                <label class="block text-xs font-bold text-slate-700 mb-1">Thêm Học Sinh Mới Vào Lớp</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Thêm học sinh mới</label>
                 <input type="text" id="newStudentNameInput" placeholder="Nhập Họ và Tên học sinh..." class="w-full px-3 py-2 border rounded-xl text-xs font-semibold bg-white">
               </div>
               <div class="w-48">
-                <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu Phụ huynh riêng</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu phụ huynh riêng</label>
                 <input type="text" id="newStudentPassInput" placeholder="VD: ph_minh01" class="w-full px-3 py-2 border rounded-xl text-xs font-bold text-emerald-700 bg-white">
               </div>
               <button onclick="addNewParentAccount()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl">
-                <i class="fa-solid fa-user-plus mr-1"></i> Thêm Học Sinh
+                <i class="fa-solid fa-user-plus mr-1"></i> Thêm học sinh
               </button>
             </div>
 
@@ -508,10 +508,10 @@
                 <thead>
                   <tr class="bg-slate-100 text-slate-700 border-b">
                     <th class="p-3 font-bold">#</th>
-                    <th class="p-3 font-bold">Họ và Tên Học Sinh</th>
-                    <th class="p-3 font-bold">Mật Khẩu Riêng Của Phụ Huynh</th>
-                    <th class="p-3 font-bold text-center">Số Bài Đã Nộp</th>
-                    <th class="p-3 font-bold text-right">Thao Tác Nhanh</th>
+                    <th class="p-3 font-bold">Họ và tên học sinh</th>
+                    <th class="p-3 font-bold">Mật khẩu riêng của phụ huynh</th>
+                    <th class="p-3 font-bold text-center">Số bài đã nộp</th>
+                    <th class="p-3 font-bold text-right">Thao tác nhanh</th>
                   </tr>
                 </thead>
                 <tbody id="parentAccountsTableBody" class="divide-y"></tbody>
@@ -531,7 +531,7 @@
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-400 border-t bg-white/60">
-    <span>EduSmart Pro V6 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
+    <span> Hệ thống học online</span>
     <button onclick="openTeacherLogin()" class="ml-2 text-slate-300 hover:text-blue-600 transition">
       <i class="fa-solid fa-key"></i>
     </button>
@@ -575,7 +575,7 @@
       exams: [
         {
           id: "exam_v6_demo",
-          title: "Đề Kiểm Tra Đánh Giá Năng Lực (Chuẩn 4 Dạng & Up Ảnh Tự Luận)",
+          title: "Đề Kiểm Tra Đánh Giá",
           subject: "Tổng hợp",
           time: 25,
           createdAt: "Hôm nay",
@@ -762,7 +762,7 @@
 
     // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
     function openTeacherLogin() {
-      const pin = prompt("🔒 Khu vực Giáo Viên.\nNhập mã PIN quản trị (Mặc định: 1234):");
+      const pin = prompt("🔒 Khu vực giáo viên.\nNhập mã PIN quản trị đã được cấp");
       if (pin === null) return;
       if (pin.trim() === TEACHER_PIN) {
         switchRole('teacher');
@@ -798,7 +798,7 @@
     function unlockParentView() {
       const enteredPass = document.getElementById('parentPassInput').value.trim();
       if (!enteredPass) {
-        alert("Vui lòng nhập mật khẩu riêng của Phụ huynh!");
+        alert("Vui lòng nhập mật khẩu riêng của phụ huynh!");
         return;
       }
 
@@ -806,7 +806,7 @@
         loggedInParentStudent = "__ALL__";
         document.getElementById('parentLockScreen').classList.add('hidden');
         document.getElementById('parentUnlockedContent').classList.remove('hidden');
-        document.getElementById('parentStudentBanner').innerText = "Chế độ Giáo Viên: Xem tất cả học sinh";
+        document.getElementById('parentStudentBanner').innerText = "Chế độ giáo viên: Xem tất cả học sinh";
         renderParentView();
         return;
       }
@@ -822,7 +822,7 @@
         document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
         renderParentView();
       } else {
-        alert("Mật khẩu không đúng! Mỗi Phụ huynh có một mật khẩu riêng do Giáo viên cấp để bảo mật điểm số của con.");
+        alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con, nếu phụ huynh không nhớ xin vui lòng nhắn lại giáo viên phụ trách môn học của con.");
       }
     }
 
@@ -864,8 +864,8 @@
               </span>
             </td>
             <td class="p-3 text-right space-x-1 whitespace-nowrap">
-              <button onclick="copyInviteForParent(${idx})" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Copy tin nhắn gửi Phụ huynh">
-                <i class="fa-regular fa-copy mr-1"></i> Copy gửi PH
+              <button onclick="copyInviteForParent(${idx})" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Copy tin nhắn gửi phụ huynh">
+                <i class="fa-regular fa-copy mr-1"></i> Copy gửi phụ huynh
               </button>
               <button onclick="removeParentAccount(${idx})" class="text-red-400 hover:text-red-600 px-2 py-1.5">
                 <i class="fa-solid fa-trash"></i>
@@ -893,14 +893,14 @@
       fillRosterFromParentAccounts();
       renderAll();
       await syncToCloud();
-      alert("✔ Đã lưu toàn bộ danh sách Học sinh & Mật khẩu riêng của từng Phụ huynh!");
+      alert("✔ Đã lưu toàn bộ danh sách học sinh & mật khẩu riêng của từng phụ huynh!");
     }
 
     async function addNewParentAccount() {
       const name = document.getElementById('newStudentNameInput').value.trim();
       const pass = document.getElementById('newStudentPassInput').value.trim();
       if (!name || !pass) {
-        alert("Vui lòng nhập cả Họ tên học sinh và Mật khẩu riêng cho Phụ huynh!");
+        alert("Vui lòng nhập cả họ tên học sinh và mật khẩu riêng cho phụ huynh!");
         return;
       }
       appData.parentAccounts.push({ name, pass });
@@ -923,9 +923,9 @@
       const name = document.getElementById('p_name_' + idx).value.trim();
       const pass = document.getElementById('p_pass_' + idx).value.trim();
       const url = window.location.href;
-      const msg = `Kính gửi Phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, bài làm và bài chữa chi tiết của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của Phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục Phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
+      const msg = `Kính gửi phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, bài làm và bài chữa của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
       navigator.clipboard.writeText(msg).then(() => {
-        alert(`📋 Đã copy tin nhắn kèm mật khẩu riêng (${pass}) của Phụ huynh em ${name}! Bạn có thể dán gửi qua Zalo ngay.`);
+        alert(`📋 Đã copy tin nhắn kèm mật khẩu riêng (${pass}) của phụ huynh em ${name}! Bạn có thể dán gửi qua Zalo ngay.`);
       }).catch(() => {
         prompt("Copy tin nhắn dưới đây gửi Phụ huynh:", msg);
       });
@@ -1027,7 +1027,7 @@
       document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-1"></i> Đang Chỉnh Sửa Câu Số ${idx + 1}`;
       document.getElementById('questionEditorBox').classList.add('bg-amber-50/40', 'p-3', 'border', 'border-amber-300');
       const saveBtn = document.getElementById('saveQuestionBtn');
-      saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cập Nhật Câu ${idx + 1}`;
+      saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu xập nhật câu ${idx + 1}`;
       saveBtn.className = "bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow";
       document.getElementById('cancelEditQuestionBtn').classList.remove('hidden');
 
@@ -1045,10 +1045,10 @@
       document.getElementById('qSolutionLatexPreview').classList.add('hidden');
       clearQuestionSolutionImage();
 
-      document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm Câu Hỏi & Bài Chữa (LaTeX + Ảnh)`;
+      document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm câu hỏi và bài chữa (LaTeX + Ảnh)`;
       document.getElementById('questionEditorBox').classList.remove('bg-amber-50/40', 'p-3', 'border', 'border-amber-300');
       const saveBtn = document.getElementById('saveQuestionBtn');
-      saveBtn.innerHTML = `<i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề`;
+      saveBtn.innerHTML = `<i class="fa-solid fa-plus mr-1"></i> Thêm câu này vào đề`;
       saveBtn.className = "bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow";
       document.getElementById('cancelEditQuestionBtn').classList.add('hidden');
 
@@ -1059,7 +1059,7 @@
       const type = document.getElementById('qType').value;
       const text = document.getElementById('qText').value.trim();
       let points = parseFloat(document.getElementById('qPoints').value) || 1;
-      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải chi tiết của Giáo viên.";
+      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải của Giáo viên.";
       const solutionImage = currentDraftSolutionImage;
 
       if (!text) { alert("Vui lòng nhập nội dung câu hỏi!"); return; }
@@ -1681,7 +1681,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         maxScore: Math.round(maxScore * 100) / 100,
         hasEssay,
         graded: !hasEssay,
-        teacherComment: hasEssay ? "Đã chấm tự động phần Trắc nghiệm, Đúng/Sai và Trả lời ngắn. Đang chờ thầy chấm bài Tự luận." : "Đã hoàn thành và chấm tự động 100%.",
+        teacherComment: hasEssay ? "Đã chấm tự động phần trắc nghiệm, Đúng/Sai và trả lời ngắn. Đang chờ thầy/cô chấm bài tự luận." : "Đã hoàn thành và chấm tự động",
         teacherCustomSolution: "",
         teacherCustomImage: "",
         answers
@@ -1767,7 +1767,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               </div>
             </div>
             <button onclick="openStudentModal('${ex.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition">
-              Chọn Tên & Vào Làm Bài <i class="fa-solid fa-arrow-right ml-1"></i>
+              Chọn tên & vào làm bài <i class="fa-solid fa-arrow-right ml-1"></i>
             </button>
           </div>
         `;
@@ -1860,7 +1860,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
             <div class="space-y-1.5">
               <div class="flex flex-wrap justify-between items-center gap-2">
-                <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi chi tiết cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
+                <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
                 <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
                   <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài của GV
                   <input type="file" accept="image/*" onchange="handleTeacherSubImage(event, '${s.id}')" class="hidden">
@@ -1872,7 +1872,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
             <div class="flex justify-end">
               <button onclick="saveTeacherGrading('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2 rounded-xl shadow transition">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Điểm & Gửi Bài Chữa Cho Phụ Huynh
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu điểm & gửi bài chữa cho phụ huynh
               </button>
             </div>
           </div>
@@ -1910,7 +1910,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
                 ${s.teacherCustomSolution ? `
                   <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
-                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & Hướng dẫn riêng của Thầy cho ${s.studentName}:</b>\n${s.teacherCustomSolution}
+                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ coo cho ${s.studentName}:</b>\n${s.teacherCustomSolution}
                   </div>
                 ` : ''}
                 ${s.teacherCustomImage ? `
@@ -1923,7 +1923,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             </div>
 
             <div class="sm:text-right flex sm:flex-col justify-between items-center sm:items-end bg-white p-4 rounded-2xl border shadow-sm min-w-[165px]">
-              <span class="text-xs font-bold text-slate-500 uppercase">Tổng Điểm</span>
+              <span class="text-xs font-bold text-slate-500 uppercase">Tổng điểm</span>
               <div class="text-3xl font-black text-blue-600">${s.totalScore} <span class="text-sm font-normal text-slate-400">/ ${s.maxScore}</span></div>
               <span class="text-[11px] font-bold ${s.graded ? 'text-emerald-600' : 'text-amber-600'}">
                 ${s.graded ? '✔ Đã chấm hoàn tất' : '⏳ Chờ chấm tự luận'}
@@ -1933,7 +1933,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
           <details class="bg-white rounded-xl border border-blue-200 overflow-hidden" open>
             <summary class="px-4 py-3 bg-blue-50/80 text-blue-900 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
-              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem Chi Tiết Bài Làm Của Con & Bài Chữa Từng Câu (${(s.answers || []).length} câu)</span>
+              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem bài làm của con và bãi chữa của thầy/cô (${(s.answers || []).length} câu)</span>
               <span class="text-[11px] underline">Thu gọn / Mở rộng</span>
             </summary>
             <div class="p-4 space-y-4 text-xs divide-y">
@@ -1987,10 +1987,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                     <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
                     ${statusHtml}
                     <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải chi tiết của Thầy:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
+                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
                       ${a.solutionImage ? `
                         <div>
-                          <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải chuẩn của Giáo viên (Bấm để phóng to):</div>
+                          <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải của giáo viên (Bấm để phóng to):</div>
                           <img src="${a.solutionImage}" onclick="zoomImage('${a.solutionImage}')" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
                         </div>
                       ` : ''}
