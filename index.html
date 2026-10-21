@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>EduSmart Pro V5 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
+  <title>EduSmart Pro V6 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Cấu hình MathJax hiển thị LaTeX chuẩn -->
@@ -189,7 +189,7 @@
           <!-- 3 Tab con trong Bảng Giáo Viên -->
           <div class="flex flex-wrap bg-slate-900/80 p-1 rounded-xl gap-1">
             <button onclick="switchTeacherTab('exams')" id="ttab-exams" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white">
-              <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn Đề & Kho Đề
+              <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn Đề & Sửa Đề
             </button>
             <button onclick="switchTeacherTab('grading')" id="ttab-grading" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
               <i class="fa-solid fa-check-to-slot mr-1"></i> 2. Chấm Bài & Up Bài Chữa (<span id="subCountBadge">0</span>)
@@ -209,12 +209,17 @@
           </div>
         </div>
 
-        <!-- TAB GV 1: SOẠN ĐỀ THI (TÙY CHỈNH ĐIỂM TỪNG Ý ĐÚNG/SAI, LATEX & UP ẢNH BÀI CHỮA) -->
+        <!-- TAB GV 1: SOẠN ĐỀ & SỬA CÂU HỎI -->
         <div id="teacher-tab-exams" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-            <h2 class="font-bold text-slate-800 text-base border-b pb-2">
-              <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra Mới
-            </h2>
+            <div class="flex justify-between items-center border-b pb-2">
+              <h2 class="font-bold text-slate-800 text-base" id="examFormHeader">
+                <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra
+              </h2>
+              <button id="cancelEditExamBtn" onclick="cancelEditPublishedExam()" class="hidden text-xs bg-red-50 text-red-600 font-bold px-3 py-1 rounded-lg border border-red-200">
+                Hủy sửa đề cũ (Tạo đề mới)
+              </button>
+            </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="sm:col-span-2">
@@ -245,21 +250,21 @@
               </div>
             </div>
 
-            <!-- KHUNG AI SOẠN ĐỀ TỰ CHỌN -->
+            <!-- KHUNG AI SOẠN ĐỀ TỰ CHỌN (KHÔNG DÍNH LỆNH CỦA GV LÊN ĐỀ HS) -->
             <div class="bg-purple-50 p-4 rounded-2xl border border-purple-200 space-y-3">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-purple-900">
-                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Trợ Lý AI Soạn Đề Tùy Ý (Có sẵn điểm từng ý Đúng/Sai & LaTeX)
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Trợ Lý AI Soạn Đề (Chỉ xuất câu hỏi sạch, không ghi lệnh của GV lên đề)
                 </span>
               </div>
 
               <textarea id="aiCustomPrompt" rows="2" 
-                placeholder="Gõ yêu cầu của bạn: VD: 2 câu trắc nghiệm, 1 câu Đúng/Sai (tính điểm từng ý), 1 câu trả lời ngắn, 1 câu tự luận về Đạo hàm hoặc Ngữ pháp Tiếng Anh..."
+                placeholder="Gõ yêu cầu của bạn (chỉ dùng để ra lệnh cho AI, sẽ KHÔNG hiển thị trong câu hỏi của học sinh). VD: Tạo đề về Đạo hàm hoặc Câu điều kiện Tiếng Anh..."
                 class="w-full p-2.5 rounded-xl border border-purple-200 text-xs bg-white"></textarea>
 
               <div class="flex flex-wrap gap-2">
                 <button onclick="generateSmartLocalAI()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm transition">
-                  ⚡ Sinh đề mẫu ngay
+                  ⚡ Sinh bộ câu hỏi mẫu
                 </button>
                 <button onclick="copyAIPromptToClipboard()" class="flex-1 bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 text-xs font-bold py-2 px-3 rounded-xl transition">
                   📋 B1: Copy Lệnh sang Gemini/ChatGPT
@@ -279,10 +284,10 @@
               </details>
             </div>
 
-            <!-- SOẠN TỪNG CÂU HỎI CHI TIẾT -->
-            <div class="border-t pt-3 space-y-3">
+            <!-- KHUNG SOẠN / SỬA TỪNG CÂU HỎI CHI TIẾT -->
+            <div id="questionEditorBox" class="border-t pt-3 space-y-3 rounded-2xl transition">
               <div class="flex flex-wrap justify-between items-center gap-2">
-                <span class="text-xs font-bold text-slate-800">
+                <span class="text-xs font-bold text-slate-800" id="questionEditorTitle">
                   <i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm Câu Hỏi & Bài Chữa (LaTeX + Ảnh)
                 </span>
                 <select id="qType" onchange="toggleQuestionType()" class="text-xs border-2 border-blue-200 rounded-xl px-2.5 py-1.5 bg-blue-50 font-bold text-blue-800">
@@ -293,7 +298,7 @@
                 </select>
               </div>
 
-              <textarea id="qText" rows="2" placeholder="Nhập câu hỏi (Gõ LaTeX thoải mái, VD: Cho hàm số $f(x) = x^3 - 3x$, tính $f^{\prime}(2)$)..." class="w-full px-3 py-2 rounded-xl border text-sm"></textarea>
+              <textarea id="qText" rows="2" placeholder="Nhập nội dung câu hỏi (Gõ LaTeX thoải mái, VD: Cho hàm số $f(x) = x^3 - 3x$, tính $f^{\prime}(2)$)..." class="w-full px-3 py-2 rounded-xl border text-sm"></textarea>
 
               <!-- 1. Trắc nghiệm 4 lựa chọn -->
               <div id="box-mcq" class="space-y-2 bg-slate-50 p-3 rounded-xl border">
@@ -376,9 +381,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="text-[11px] text-amber-800 italic">
-                  * Học sinh chọn đúng ý nào sẽ được cộng đúng số điểm bạn đặt cho ý đó.
-                </div>
               </div>
 
               <!-- 3. Trả lời ngắn -->
@@ -403,7 +405,6 @@
                   placeholder="Gõ lời giải LaTeX vào đây (VD: Ta có $f^{\prime}(x) = 3x^2 - 3 = 0 \Leftrightarrow x = \pm 1$...) và/hoặc đính kèm ảnh chụp viết tay bên trên." 
                   class="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs bg-white"></textarea>
 
-                <!-- Xem trước LaTeX và Ảnh bài chữa ngay khi gõ -->
                 <div id="qSolutionLatexPreview" class="hidden p-2.5 bg-white rounded-lg border text-xs text-slate-700"></div>
                 <div id="qSolutionImagePreviewBox" class="hidden relative inline-block">
                   <img id="qSolutionImagePreview" src="" class="max-h-36 rounded-lg border shadow-sm">
@@ -411,30 +412,36 @@
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-1">
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                 <div class="flex items-center gap-2 text-xs">
                   <span class="font-semibold text-slate-600">Tổng điểm câu này:</span>
                   <input type="number" id="qPoints" value="2" step="0.25" min="0.1" class="w-20 px-2 py-1 border rounded-lg text-center font-bold text-blue-700">
                 </div>
-                <button onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
-                  <i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề
-                </button>
+                <div class="flex gap-2">
+                  <button type="button" id="cancelEditQuestionBtn" onclick="cancelEditDraftQuestion()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition">
+                    Hủy sửa câu
+                  </button>
+                  <button type="button" id="saveQuestionBtn" onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
+                    <i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Cột Phải của Tab 1: Xem trước Đề đang soạn & Kho Đề đang mở -->
+          <!-- Cột Phải của Tab 1: Danh sách Câu đã thêm (Có nút SỬA từng câu) & Kho Đề -->
           <div class="lg:col-span-5 space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
               <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-slate-800 text-sm">
-                  <i class="fa-solid fa-list-ol text-blue-600 mr-1"></i> Các Câu Đã Thêm Vào Đề (<span id="draftCount">0</span>)
+                  <i class="fa-solid fa-list-ol text-blue-600 mr-1"></i> Các Câu Trong Đề (<span id="draftCount">0</span>)
                 </h3>
                 <button onclick="clearDraft()" class="text-xs text-red-500 hover:underline font-semibold">Xóa trắng</button>
               </div>
-              <div id="draftList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs"></div>
+              <p class="text-[11px] text-slate-500">Bấm nút <b>"✏️ Sửa"</b> ở bất kỳ câu nào bên dưới để nạp lại câu hỏi lên khung bên trái và chỉnh sửa.</p>
+              <div id="draftList" class="space-y-2.5 max-h-96 overflow-y-auto pr-1 text-xs"></div>
 
-              <button onclick="publishExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm">
+              <button id="publishExamBtn" onclick="publishExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm">
                 <i class="fa-solid fa-paper-plane"></i> PHÁT ĐỀ LÊN HỆ THỐNG CHO HỌC SINH
               </button>
             </div>
@@ -524,7 +531,7 @@
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-400 border-t bg-white/60">
-    <span>EduSmart Pro V5 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
+    <span>EduSmart Pro V6 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
     <button onclick="openTeacherLogin()" class="ml-2 text-slate-300 hover:text-blue-600 transition">
       <i class="fa-solid fa-key"></i>
     </button>
@@ -538,7 +545,6 @@
     const BUILTIN_CLOUD_API = "https://jsonblob.com/api/jsonBlob";
     let defaultBlobId = localStorage.getItem('edusmart_blob_id') || "";
 
-    // Danh sách Học sinh kèm Mật khẩu riêng mặc định cho từng Phụ huynh
     const INITIAL_PARENT_ACCOUNTS = [
       { name: "Khánh Lam", pass: "kl01" },
       { name: "Ngọc Linh", pass: "nl02" },
@@ -568,7 +574,7 @@
       parentAccounts: [...INITIAL_PARENT_ACCOUNTS],
       exams: [
         {
-          id: "exam_v5_demo",
+          id: "exam_v6_demo",
           title: "Đề Kiểm Tra Đánh Giá Năng Lực (Chuẩn 4 Dạng & Up Ảnh Tự Luận)",
           subject: "Tổng hợp",
           time: 25,
@@ -619,10 +625,12 @@
     };
 
     let draftQuestions = [];
+    let editingDraftQuestionIdx = null; // Chỉ số câu hỏi đang được chỉnh sửa trong đề nháp
+    let editingPublishedExamId = null;  // ID của đề đã phát hành đang được nạp lên để sửa
     let currentDraftSolutionImage = "";
-    let pendingStudentEssayImages = {}; // Lưu ảnh bài làm tự luận của Học sinh theo chỉ số câu hỏi (idx)
-    let pendingSubmissionImages = {}; // Lưu ảnh bài chữa GV tải lên cho từng bài nộp
-    let loggedInParentStudent = null; // Tên học sinh của Phụ huynh đang đăng nhập (`__ALL__` nếu là GV)
+    let pendingStudentEssayImages = {};
+    let pendingSubmissionImages = {};
+    let loggedInParentStudent = null;
     let pendingExamId = null;
     let currentExam = null;
     let currentStudentName = "";
@@ -630,7 +638,7 @@
     let secondsRemaining = 0;
 
     window.onload = async () => {
-      const savedLocal = localStorage.getItem('edusmart_v5_data') || localStorage.getItem('edusmart_v4_data');
+      const savedLocal = localStorage.getItem('edusmart_v6_data') || localStorage.getItem('edusmart_v5_data');
       if (savedLocal) {
         try {
           const parsed = JSON.parse(savedLocal);
@@ -663,7 +671,6 @@
       document.getElementById('imageZoomModal').classList.remove('hidden');
     }
 
-    // Hàm nén ảnh tự động trên iPad/điện thoại để gửi qua Cloud mượt mà
     function compressImageFile(file, callback) {
       if (!file) return;
       const reader = new FileReader();
@@ -730,7 +737,7 @@
             if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
               appData.parentAccounts = remoteData.parentAccounts;
             }
-            localStorage.setItem('edusmart_v5_data', JSON.stringify(appData));
+            localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
             renderAll();
           }
           if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
@@ -739,7 +746,7 @@
     }
 
     async function syncToCloud() {
-      localStorage.setItem('edusmart_v5_data', JSON.stringify(appData));
+      localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
       if (!defaultBlobId) {
         await initDatabase();
         return;
@@ -753,7 +760,7 @@
       } catch (e) {}
     }
 
-    // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH CÁ NHÂN HÓA ====================
+    // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
     function openTeacherLogin() {
       const pin = prompt("🔒 Khu vực Giáo Viên.\nNhập mã PIN quản trị (Mặc định: 1234):");
       if (pin === null) return;
@@ -826,7 +833,7 @@
       document.getElementById('parentLockScreen').classList.remove('hidden');
     }
 
-    // ==================== BẢNG QUẢN TRỊ PHỤ HUYNH (TRONG MỤC GIÁO VIÊN) ====================
+    // ==================== BẢNG QUẢN TRỊ PHỤ HUYNH ====================
     function fillRosterFromParentAccounts() {
       const input = document.getElementById('examRoster');
       if (input) {
@@ -924,13 +931,13 @@
       });
     }
 
-    // ==================== SOẠN CÂU HỎI, ĐIỂM TỪNG Ý ĐÚNG/SAI, LATEX & ẢNH BÀI CHỮA ====================
+    // ==================== SOẠN & CHỈNH SỬA CÂU HỎI TRONG ĐỀ ====================
     function toggleQuestionType() {
       const type = document.getElementById('qType').value;
       document.getElementById('box-mcq').classList.toggle('hidden', type !== 'mcq');
       document.getElementById('box-tf').classList.toggle('hidden', type !== 'tf');
       document.getElementById('box-short').classList.toggle('hidden', type !== 'short');
-      if (type === 'tf') recalcTfTotalPoints();
+      if (type === 'tf' && editingDraftQuestionIdx === null) recalcTfTotalPoints();
     }
 
     function recalcTfTotalPoints() {
@@ -976,6 +983,78 @@
       document.getElementById('qSolutionImagePreviewBox').classList.add('hidden');
     }
 
+    // Nạp một câu hỏi đã thêm vào đề nháp lên khung soạn thảo để Giáo viên chỉnh sửa
+    function editDraftQuestion(idx) {
+      const q = draftQuestions[idx];
+      if (!q) return;
+      editingDraftQuestionIdx = idx;
+
+      document.getElementById('qType').value = q.type;
+      toggleQuestionType();
+
+      document.getElementById('qText').value = q.text || '';
+      document.getElementById('qPoints').value = q.points || 2;
+      document.getElementById('qSolution').value = q.solution || '';
+      previewQuestionLatex();
+
+      if (q.solutionImage) {
+        currentDraftSolutionImage = q.solutionImage;
+        document.getElementById('qSolutionImagePreview').src = q.solutionImage;
+        document.getElementById('qSolutionImagePreviewBox').classList.remove('hidden');
+      } else {
+        clearQuestionSolutionImage();
+      }
+
+      if (q.type === 'mcq') {
+        const opts = q.options || ['', '', '', ''];
+        document.getElementById('optA').value = opts[0] || '';
+        document.getElementById('optB').value = opts[1] || '';
+        document.getElementById('optC').value = opts[2] || '';
+        document.getElementById('optD').value = opts[3] || '';
+        document.getElementById('qCorrect').value = (q.correct !== undefined) ? q.correct : 0;
+      } else if (q.type === 'tf') {
+        const sts = q.statements || [];
+        for (let i = 0; i < 4; i++) {
+          document.getElementById('tf_text_' + i).value = sts[i] ? sts[i].text : '';
+          document.getElementById('tf_ans_' + i).value = (sts[i] && sts[i].answer === false) ? 'false' : 'true';
+          document.getElementById('tf_pts_' + i).value = (sts[i] && sts[i].points !== undefined) ? sts[i].points : 0.25;
+        }
+      } else if (q.type === 'short') {
+        document.getElementById('shortAnswerKey').value = q.correctText || '';
+      }
+
+      // Đổi giao diện nút sang chế độ "Lưu cập nhật câu hỏi"
+      document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-1"></i> Đang Chỉnh Sửa Câu Số ${idx + 1}`;
+      document.getElementById('questionEditorBox').classList.add('bg-amber-50/40', 'p-3', 'border', 'border-amber-300');
+      const saveBtn = document.getElementById('saveQuestionBtn');
+      saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cập Nhật Câu ${idx + 1}`;
+      saveBtn.className = "bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow";
+      document.getElementById('cancelEditQuestionBtn').classList.remove('hidden');
+
+      renderDraftQuestions();
+      document.getElementById('questionEditorBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function cancelEditDraftQuestion() {
+      editingDraftQuestionIdx = null;
+      document.getElementById('qText').value = '';
+      document.getElementById('qSolution').value = '';
+      ['optA','optB','optC','optD'].forEach(id => document.getElementById(id).value = '');
+      [0,1,2,3].forEach(i => document.getElementById('tf_text_' + i).value = '');
+      document.getElementById('shortAnswerKey').value = '';
+      document.getElementById('qSolutionLatexPreview').classList.add('hidden');
+      clearQuestionSolutionImage();
+
+      document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm Câu Hỏi & Bài Chữa (LaTeX + Ảnh)`;
+      document.getElementById('questionEditorBox').classList.remove('bg-amber-50/40', 'p-3', 'border', 'border-amber-300');
+      const saveBtn = document.getElementById('saveQuestionBtn');
+      saveBtn.innerHTML = `<i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề`;
+      saveBtn.className = "bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow";
+      document.getElementById('cancelEditQuestionBtn').classList.add('hidden');
+
+      renderDraftQuestions();
+    }
+
     function addQuestionToDraft() {
       const type = document.getElementById('qType').value;
       const text = document.getElementById('qText').value.trim();
@@ -985,14 +1064,15 @@
 
       if (!text) { alert("Vui lòng nhập nội dung câu hỏi!"); return; }
 
+      let newQuestionObj = null;
+
       if (type === 'mcq') {
         const a = document.getElementById('optA').value.trim() || "Đáp án A";
         const b = document.getElementById('optB').value.trim() || "Đáp án B";
         const c = document.getElementById('optC').value.trim() || "Đáp án C";
         const d = document.getElementById('optD').value.trim() || "Đáp án D";
         const correct = parseInt(document.getElementById('qCorrect').value);
-        draftQuestions.push({ type: 'mcq', text, options: [a, b, c, d], correct, points, solution, solutionImage });
-        ['optA','optB','optC','optD'].forEach(id => document.getElementById(id).value = '');
+        newQuestionObj = { type: 'mcq', text, options: [a, b, c, d], correct, points, solution, solutionImage };
       } else if (type === 'tf') {
         let totalTfPts = 0;
         const statements = [0, 1, 2, 3].map(i => {
@@ -1005,75 +1085,121 @@
           };
         });
         points = Math.round(totalTfPts * 100) / 100;
-        draftQuestions.push({ type: 'tf', text, statements, points, solution, solutionImage });
-        [0,1,2,3].forEach(i => document.getElementById('tf_text_' + i).value = '');
+        newQuestionObj = { type: 'tf', text, statements, points, solution, solutionImage };
       } else if (type === 'short') {
         const correctText = document.getElementById('shortAnswerKey').value.trim();
         if (!correctText) { alert("Vui lòng nhập đáp án chuẩn cho câu trả lời ngắn!"); return; }
-        draftQuestions.push({ type: 'short', text, correctText, points, solution, solutionImage });
-        document.getElementById('shortAnswerKey').value = '';
+        newQuestionObj = { type: 'short', text, correctText, points, solution, solutionImage };
       } else {
-        draftQuestions.push({ type: 'essay', text, points, solution, solutionImage });
+        newQuestionObj = { type: 'essay', text, points, solution, solutionImage };
       }
 
-      document.getElementById('qText').value = '';
-      document.getElementById('qSolution').value = '';
-      document.getElementById('qSolutionLatexPreview').classList.add('hidden');
-      clearQuestionSolutionImage();
-      renderDraftQuestions();
+      if (editingDraftQuestionIdx !== null) {
+        draftQuestions[editingDraftQuestionIdx] = newQuestionObj;
+        cancelEditDraftQuestion();
+      } else {
+        draftQuestions.push(newQuestionObj);
+        cancelEditDraftQuestion();
+      }
     }
 
+    // Sinh câu hỏi mẫu sạch 100% (Tuyệt đối KHÔNG chèn nội dung ô lệnh của GV vào đầu câu hỏi)
     function generateSmartLocalAI() {
       const promptText = document.getElementById('aiCustomPrompt').value.trim();
-      const topicLabel = promptText || "Chuyên đề nâng cao";
-      draftQuestions.push(
-        {
-          type: 'mcq',
-          text: `[${topicLabel}] Cho hàm số $y = x^3 - 3x^2 + 2$. Giá trị cực tiểu của hàm số bằng:`,
-          options: ["$y = 2$", "$y = -2$", "$y = 0$", "$y = 4$"],
-          correct: 1,
-          points: 2,
-          solution: "Ta có $y^{\\prime} = 3x^2 - 6x = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$. Hàm số đạt cực tiểu tại $x = 2 \\Rightarrow y_{CT} = -2$.",
-          solutionImage: ""
-        },
-        {
-          type: 'tf',
-          text: `[${topicLabel}] Xét phương trình $x^2 - 2mx + m^2 - 1 = 0$. Xét tính Đúng/Sai của các mệnh đề sau:`,
-          statements: [
-            { text: "Biệt thức $\\Delta^{\\prime} = 1 > 0$ với mọi $m$.", answer: true, points: 0.5 },
-            { text: "Phương trình luôn có 2 nghiệm là $x = m - 1$ và $x = m + 1$.", answer: true, points: 0.5 },
-            { text: "Khi $m = 0$, tổng hai nghiệm bằng $2$.", answer: false, points: 1.0 },
-            { text: "Để $x_1^2 + x_2^2 = 10$ thì $m = \\pm 2$.", answer: true, points: 1.0 }
-          ],
-          points: 3,
-          solution: "a) Đúng (0.5đ): $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1$.\nb) Đúng (0.5đ): Nghiệm $x = m \\pm 1$.\nc) Sai (1.0đ): Khi $m = 0$ thì $x_1 + x_2 = 2m = 0$.\nd) Đúng (1.0đ): $x_1^2 + x_2^2 = (x_1+x_2)^2 - 2x_1x_2 = 2m^2 + 2 = 10 \\Leftrightarrow m = \\pm 2$.",
-          solutionImage: ""
-        },
-        {
-          type: 'short',
-          text: `[${topicLabel}] Tìm giá trị lớn nhất của hàm số $y = -x^2 + 4x + 5$ trên $\\mathbb{R}$:`,
-          correctText: "9",
-          points: 2,
-          solution: "Ta có $y = -(x - 2)^2 + 9 \\le 9, \\forall x \\in \\mathbb{R}$. Vậy GTLN bằng $9$ tại $x = 2$.",
-          solutionImage: ""
-        },
-        {
-          type: 'essay',
-          text: `[${topicLabel}] Trình bày lời giải chi tiết hoặc chụp ảnh vở làm bài cho bài toán: Giải bất phương trình $\\sqrt{x^2 - 3x + 2} \\le x - 1$.`,
-          points: 3,
-          solution: "Điều kiện: $x - 1 \\ge 0 \\Leftrightarrow x \\ge 1$ và $x^2 - 3x + 2 \\ge 0$. Bình phương hai vế ta được $x^2 - 3x + 2 \\le x^2 - 2x + 1 \\Leftrightarrow x \\ge 1$. Kết hợp điều kiện suy ra tập nghiệm $S = \\{1\\} \\cup [2; +\\infty)$.",
-          solutionImage: ""
-        }
-      );
+      const isEng = /anh|english|grammar|tense|vocabulary|word|thì|câu điều kiện/i.test(promptText);
+
+      if (isEng) {
+        draftQuestions.push(
+          {
+            type: 'mcq',
+            text: "Choose the correct answer: If she ___ harder, she would pass the examination easily.",
+            options: ["studies", "studied", "had studied", "would study"],
+            correct: 1,
+            points: 2,
+            solution: "Câu điều kiện loại 2 (mệnh đề chính có 'would + V'), mệnh đề If chia ở thì Quá khứ đơn (studied).",
+            solutionImage: ""
+          },
+          {
+            type: 'tf',
+            text: "Xét tính Đúng (True) hoặc Sai (False) về mặt ngữ pháp của các câu tiếng Anh sau:",
+            statements: [
+              { text: "She has lived in Hanoi for 5 years.", answer: true, points: 0.5 },
+              { text: "They didn't went to school yesterday.", answer: false, points: 0.5 },
+              { text: "Neither the teacher nor the students are in the classroom.", answer: true, points: 1.0 },
+              { text: "I look forward to hear from you soon.", answer: false, points: 1.0 }
+            ],
+            points: 3,
+            solution: "a) Đúng (Hiện tại hoàn thành với for).\nb) Sai (Sau trợ động từ didn't dùng động từ nguyên thể 'go').\nc) Đúng (Chia động từ theo chủ ngữ gần nhất 'the students').\nd) Sai (Cấu trúc look forward to + V-ing: hearing).",
+            solutionImage: ""
+          },
+          {
+            type: 'short',
+            text: "Điền giới từ thích hợp vào chỗ trống: 'My brother is very interested ___ solving Mathematics problems.' (Chỉ điền 1 từ)",
+            correctText: "in",
+            points: 2,
+            solution: "Cấu trúc cố định: to be interested in + V-ing / N.",
+            solutionImage: ""
+          },
+          {
+            type: 'essay',
+            text: "Rewrite the following sentence without changing its meaning: 'The last time I saw him was 3 years ago.' -> 'I haven't...'",
+            points: 3,
+            solution: "Đáp án chuẩn: I haven't seen him for 3 years.",
+            solutionImage: ""
+          }
+        );
+      } else {
+        draftQuestions.push(
+          {
+            type: 'mcq',
+            text: "Cho hàm số $y = x^3 - 3x^2 + 2$. Giá trị cực tiểu của hàm số đã cho bằng:",
+            options: ["$y = 2$", "$y = -2$", "$y = 0$", "$y = 4$"],
+            correct: 1,
+            points: 2,
+            solution: "Ta có $y^{\\prime} = 3x^2 - 6x = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$. Hàm số đạt cực tiểu tại $x = 2 \\Rightarrow y_{CT} = -2$.",
+            solutionImage: ""
+          },
+          {
+            type: 'tf',
+            text: "Cho phương trình bậc hai $x^2 - 2mx + m^2 - 1 = 0$ ($m$ là tham số thực). Xét tính Đúng/Sai của các mệnh đề sau:",
+            statements: [
+              { text: "Biệt thức $\\Delta^{\\prime} = 1 > 0$ với mọi giá trị của $m$.", answer: true, points: 0.5 },
+              { text: "Phương trình luôn có hai nghiệm phân biệt là $x = m - 1$ và $x = m + 1$.", answer: true, points: 0.5 },
+              { text: "Khi $m = 0$, tổng hai nghiệm của phương trình bằng $2$.", answer: false, points: 1.0 },
+              { text: "Có đúng hai giá trị của tham số $m$ là $m = \\pm 2$ để hai nghiệm $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$.", answer: true, points: 1.0 }
+            ],
+            points: 3,
+            solution: "a) Đúng (0.5đ): $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1$.\nb) Đúng (0.5đ): Nghiệm $x = m \\pm 1$.\nc) Sai (1.0đ): Khi $m = 0$ thì $x_1 + x_2 = 2m = 0$.\nd) Đúng (1.0đ): $x_1^2 + x_2^2 = (x_1+x_2)^2 - 2x_1x_2 = 2m^2 + 2 = 10 \\Leftrightarrow m = \\pm 2$.",
+            solutionImage: ""
+          },
+          {
+            type: 'short',
+            text: "Tìm giá trị lớn nhất của hàm số $y = -x^2 + 4x + 5$ trên tập số thực $\\mathbb{R}$:",
+            correctText: "9",
+            points: 2,
+            solution: "Ta có $y = -(x - 2)^2 + 9 \\le 9, \\forall x \\in \\mathbb{R}$. Vậy GTLN bằng $9$ tại $x = 2$.",
+            solutionImage: ""
+          },
+          {
+            type: 'essay',
+            text: "Giải bất phương trình $\\sqrt{x^2 - 3x + 2} \\le x - 1$. (Em có thể trình bày trực tiếp hoặc chụp ảnh bài giải trong vở tải lên).",
+            points: 3,
+            solution: "Điều kiện: $x - 1 \\ge 0 \\Leftrightarrow x \\ge 1$ và $x^2 - 3x + 2 \\ge 0$. Bình phương hai vế ta được $x^2 - 3x + 2 \\le x^2 - 2x + 1 \\Leftrightarrow x \\ge 1$. Kết hợp điều kiện suy ra tập nghiệm $S = \\{1\\} \\cup [2; +\\infty)$.",
+            solutionImage: ""
+          }
+        );
+      }
       renderDraftQuestions();
     }
 
     function copyAIPromptToClipboard() {
       const userReq = document.getElementById('aiCustomPrompt').value.trim() || "Tạo đề kiểm tra gồm Trắc nghiệm, Đúng/Sai (tính điểm riêng từng ý), Trả lời ngắn và Tự luận";
-      const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi. Dựa trên yêu cầu của tôi:
+      const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi chuyên nghiệp. Dựa trên yêu cầu của tôi:
 "${userReq}"
 
-Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết chữ nào bên ngoài khối JSON, công thức Toán bọc trong dấu $...$ và dùng \\prime thay cho dấu '):
+LƯU Ý QUAN TRỌNG: Trong nội dung câu hỏi ("text"), TUYỆT ĐỐI KHÔNG nhắc lại yêu cầu của giáo viên, chỉ ghi nội dung đề bài sạch sẽ dành cho học sinh. Công thức Toán bọc trong dấu $...$ và dùng \\prime thay cho dấu '.
+
+Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết chữ nào bên ngoài khối JSON):
 
 [
   {
@@ -1127,14 +1253,16 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         draftQuestions.push(...parsed);
         document.getElementById('aiJsonPasteBox').value = '';
         renderDraftQuestions();
-        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
+        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề! Bạn có thể bấm nút "Sửa" ở từng câu nếu muốn điều chỉnh thêm.`);
       } catch (e) {
         alert("Đoạn mã chưa đúng chuẩn JSON [ ... ]. Hãy kiểm tra lại!");
       }
     }
 
     function clearDraft() {
+      if (draftQuestions.length > 0 && !confirm("Bạn muốn xóa toàn bộ câu hỏi đang có trong danh sách nháp?")) return;
       draftQuestions = [];
+      cancelEditDraftQuestion();
       renderDraftQuestions();
     }
 
@@ -1146,13 +1274,14 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         return;
       }
       box.innerHTML = draftQuestions.map((q, idx) => {
+        const isEditing = (editingDraftQuestionIdx === idx);
         let tfDetail = '';
         if (q.type === 'tf' && q.statements) {
           tfDetail = `<div class="text-[11px] text-amber-800 mt-1">Điểm từng ý: ` +
             q.statements.map((s, i) => `${['a','b','c','d'][i]}(${s.points || 0.25}đ)`).join(', ') + `</div>`;
         }
         return `
-          <div class="p-3 bg-slate-50 rounded-xl border flex justify-between items-start gap-2">
+          <div class="p-3 rounded-xl border ${isEditing ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-200' : 'bg-slate-50 border-slate-200'} flex justify-between items-start gap-2 transition">
             <div class="space-y-1 flex-1">
               <div>
                 <span class="font-bold text-blue-700">Câu ${idx+1} (${q.points}đ):</span>
@@ -1162,13 +1291,67 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="text-[11px] text-emerald-700"><b>Bài chữa:</b> ${q.solution}</div>
               ${q.solutionImage ? `<img src="${q.solutionImage}" class="h-14 rounded border mt-1">` : ''}
             </div>
-            <button onclick="draftQuestions.splice(${idx},1);renderDraftQuestions();" class="text-red-400 hover:text-red-600 px-1">
-              <i class="fa-solid fa-trash"></i>
-            </button>
+            <div class="flex flex-col gap-1.5 items-end">
+              <button onclick="editDraftQuestion(${idx})" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap transition">
+                <i class="fa-solid fa-pen mr-0.5"></i> Sửa
+              </button>
+              <button onclick="deleteDraftQuestion(${idx})" class="text-red-400 hover:text-red-600 px-2 py-1 text-[11px]">
+                <i class="fa-solid fa-trash"></i> Xóa
+              </button>
+            </div>
           </div>
         `;
       }).join('');
       triggerMathJax();
+    }
+
+    function deleteDraftQuestion(idx) {
+      if (editingDraftQuestionIdx === idx) cancelEditDraftQuestion();
+      draftQuestions.splice(idx, 1);
+      if (editingDraftQuestionIdx !== null && editingDraftQuestionIdx > idx) {
+        editingDraftQuestionIdx--;
+      }
+      renderDraftQuestions();
+    }
+
+    // Nạp cả một đề thi đã phát hành lên để sửa câu hỏi / thông tin
+    function editPublishedExam(examId) {
+      const ex = appData.exams.find(e => e.id === examId);
+      if (!ex) return;
+      editingPublishedExamId = examId;
+
+      document.getElementById('examTitle').value = ex.title || '';
+      document.getElementById('examSubject').value = ex.subject || 'Tổng hợp';
+      document.getElementById('examTime').value = ex.time || 25;
+      document.getElementById('examRoster').value = (ex.roster || []).join(', ');
+
+      draftQuestions = JSON.parse(JSON.stringify(ex.questions || []));
+      cancelEditDraftQuestion();
+
+      document.getElementById('examFormHeader').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-1"></i> Đang Sửa Đề: <span class="text-amber-700">${ex.title}</span>`;
+      document.getElementById('cancelEditExamBtn').classList.remove('hidden');
+      const pubBtn = document.getElementById('publishExamBtn');
+      pubBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> LƯU CẬP NHẬT ĐỀ THI NÀY`;
+      pubBtn.className = "w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm";
+
+      renderDraftQuestions();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEditPublishedExam() {
+      editingPublishedExamId = null;
+      document.getElementById('examTitle').value = '';
+      fillRosterFromParentAccounts();
+      draftQuestions = [];
+      cancelEditDraftQuestion();
+
+      document.getElementById('examFormHeader').innerHTML = `<i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra`;
+      document.getElementById('cancelEditExamBtn').classList.add('hidden');
+      const pubBtn = document.getElementById('publishExamBtn');
+      pubBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> PHÁT ĐỀ LÊN HỆ THỐNG CHO HỌC SINH`;
+      pubBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm";
+
+      renderDraftQuestions();
     }
 
     async function publishExam() {
@@ -1181,26 +1364,43 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (!title) { alert("Vui lòng nhập Tên bài kiểm tra!"); return; }
       if (draftQuestions.length === 0) { alert("Hãy thêm ít nhất 1 câu hỏi vào đề!"); return; }
 
-      const newExam = {
-        id: "exam_" + Date.now(),
-        title,
-        subject,
-        time,
-        createdAt: new Date().toLocaleString('vi-VN'),
-        roster: roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name),
-        questions: [...draftQuestions]
-      };
+      if (editingPublishedExamId) {
+        const exIdx = appData.exams.findIndex(e => e.id === editingPublishedExamId);
+        if (exIdx !== -1) {
+          appData.exams[exIdx].title = title;
+          appData.exams[exIdx].subject = subject;
+          appData.exams[exIdx].time = time;
+          appData.exams[exIdx].roster = roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name);
+          appData.exams[exIdx].questions = [...draftQuestions];
+        }
+        cancelEditPublishedExam();
+        renderAll();
+        await syncToCloud();
+        alert("✔ Đã lưu cập nhật đề thi thành công!");
+      } else {
+        const newExam = {
+          id: "exam_" + Date.now(),
+          title,
+          subject,
+          time,
+          createdAt: new Date().toLocaleString('vi-VN'),
+          roster: roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name),
+          questions: [...draftQuestions]
+        };
 
-      appData.exams.unshift(newExam);
-      draftQuestions = [];
-      document.getElementById('examTitle').value = '';
-      renderAll();
-      await syncToCloud();
-      alert("🎉 Đã phát đề thành công lên hệ thống!");
+        appData.exams.unshift(newExam);
+        draftQuestions = [];
+        document.getElementById('examTitle').value = '';
+        cancelEditDraftQuestion();
+        renderAll();
+        await syncToCloud();
+        alert("🎉 Đã phát đề thành công lên hệ thống!");
+      }
     }
 
     async function deleteExam(examId) {
       if (!confirm("Xóa đề kiểm tra này?")) return;
+      if (editingPublishedExamId === examId) cancelEditPublishedExam();
       appData.exams = appData.exams.filter(e => e.id !== examId);
       renderAll();
       await syncToCloud();
@@ -1239,7 +1439,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       startExamExecution(examId);
     }
 
-    // Xử lý khi Học sinh chọn/chụp ảnh bài làm tự luận ở câu idx
     function handleStudentEssayImage(event, qIdx) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1267,7 +1466,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (!exam) return;
 
       currentExam = exam;
-      pendingStudentEssayImages = {}; // Xóa bộ nhớ ảnh tạm trước khi làm bài mới
+      pendingStudentEssayImages = {};
 
       document.getElementById('studentLobby').classList.add('hidden');
       document.getElementById('studentExamRoom').classList.remove('hidden');
@@ -1341,7 +1540,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                   <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                   <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${q.text}
                 </div>
-                <!-- Nút Học sinh Chụp ảnh / Tải ảnh bài làm tự luận -->
                 <label class="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5">
                   <i class="fa-solid fa-camera"></i> Chụp / Tải ảnh bài làm
                   <input type="file" id="student_essay_file_${idx}" accept="image/*" onchange="handleStudentEssayImage(event, ${idx})" class="hidden">
@@ -1351,7 +1549,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <textarea id="ans_essay_${idx}" rows="4" placeholder="Gõ lời giải của em vào đây HOẶC bấm nút 'Chụp / Tải ảnh bài làm' ở góc phải để gửi ảnh chụp vở..." 
                 class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-purple-600"></textarea>
 
-              <!-- Khung hiển thị ảnh bài làm tự luận Học sinh vừa tải lên -->
               <div id="student_essay_img_box_${idx}" class="hidden bg-white p-3 rounded-xl border border-purple-200 space-y-1.5">
                 <div class="flex justify-between items-center">
                   <span class="text-xs font-bold text-purple-700"><i class="fa-solid fa-image mr-1"></i> Ảnh bài làm tự luận của em đã đính kèm:</span>
@@ -1395,7 +1592,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       document.getElementById('studentLobby').classList.remove('hidden');
     }
 
-    // Chấm điểm & Lưu cả ảnh chụp bài làm Tự luận của học sinh
     async function submitStudentExam(autoSubmit = false) {
       if (!autoSubmit && !confirm("Em đã kiểm tra kỹ bài làm (và ảnh chụp tự luận nếu có) để nộp bài ngay?")) return;
       clearInterval(timerInterval);
@@ -1584,15 +1780,20 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         examBox.innerHTML = `<p class="text-xs text-slate-400 italic">Chưa có đề nào.</p>`;
       } else {
         examBox.innerHTML = appData.exams.map(ex => `
-          <div class="p-3.5 rounded-xl border flex justify-between items-center bg-slate-50">
+          <div class="p-3.5 rounded-xl border ${editingPublishedExamId === ex.id ? 'border-amber-500 bg-amber-50' : 'bg-slate-50'} flex justify-between items-center gap-2">
             <div>
               <span class="text-xs font-bold text-blue-600">[${ex.subject}]</span>
               <span class="font-bold text-sm text-slate-800 ml-1">${ex.title}</span>
               <div class="text-[11px] text-slate-500 mt-0.5">${ex.questions.length} câu • ${ex.time} phút</div>
             </div>
-            <button onclick="deleteExam('${ex.id}')" class="text-xs text-red-500 hover:bg-red-50 px-2.5 py-1.5 rounded-lg font-semibold">
-              <i class="fa-solid fa-trash"></i> Xóa
-            </button>
+            <div class="flex items-center gap-1.5 whitespace-nowrap">
+              <button onclick="editPublishedExam('${ex.id}')" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2.5 py-1.5 rounded-lg font-bold transition">
+                <i class="fa-solid fa-pen mr-0.5"></i> Sửa đề này
+              </button>
+              <button onclick="deleteExam('${ex.id}')" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1.5 rounded-lg font-semibold">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
           </div>
         `).join('');
       }
@@ -1648,7 +1849,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             }).join('')}
           </div>
 
-          <!-- Khung chấm điểm, gõ LaTeX & tải ảnh bài chữa riêng cho học sinh này -->
           <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
             <div class="flex flex-col sm:flex-row gap-2 items-center">
               <div class="flex items-center gap-1.5 w-full sm:w-auto">
@@ -1706,7 +1906,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="text-sm font-bold text-slate-700">📂 Đề kiểm tra: ${s.examTitle}</div>
               <div class="text-xs text-slate-400">Thời gian nộp bài: ${s.submittedAt}</div>
 
-              <!-- Khung Nhận xét & Bài chữa riêng của Giáo viên cho con -->
               <div class="text-xs text-slate-700 bg-white p-3.5 rounded-xl border border-emerald-200 mt-2 space-y-2">
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
                 ${s.teacherCustomSolution ? `
@@ -1732,7 +1931,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             </div>
           </div>
 
-          <!-- Mở xem Chi tiết từng câu (Bao gồm ảnh bài làm của con & bài chữa của Thầy) -->
           <details class="bg-white rounded-xl border border-blue-200 overflow-hidden" open>
             <summary class="px-4 py-3 bg-blue-50/80 text-blue-900 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
               <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem Chi Tiết Bài Làm Của Con & Bài Chữa Từng Câu (${(s.answers || []).length} câu)</span>
