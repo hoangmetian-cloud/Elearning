@@ -31,8 +31,8 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
         
-        <!-- Chạm vào Logo này + nhập mã 1234 để mở màn hình Giáo Viên -->
-        <div onclick="openTeacherLogin()" class="flex items-center gap-2.5 cursor-pointer select-none active:scale-95 transition" title="Chạm để mở khóa Giáo Viên">
+        <!-- Chạm vào Logo này + nhập mã 1234 để mở màn hình giáo Viên -->
+        <div onclick="openTeacherLogin()" class="flex items-center gap-2.5 cursor-pointer select-none active:scale-95 transition" title="Chạm để mở khóa giáo Viên">
           <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow">
             <i class="fa-solid fa-graduation-cap text-xl"></i>
           </div>
@@ -45,7 +45,7 @@
           </div>
         </div>
 
-        <!-- Chỉ hiển thị Học Sinh & Phụ Huynh -->
+        <!-- Chỉ hiển thị Học Sinh & phụ Huynh -->
         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button onclick="switchRole('student')" id="btn-student" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active">
             <i class="fa-solid fa-user-pen mr-1"></i> Học sinh
@@ -153,18 +153,18 @@
       <!-- ==================== 2. GIAO DIỆN PHỤ HUYNH (MỖI PH 1 PASS RIÊNG) ==================== -->
       <section id="view-parent" class="hidden space-y-6">
         
-        <!-- Màn hình đăng nhập bằng Mật khẩu riêng của từng Phụ huynh -->
+        <!-- Màn hình đăng nhập bằng Mật khẩu riêng của từng phụ huynh -->
         <div id="parentLockScreen" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md mx-auto text-center space-y-4 my-8">
           <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
             <i class="fa-solid fa-user-lock"></i>
           </div>
           <h2 class="font-bold text-lg text-slate-800">Sổ phụ huynh</h2>
           <p class="text-xs text-slate-500 leading-relaxed">
-            Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
+            Mỗi phụ huynh được giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
             Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa</b>.
           </p>
           <div class="space-y-3 pt-2">
-            <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
+            <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của phụ huynh..." 
               onkeydown="if(event.key==='Enter') unlockParentView()"
               class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
             <button onclick="unlockParentView()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow transition">
@@ -173,7 +173,7 @@
           </div>
         </div>
 
-        <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi Phụ huynh đăng nhập -->
+        <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi phụ huynh đăng nhập -->
         <div id="parentUnlockedContent" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
             <div class="flex items-center gap-3">
@@ -202,7 +202,7 @@
       <!-- ==================== 3. GIAO DIỆN GIÁO VIÊN (3 TAB CHUYÊN BIỆT) ==================== -->
       <section id="view-teacher" class="hidden space-y-6">
         
-        <!-- Thanh điều hướng nội bộ của Giáo Viên -->
+        <!-- Thanh điều hướng nội bộ của giáo Viên -->
         <div class="bg-slate-800 text-white p-4 rounded-2xl shadow flex flex-wrap justify-between items-center gap-3">
           <div class="flex items-center gap-2.5">
             <i class="fa-solid fa-shield-halved text-emerald-400 text-xl"></i>
@@ -212,7 +212,7 @@
             </div>
           </div>
 
-          <!-- 3 Tab con trong Bảng Giáo Viên -->
+          <!-- 3 Tab con trong Bảng giáo Viên -->
           <div class="flex flex-wrap bg-slate-900/80 p-1 rounded-xl gap-1">
             <button onclick="switchTeacherTab('exams')" id="ttab-exams" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white">
               <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn & sửa đề
@@ -513,7 +513,7 @@
                   <i class="fa-solid fa-id-card-clip text-emerald-600 mr-1"></i> Bảng quản trị tài khoản phụ huynh
                 </h2>
                 <p class="text-xs text-slate-500">
-                  Mỗi học sinh có một <b>Mật khẩu Phụ huynh riêng biệt</b>. Phụ huynh nhập mật khẩu nào thì hệ thống chỉ mở đúng hồ sơ bài làm và bài chữa của con người đó.
+                  Mỗi học sinh có một <b>Mật khẩu phụ huynh riêng biệt</b>. phụ huynh nhập mật khẩu nào thì hệ thống chỉ mở đúng hồ sơ bài làm và bài chữa của con người đó.
                 </p>
               </div>
               <button onclick="saveAllParentAccounts()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
@@ -536,7 +536,7 @@
               </button>
             </div>
 
-            <!-- Bảng danh sách Học sinh & Mật khẩu Phụ huynh -->
+            <!-- Bảng danh sách Học sinh & Mật khẩu phụ huynh -->
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
                 <thead>
@@ -575,7 +575,7 @@
     // =========================================================================
     // CẤU HÌNH MẶC ĐỊNH & DANH SÁCH MẬT KHẨU RIÊNG TỪNG PHỤ HUYNH
     // =========================================================================
-    const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
+    const TEACHER_PIN = "27112004"; // Mã PIN mở mục giáo Viên
     const BUILTIN_CLOUD_API = "https://jsonblob.com/api/jsonBlob";
     let defaultBlobId = localStorage.getItem('edusmart_blob_id') || "";
 
@@ -863,7 +863,7 @@
         loggedInParentStudent = matchedAccount.name;
         document.getElementById('parentLockScreen').classList.add('hidden');
         document.getElementById('parentUnlockedContent').classList.remove('hidden');
-        document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
+        document.getElementById('parentStudentBanner').innerText = `phụ huynh em: ${matchedAccount.name}`;
         renderParentView();
       } else {
         alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con, nếu phụ huynh không nhớ xin vui lòng nhắn lại giáo viên phụ trách môn học của con.");
@@ -956,7 +956,7 @@
     }
 
     async function removeParentAccount(idx) {
-      if (!confirm("Xóa học sinh này khỏi bảng quản trị Phụ huynh?")) return;
+      if (!confirm("Xóa học sinh này khỏi bảng quản trị phụ huynh?")) return;
       appData.parentAccounts.splice(idx, 1);
       fillRosterFromParentAccounts();
       renderAll();
@@ -967,11 +967,11 @@
       const name = document.getElementById('p_name_' + idx).value.trim();
       const pass = document.getElementById('p_pass_' + idx).value.trim();
       const url = window.location.href;
-      const msg = `Kính gửi phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, bài làm và bài chữa của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
+      const msg = `Kính gửi phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, bài làm và bài chữa của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của phụ huynh em ${name}: ${pass}\n(phụ huynh bấm vào link -> chọn mục phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
       navigator.clipboard.writeText(msg).then(() => {
         alert(`📋 Đã copy tin nhắn kèm mật khẩu riêng (${pass}) của phụ huynh em ${name}! Bạn có thể dán gửi qua Zalo ngay.`);
       }).catch(() => {
-        prompt("Copy tin nhắn dưới đây gửi Phụ huynh:", msg);
+        prompt("Copy tin nhắn dưới đây gửi phụ huynh:", msg);
       });
     }
 
@@ -1025,7 +1025,7 @@
       document.getElementById('qSolutionImagePreviewBox').classList.add('hidden');
     }
 
-    // Nạp một câu hỏi đã thêm vào đề nháp lên khung soạn thảo để Giáo viên chỉnh sửa
+    // Nạp một câu hỏi đã thêm vào đề nháp lên khung soạn thảo để giáo viên chỉnh sửa
     function editDraftQuestion(idx) {
       const q = draftQuestions[idx];
       if (!q) return;
@@ -1104,7 +1104,7 @@
       const type = document.getElementById('qType').value;
       const text = document.getElementById('qText').value.trim();
       let points = parseFloat(document.getElementById('qPoints').value) || 1;
-      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải của Giáo viên.";
+      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải của giáo viên.";
       const solutionImage = currentDraftSolutionImage;
 
       if (!text) { alert("Vui lòng nhập nội dung câu hỏi!"); return; }
@@ -2074,7 +2074,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                         <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Chấm điểm Tự luận:</label>
                         <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center bg-white">
                       </div>
-                      <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi Phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
+                      <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
                     </div>
 
                     <div class="space-y-1.5">
@@ -2130,7 +2130,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="text-xs text-slate-400">Thời gian nộp bài: ${s.submittedAt}</div>
 
               <div class="text-xs text-slate-700 bg-white p-3.5 rounded-xl border border-emerald-200 mt-2 space-y-2">
-                <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
+                <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
                 ${s.teacherCustomSolution ? `
                   <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
                     <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ coo cho ${s.studentName}:</b>\n${s.teacherCustomSolution}
@@ -2138,7 +2138,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                 ` : ''}
                 ${s.teacherCustomImage ? `
                   <div class="pt-2">
-                    <div class="text-[11px] font-bold text-blue-700 mb-1"><i class="fa-solid fa-image mr-1"></i>Ảnh chụp bài chữa viết tay của Giáo viên (Bấm vào ảnh để phóng to):</div>
+                    <div class="text-[11px] font-bold text-blue-700 mb-1"><i class="fa-solid fa-image mr-1"></i>Ảnh chụp bài chữa viết tay của giáo viên (Bấm vào ảnh để phóng to):</div>
                     <img src="${s.teacherCustomImage}" onclick="zoomImage('${s.teacherCustomImage}')" class="max-h-64 rounded-xl border shadow cursor-zoom-in">
                   </div>
                 ` : ''}
@@ -2209,7 +2209,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                     <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
                     ${statusHtml}
                     <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
+                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Xem trong phần nhận xét của giáo viên.'}</div>
                       ${a.solutionImage ? `
                         <div>
                           <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải của giáo viên (Bấm để phóng to):</div>
