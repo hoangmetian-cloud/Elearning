@@ -2346,6 +2346,19 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
       triggerMathJax();
     }
+    // Chặn phím F12, Ctrl+Shift+I, Ctrl+U
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Chặn click chuột phải
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
   </script>
 </body>
 </html>
