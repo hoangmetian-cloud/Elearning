@@ -91,7 +91,7 @@
             <div id="guestStudentBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1.5">
               <label class="block text-xs font-bold text-amber-800">Nhập tên của em (Học sinh vãng lai):</label>
               <input type="text" id="guestStudentNameInput" placeholder="Nhập họ tên của em..." class="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm font-semibold bg-white">
-              <p class="text-[11px] text-amber-700">* Học sinh vãng lai sau khi nộp bài sẽ được xem ngay điểm số, đáp án và lời giải chi tiết.</p>
+              <p class="text-[11px] text-amber-700">* Học sinh vãng lai sau khi nộp bài sẽ được xem ngay điểm số, đáp án và lời giải .</p>
             </div>
             <div class="flex justify-end gap-2 pt-2">
               <button onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
@@ -132,7 +132,7 @@
         <div id="guestResultRoom" class="hidden bg-white p-6 rounded-2xl shadow-md border border-emerald-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
             <div>
-              <span class="text-xs font-bold uppercase px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">Kết quả & Đáp án chi tiết</span>
+              <span class="text-xs font-bold uppercase px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">Kết quả & Đáp án </span>
               <h2 id="guestResultTitle" class="font-bold text-slate-800 text-lg mt-1"></h2>
               <p class="text-xs text-slate-500" id="guestResultStudent"></p>
             </div>
@@ -310,7 +310,7 @@
               </details>
             </div>
 
-            <!-- KHUNG SOẠN / SỬA TỪNG CÂU HỎI CHI TIẾT -->
+            <!-- KHUNG SOẠN / SỬA TỪNG CÂU HỎI  -->
             <div id="questionEditorBox" class="border-t pt-3 space-y-3 rounded-2xl transition">
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <span class="text-xs font-bold text-slate-800" id="questionEditorTitle">
@@ -635,7 +635,7 @@
               ],
               tfRules: [0, 0.1, 0.25, 0.5, 1.0],
               points: 1,
-              solution: "Lời giải chi tiết:\n- Ý a) Đúng vì $f^{\\prime}(x) = (x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\n- Ý b) Đúng vì $f^{\\prime}(-1) = 0$ và $f(-1) = (-1)^3 - 3(-1) + 2 = 4$.\n- Ý c) Sai vì trên $(-1; 1)$ ta có $f^{\\prime}(x) < 0$ nên hàm số nghịch biến.\n- Ý d) Đúng vì hệ số góc tiếp tuyến tại $x_0 = 2$ là $k = f^{\\prime}(2) = 3 \\cdot 2^2 - 3 = 9$.",
+              solution: "Lời giải :\n- Ý a) Đúng vì $f^{\\prime}(x) = (x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\n- Ý b) Đúng vì $f^{\\prime}(-1) = 0$ và $f(-1) = (-1)^3 - 3(-1) + 2 = 4$.\n- Ý c) Sai vì trên $(-1; 1)$ ta có $f^{\\prime}(x) < 0$ nên hàm số nghịch biến.\n- Ý d) Đúng vì hệ số góc tiếp tuyến tại $x_0 = 2$ là $k = f^{\\prime}(2) = 3 \\cdot 2^2 - 3 = 9$.",
               solutionImage: ""
             },
             {
@@ -1254,7 +1254,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     "options": ["Phương án A", "Phương án B", "Phương án C", "Phương án D"],
     "correct": 0,
     "points": 0.25,
-    "solution": "Lời giải chi tiết có LaTeX"
+    "solution": "Lời giải  có LaTeX"
   },
   {
     "type": "tf",
@@ -1267,20 +1267,20 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     ],
     "tfRules": [0, 0.1, 0.25, 0.5, 1.0],
     "points": 1.0,
-    "solution": "Giải thích chi tiết từng mệnh đề a, b, c, d"
+    "solution": "Giải thích  từng mệnh đề a, b, c, d"
   },
   {
     "type": "short",
     "text": "Câu hỏi trả lời ngắn?",
     "correctText": "Đáp số",
     "points": 0.5,
-    "solution": "Lời giải chi tiết"
+    "solution": "Lời giải "
   },
   {
     "type": "essay",
     "text": "Câu hỏi tự luận?",
     "points": 2,
-    "solution": "Hướng dẫn chấm chi tiết"
+    "solution": "Hướng dẫn chấm "
   }
 ]`;
       navigator.clipboard.writeText(fullPrompt).then(() => {
