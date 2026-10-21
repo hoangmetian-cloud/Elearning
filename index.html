@@ -75,7 +75,7 @@
           <div id="studentExamCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <!-- Hộp thoại chọn tên học sinh -->
+        <!-- Hộp thoại chọn tên học sinh (Có thêm phần Học sinh vãng lai) -->
         <div id="studentSelectModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -85,8 +85,13 @@
             <div id="modalExamName" class="text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl"></div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1.5">Chọn tên của em trong danh sách đề này *</label>
-              <select id="modalStudentSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:border-blue-600">
+              <select id="modalStudentSelect" onchange="toggleGuestStudentInput()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:border-blue-600">
               </select>
+            </div>
+            <div id="guestStudentBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1.5">
+              <label class="block text-xs font-bold text-amber-800">Nhập tên của em (Học sinh vãng lai):</label>
+              <input type="text" id="guestStudentNameInput" placeholder="Nhập họ tên của em..." class="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm font-semibold bg-white">
+              <p class="text-[11px] text-amber-700">* Học sinh vãng lai sau khi nộp bài sẽ được xem ngay điểm số, đáp án và lời giải chi tiết.</p>
             </div>
             <div class="flex justify-end gap-2 pt-2">
               <button onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
@@ -121,6 +126,27 @@
               <i class="fa-solid fa-check-double mr-1"></i> NỘP BÀI HOÀN TẤT
             </button>
           </div>
+        </div>
+
+        <!-- Màn hình Xem kết quả & Đáp án ngay dành cho Học sinh vãng lai -->
+        <div id="guestResultRoom" class="hidden bg-white p-6 rounded-2xl shadow-md border border-emerald-200 space-y-5">
+          <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
+            <div>
+              <span class="text-xs font-bold uppercase px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md">Kết quả & Đáp án chi tiết</span>
+              <h2 id="guestResultTitle" class="font-bold text-slate-800 text-lg mt-1"></h2>
+              <p class="text-xs text-slate-500" id="guestResultStudent"></p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-200">
+                <div class="text-[11px] font-bold text-slate-500 uppercase">Điểm chấm tự động</div>
+                <div id="guestResultScore" class="text-2xl font-black text-blue-600"></div>
+              </div>
+              <button onclick="closeGuestResultRoom()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl">
+                Quay về danh sách đề
+              </button>
+            </div>
+          </div>
+          <div id="guestResultDetails" class="space-y-4 text-xs divide-y"></div>
         </div>
       </section>
 
@@ -292,7 +318,7 @@
                 </span>
                 <select id="qType" onchange="toggleQuestionType()" class="text-xs border-2 border-blue-200 rounded-xl px-2.5 py-1.5 bg-blue-50 font-bold text-blue-800">
                   <option value="mcq">1. Trắc nghiệm 4 lựa chọn (A, B, C, D)</option>
-                  <option value="tf">2. Đúng / Sai (Chấm điểm riêng từng ý a, b, c, d)</option>
+                  <option value="tf">2. Đúng / Sai (Tính điểm theo số ý đúng)</option>
                   <option value="short">3. Trả lời ngắn (Điền đáp số / từ)</option>
                   <option value="essay">4. Tự luận (Học sinh gõ bài hoặc Chụp ảnh vở)</option>
                 </select>
@@ -319,14 +345,35 @@
                 </div>
               </div>
 
-              <!-- 2. Đúng / Sai (Giáo viên tự cho điểm từng ý a, b, c, d) -->
+              <!-- 2. Đúng / Sai (Tính điểm theo SỐ LƯỢNG Ý ĐÚNG: Đúng 1 ý = 0.1, 2 ý = 0.25, 3 ý = 0.5, 4 ý = 1.0) -->
               <div id="box-tf" class="hidden space-y-2.5 bg-amber-50/70 p-3.5 rounded-xl border border-amber-200">
                 <div class="flex flex-wrap justify-between items-center gap-2">
-                  <span class="text-xs font-bold text-amber-900">Cấu hình câu Đúng / Sai & Điểm từng ý:</span>
-                  <button type="button" onclick="setEqualTfPoints()" class="text-[11px] bg-white border border-amber-300 px-2 py-0.5 rounded text-amber-800 font-semibold">
-                    Đặt mỗi ý 0.25đ
+                  <span class="text-xs font-bold text-amber-900">Cấu hình câu Đúng / Sai (Điểm tính theo tổng số ý làm đúng):</span>
+                  <button type="button" onclick="setStandardTfRule()" class="text-[11px] bg-white border border-amber-300 px-2 py-0.5 rounded text-amber-800 font-semibold">
+                    Mặc định: 0.1 - 0.25 - 0.5 - 1.0
                   </button>
                 </div>
+
+                <!-- Bảng cấu hình mốc điểm theo số lượng ý đúng -->
+                <div class="grid grid-cols-4 gap-2 bg-white p-2.5 rounded-xl border border-amber-200 text-xs">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500">Đúng 1 ý được:</label>
+                    <input type="number" id="tf_rule_1" value="0.1" step="0.05" min="0" class="w-full px-2 py-1 border rounded font-bold text-amber-700 text-center">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500">Đúng 2 ý được:</label>
+                    <input type="number" id="tf_rule_2" value="0.25" step="0.05" min="0" class="w-full px-2 py-1 border rounded font-bold text-amber-700 text-center">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500">Đúng 3 ý được:</label>
+                    <input type="number" id="tf_rule_3" value="0.5" step="0.05" min="0" class="w-full px-2 py-1 border rounded font-bold text-amber-700 text-center">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500">Đúng cả 4 ý được:</label>
+                    <input type="number" id="tf_rule_4" value="1" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-full px-2 py-1 border rounded font-bold text-emerald-700 text-center">
+                  </div>
+                </div>
+
                 <div class="space-y-2">
                   <!-- Ý a -->
                   <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
@@ -336,10 +383,6 @@
                       <option value="true">Đúng</option>
                       <option value="false">Sai</option>
                     </select>
-                    <div class="flex items-center gap-1 text-xs">
-                      <span class="text-slate-500">Điểm:</span>
-                      <input type="number" id="tf_pts_0" value="0.1" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
-                    </div>
                   </div>
                   <!-- Ý b -->
                   <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
@@ -349,10 +392,6 @@
                       <option value="true">Đúng</option>
                       <option value="false">Sai</option>
                     </select>
-                    <div class="flex items-center gap-1 text-xs">
-                      <span class="text-slate-500">Điểm:</span>
-                      <input type="number" id="tf_pts_1" value="0.25" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
-                    </div>
                   </div>
                   <!-- Ý c -->
                   <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
@@ -362,10 +401,6 @@
                       <option value="false">Sai</option>
                       <option value="true">Đúng</option>
                     </select>
-                    <div class="flex items-center gap-1 text-xs">
-                      <span class="text-slate-500">Điểm:</span>
-                      <input type="number" id="tf_pts_2" value="0.5" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
-                    </div>
                   </div>
                   <!-- Ý d -->
                   <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
@@ -375,10 +410,6 @@
                       <option value="false">Sai</option>
                       <option value="true">Đúng</option>
                     </select>
-                    <div class="flex items-center gap-1 text-xs">
-                      <span class="text-slate-500">Điểm:</span>
-                      <input type="number" id="tf_pts_3" value="1" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
-                    </div>
                   </div>
                 </div>
               </div>
@@ -455,7 +486,7 @@
           </div>
         </div>
 
-        <!-- TAB GV 2: CHẤM BÀI (XEM ẢNH TỰ LUẬN CỦA HS), GÕ LATEX & UP ẢNH CHỮA BÀI RIÊNG -->
+        <!-- TAB GV 2: CHẤM BÀI GOM THEO MỤC LỤC TỪNG ĐỀ THI & CÓ NÚT XÓA BÀI NỘP -->
         <div id="teacher-tab-grading" class="hidden space-y-6">
           <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
@@ -463,10 +494,13 @@
                 <h2 class="font-bold text-slate-800 text-base">
                   <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Danh sách bài của học sinh (<span id="subCount">0</span>)
                 </h2>
-                <p class="text-xs text-slate-500">Bấm vào ảnh chụp bài làm tự luận của học sinh để phóng to, chấm điểm và tải ảnh bài chữa của bạn lên.</p>
+                <p class="text-xs text-slate-500">Các bài làm được gom theo từng mục lục đề kiểm tra. Bạn có thể bấm mở từng đề để chấm hoặc xóa bớt bài cũ cho nhẹ bộ nhớ.</p>
               </div>
+              <button onclick="deleteAllSubmissions()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-xl border border-red-200 transition">
+                <i class="fa-solid fa-trash-can mr-1"></i> Xóa toàn bộ bài nộp
+              </button>
             </div>
-            <div id="teacherSubmissionsList" class="space-y-5"></div>
+            <div id="teacherSubmissionsList" class="space-y-4"></div>
           </div>
         </div>
 
@@ -592,14 +626,15 @@
             },
             {
               type: "tf",
-              text: "Cho hàm số $y = f(x) = x^3 - 3x + 2$. Xét tính Đúng/Sai của các mệnh đề sau (Mỗi ý đúng được tính điểm riêng):",
+              text: "Cho hàm số $y = f(x) = x^3 - 3x + 2$. Xét tính Đúng/Sai của các mệnh đề sau:",
               statements: [
-                { text: "Đạo hàm của hàm số là $f^{\\prime}(x) = 3x^2 - 3$.", answer: true, points: 0.5 },
-                { text: "Hàm số đạt cực đại tại $x = -1$ và $y_{CĐ} = 4$.", answer: true, points: 0.5 },
-                { text: "Hàm số đồng biến trên khoảng $(-1; 1)$.", answer: false, points: 1.0 },
-                { text: "Phương trình tiếp tuyến của đồ thị tại điểm có hoành độ $x_0 = 2$ có hệ số góc bằng $9$.", answer: true, points: 1.0 }
+                { text: "Đạo hàm của hàm số là $f^{\\prime}(x) = 3x^2 - 3$.", answer: true },
+                { text: "Hàm số đạt cực đại tại $x = -1$ và $y_{CĐ} = 4$.", answer: true },
+                { text: "Hàm số đồng biến trên khoảng $(-1; 1)$.", answer: false },
+                { text: "Phương trình tiếp tuyến của đồ thị tại điểm có hoành độ $x_0 = 2$ có hệ số góc bằng $9$.", answer: true }
               ],
-              points: 3,
+              tfRules: [0, 0.1, 0.25, 0.5, 1.0],
+              points: 1,
               solution: "Lời giải chi tiết:\n- Ý a) Đúng vì $f^{\\prime}(x) = (x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\n- Ý b) Đúng vì $f^{\\prime}(-1) = 0$ và $f(-1) = (-1)^3 - 3(-1) + 2 = 4$.\n- Ý c) Sai vì trên $(-1; 1)$ ta có $f^{\\prime}(x) < 0$ nên hàm số nghịch biến.\n- Ý d) Đúng vì hệ số góc tiếp tuyến tại $x_0 = 2$ là $k = f^{\\prime}(2) = 3 \\cdot 2^2 - 3 = 9$.",
               solutionImage: ""
             },
@@ -625,8 +660,8 @@
     };
 
     let draftQuestions = [];
-    let editingDraftQuestionIdx = null; // Chỉ số câu hỏi đang được chỉnh sửa trong đề nháp
-    let editingPublishedExamId = null;  // ID của đề đã phát hành đang được nạp lên để sửa
+    let editingDraftQuestionIdx = null;
+    let editingPublishedExamId = null;
     let currentDraftSolutionImage = "";
     let pendingStudentEssayImages = {};
     let pendingSubmissionImages = {};
@@ -634,6 +669,7 @@
     let pendingExamId = null;
     let currentExam = null;
     let currentStudentName = "";
+    let isCurrentStudentGuest = false;
     let timerInterval = null;
     let secondsRemaining = 0;
 
@@ -695,6 +731,14 @@
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
+    }
+
+    // ==================== HÀM TÍNH ĐIỂM ĐÚNG/SAI THEO SỐ LƯỢNG Ý ĐÚNG ====================
+    function getTfScoreByCount(q, correctCount) {
+      const rules = (q.tfRules && q.tfRules.length === 5)
+        ? q.tfRules
+        : [0, 0.1, 0.25, 0.5, q.points || 1.0];
+      return parseFloat(rules[correctCount] || 0);
     }
 
     // ==================== ĐỒNG BỘ DATABASE CLOUD ====================
@@ -941,17 +985,15 @@
     }
 
     function recalcTfTotalPoints() {
-      let sum = 0;
-      for (let i = 0; i < 4; i++) {
-        sum += parseFloat(document.getElementById('tf_pts_' + i).value) || 0;
-      }
-      document.getElementById('qPoints').value = Math.round(sum * 100) / 100;
+      const max4 = parseFloat(document.getElementById('tf_rule_4').value) || 1;
+      document.getElementById('qPoints').value = Math.round(max4 * 100) / 100;
     }
 
-    function setEqualTfPoints() {
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('tf_pts_' + i).value = 0.25;
-      }
+    function setStandardTfRule() {
+      document.getElementById('tf_rule_1').value = 0.1;
+      document.getElementById('tf_rule_2').value = 0.25;
+      document.getElementById('tf_rule_3').value = 0.5;
+      document.getElementById('tf_rule_4').value = 1.0;
       recalcTfTotalPoints();
     }
 
@@ -993,7 +1035,7 @@
       toggleQuestionType();
 
       document.getElementById('qText').value = q.text || '';
-      document.getElementById('qPoints').value = q.points || 2;
+      document.getElementById('qPoints').value = q.points || 1;
       document.getElementById('qSolution').value = q.solution || '';
       previewQuestionLatex();
 
@@ -1017,13 +1059,16 @@
         for (let i = 0; i < 4; i++) {
           document.getElementById('tf_text_' + i).value = sts[i] ? sts[i].text : '';
           document.getElementById('tf_ans_' + i).value = (sts[i] && sts[i].answer === false) ? 'false' : 'true';
-          document.getElementById('tf_pts_' + i).value = (sts[i] && sts[i].points !== undefined) ? sts[i].points : 0.25;
         }
+        const rules = (q.tfRules && q.tfRules.length === 5) ? q.tfRules : [0, 0.1, 0.25, 0.5, q.points || 1];
+        document.getElementById('tf_rule_1').value = rules[1];
+        document.getElementById('tf_rule_2').value = rules[2];
+        document.getElementById('tf_rule_3').value = rules[3];
+        document.getElementById('tf_rule_4').value = rules[4];
       } else if (q.type === 'short') {
         document.getElementById('shortAnswerKey').value = q.correctText || '';
       }
 
-      // Đổi giao diện nút sang chế độ "Lưu cập nhật câu hỏi"
       document.getElementById('questionEditorTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-1"></i> Đang Chỉnh Sửa Câu Số ${idx + 1}`;
       document.getElementById('questionEditorBox').classList.add('bg-amber-50/40', 'p-3', 'border', 'border-amber-300');
       const saveBtn = document.getElementById('saveQuestionBtn');
@@ -1074,18 +1119,17 @@
         const correct = parseInt(document.getElementById('qCorrect').value);
         newQuestionObj = { type: 'mcq', text, options: [a, b, c, d], correct, points, solution, solutionImage };
       } else if (type === 'tf') {
-        let totalTfPts = 0;
-        const statements = [0, 1, 2, 3].map(i => {
-          const itemPts = parseFloat(document.getElementById('tf_pts_' + i).value) || 0.25;
-          totalTfPts += itemPts;
-          return {
-            text: document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`,
-            answer: document.getElementById('tf_ans_' + i).value === 'true',
-            points: itemPts
-          };
-        });
-        points = Math.round(totalTfPts * 100) / 100;
-        newQuestionObj = { type: 'tf', text, statements, points, solution, solutionImage };
+        const r1 = parseFloat(document.getElementById('tf_rule_1').value) || 0.1;
+        const r2 = parseFloat(document.getElementById('tf_rule_2').value) || 0.25;
+        const r3 = parseFloat(document.getElementById('tf_rule_3').value) || 0.5;
+        const r4 = parseFloat(document.getElementById('tf_rule_4').value) || 1.0;
+        const tfRules = [0, r1, r2, r3, r4];
+        const statements = [0, 1, 2, 3].map(i => ({
+          text: document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`,
+          answer: document.getElementById('tf_ans_' + i).value === 'true'
+        }));
+        points = r4;
+        newQuestionObj = { type: 'tf', text, statements, tfRules, points, solution, solutionImage };
       } else if (type === 'short') {
         const correctText = document.getElementById('shortAnswerKey').value.trim();
         if (!correctText) { alert("Vui lòng nhập đáp án chuẩn cho câu trả lời ngắn!"); return; }
@@ -1103,7 +1147,6 @@
       }
     }
 
-    // Sinh câu hỏi mẫu sạch 100% (Tuyệt đối KHÔNG chèn nội dung ô lệnh của GV vào đầu câu hỏi)
     function generateSmartLocalAI() {
       const promptText = document.getElementById('aiCustomPrompt').value.trim();
       const isEng = /anh|english|grammar|tense|vocabulary|word|thì|câu điều kiện/i.test(promptText);
@@ -1123,12 +1166,13 @@
             type: 'tf',
             text: "Xét tính Đúng (True) hoặc Sai (False) về mặt ngữ pháp của các câu tiếng Anh sau:",
             statements: [
-              { text: "She has lived in Hanoi for 5 years.", answer: true, points: 0.5 },
-              { text: "They didn't went to school yesterday.", answer: false, points: 0.5 },
-              { text: "Neither the teacher nor the students are in the classroom.", answer: true, points: 1.0 },
-              { text: "I look forward to hear from you soon.", answer: false, points: 1.0 }
+              { text: "She has lived in Hanoi for 5 years.", answer: true },
+              { text: "They didn't went to school yesterday.", answer: false },
+              { text: "Neither the teacher nor the students are in the classroom.", answer: true },
+              { text: "I look forward to hear from you soon.", answer: false }
             ],
-            points: 3,
+            tfRules: [0, 0.1, 0.25, 0.5, 1.0],
+            points: 1,
             solution: "a) Đúng (Hiện tại hoàn thành với for).\nb) Sai (Sau trợ động từ didn't dùng động từ nguyên thể 'go').\nc) Đúng (Chia động từ theo chủ ngữ gần nhất 'the students').\nd) Sai (Cấu trúc look forward to + V-ing: hearing).",
             solutionImage: ""
           },
@@ -1163,13 +1207,14 @@
             type: 'tf',
             text: "Cho phương trình bậc hai $x^2 - 2mx + m^2 - 1 = 0$ ($m$ là tham số thực). Xét tính Đúng/Sai của các mệnh đề sau:",
             statements: [
-              { text: "Biệt thức $\\Delta^{\\prime} = 1 > 0$ với mọi giá trị của $m$.", answer: true, points: 0.5 },
-              { text: "Phương trình luôn có hai nghiệm phân biệt là $x = m - 1$ và $x = m + 1$.", answer: true, points: 0.5 },
-              { text: "Khi $m = 0$, tổng hai nghiệm của phương trình bằng $2$.", answer: false, points: 1.0 },
-              { text: "Có đúng hai giá trị của tham số $m$ là $m = \\pm 2$ để hai nghiệm $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$.", answer: true, points: 1.0 }
+              { text: "Biệt thức $\\Delta^{\\prime} = 1 > 0$ với mọi giá trị của $m$.", answer: true },
+              { text: "Phương trình luôn có hai nghiệm phân biệt là $x = m - 1$ và $x = m + 1$.", answer: true },
+              { text: "Khi $m = 0$, tổng hai nghiệm của phương trình bằng $2$.", answer: false },
+              { text: "Có đúng hai giá trị của tham số $m$ là $m = \\pm 2$ để hai nghiệm $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$.", answer: true }
             ],
-            points: 3,
-            solution: "a) Đúng (0.5đ): $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1$.\nb) Đúng (0.5đ): Nghiệm $x = m \\pm 1$.\nc) Sai (1.0đ): Khi $m = 0$ thì $x_1 + x_2 = 2m = 0$.\nd) Đúng (1.0đ): $x_1^2 + x_2^2 = (x_1+x_2)^2 - 2x_1x_2 = 2m^2 + 2 = 10 \\Leftrightarrow m = \\pm 2$.",
+            tfRules: [0, 0.1, 0.25, 0.5, 1.0],
+            points: 1,
+            solution: "a) Đúng: $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1$.\nb) Đúng: Nghiệm $x = m \\pm 1$.\nc) Sai: Khi $m = 0$ thì $x_1 + x_2 = 2m = 0$.\nd) Đúng: $x_1^2 + x_2^2 = (x_1+x_2)^2 - 2x_1x_2 = 2m^2 + 2 = 10 \\Leftrightarrow m = \\pm 2$.",
             solutionImage: ""
           },
           {
@@ -1193,7 +1238,7 @@
     }
 
     function copyAIPromptToClipboard() {
-      const userReq = document.getElementById('aiCustomPrompt').value.trim() || "Tạo đề kiểm tra gồm Trắc nghiệm, Đúng/Sai (tính điểm riêng từng ý), Trả lời ngắn và Tự luận";
+      const userReq = document.getElementById('aiCustomPrompt').value.trim() || "Tạo đề kiểm tra gồm Trắc nghiệm, Đúng/Sai (đúng 1 ý 0.1, 2 ý 0.25, 3 ý 0.5, 4 ý 1.0), Trả lời ngắn và Tự luận";
       const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi chuyên nghiệp. Dựa trên yêu cầu của tôi:
 "${userReq}"
 
@@ -1207,32 +1252,33 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     "text": "Nội dung câu hỏi trắc nghiệm?",
     "options": ["Phương án A", "Phương án B", "Phương án C", "Phương án D"],
     "correct": 0,
-    "points": 2,
+    "points": 0.25,
     "solution": "Lời giải chi tiết có LaTeX"
   },
   {
     "type": "tf",
     "text": "Nội dung câu hỏi Đúng/Sai:",
     "statements": [
-      { "text": "Mệnh đề a", "answer": true, "points": 0.1 },
-      { "text": "Mệnh đề b", "answer": false, "points": 0.25 },
-      { "text": "Mệnh đề c", "answer": true, "points": 0.5 },
-      { "text": "Mệnh đề d", "answer": false, "points": 1.0 }
+      { "text": "Mệnh đề a", "answer": true },
+      { "text": "Mệnh đề b", "answer": false },
+      { "text": "Mệnh đề c", "answer": true },
+      { "text": "Mệnh đề d", "answer": false }
     ],
-    "points": 3,
+    "tfRules": [0, 0.1, 0.25, 0.5, 1.0],
+    "points": 1.0,
     "solution": "Giải thích chi tiết từng mệnh đề a, b, c, d"
   },
   {
     "type": "short",
     "text": "Câu hỏi trả lời ngắn?",
     "correctText": "Đáp số",
-    "points": 2,
+    "points": 0.5,
     "solution": "Lời giải chi tiết"
   },
   {
     "type": "essay",
     "text": "Câu hỏi tự luận?",
-    "points": 3,
+    "points": 2,
     "solution": "Hướng dẫn chấm chi tiết"
   }
 ]`;
@@ -1243,49 +1289,50 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       });
     }
 
-function importAIJsonQuestions() {
-  const pasteBox = document.getElementById('aiJsonPasteBox');
-  if (!pasteBox) return;
+    function importAIJsonQuestions() {
+      const pasteBox = document.getElementById('aiJsonPasteBox');
+      if (!pasteBox) return;
 
-  let raw = pasteBox.value.trim();
-  if (!raw) return;
+      let raw = pasteBox.value.trim();
+      if (!raw) return;
 
-  // 1. Loại bỏ các thẻ bao bọc markdown ```json nếu có
-  const match = raw.match(/```json\s*([\s\(\S\)]*?)\s*```/) || raw.match(/```\s*([\s\(\S\)]*?)\s*```/);
-  if (match) {
-    raw = match[1].trim();
-  } else {
-    raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```\$/, '').trim();
-  }
+      const match = raw.match(/```json\s*([\s\S]*?)\s*```/) || raw.match(/```\s*([\s\S]*?)\s*```/);
+      if (match) {
+        raw = match[1].trim();
+      } else {
+        raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+      }
 
-  // 2. SỬA LỖI AI: Biến đổi các cụm 3 dấu hoặc 2 dấu gạch chéo ngược của LaTeX 
-  // về thành 2 dấu gạch chéo đúng tiêu chuẩn chuỗi JSON chứa ký tự đặc biệt.
-  raw = raw.replace(/\\{2,3}/g, '\\\\');
+      raw = raw.replace(/\\{2,3}/g, '\\\\');
+      raw = raw.replace(/,(\s*[}\]])/g, '$1');
 
-  // 3. Tự động sửa lỗi dấu phẩy dư ở cuối mảng/object nếu có
-  raw = raw.replace(/,(\s*[}\]])/g, '\$1');
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Format error");
+        }
+        if (parsed.length === 0) {
+          alert("⚠️ Không tìm thấy câu hỏi nào trong đoạn JSON!");
+          return;
+        }
 
-  try {
-    const parsed = JSON.parse(raw);
-    
-    if (!Array.isArray(parsed)) {
-      throw new Error("Format error");
+        // Chuẩn hóa quy tắc điểm Đúng/Sai cho các câu nạp từ AI
+        parsed.forEach(q => {
+          if (q.type === 'tf' && (!q.tfRules || q.tfRules.length !== 5)) {
+            q.tfRules = [0, 0.1, 0.25, 0.5, q.points || 1.0];
+            q.points = q.tfRules[4];
+          }
+        });
+
+        draftQuestions.push(...parsed);
+        pasteBox.value = '';
+        renderDraftQuestions();
+        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
+      } catch (e) {
+        console.error("Lỗi Parse thực tế:", e);
+        alert("❌ Đoạn mã chưa đúng chuẩn JSON hoặc lỗi ký tự Toán học LaTeX. Hãy kiểm tra lại!");
+      }
     }
-    if (parsed.length === 0) {
-      alert("⚠️ Không tìm thấy câu hỏi nào trong đoạn JSON!");
-      return;
-    }
-
-    draftQuestions.push(...parsed);
-    pasteBox.value = '';
-    renderDraftQuestions();
-    alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
-  } catch (e) {
-    console.error("Lỗi Parse thực tế:", e);
-    alert("❌ Đoạn mã chưa đúng chuẩn JSON hoặc lỗi ký tự Toán học LaTeX. Hãy kiểm tra lại!");
-  }
-}
-
 
     function clearDraft() {
       if (draftQuestions.length > 0 && !confirm("Bạn muốn xóa toàn bộ câu hỏi đang có trong danh sách nháp?")) return;
@@ -1304,9 +1351,9 @@ function importAIJsonQuestions() {
       box.innerHTML = draftQuestions.map((q, idx) => {
         const isEditing = (editingDraftQuestionIdx === idx);
         let tfDetail = '';
-        if (q.type === 'tf' && q.statements) {
-          tfDetail = `<div class="text-[11px] text-amber-800 mt-1">Điểm từng ý: ` +
-            q.statements.map((s, i) => `${['a','b','c','d'][i]}(${s.points || 0.25}đ)`).join(', ') + `</div>`;
+        if (q.type === 'tf') {
+          const rules = (q.tfRules && q.tfRules.length === 5) ? q.tfRules : [0, 0.1, 0.25, 0.5, q.points || 1.0];
+          tfDetail = `<div class="text-[11px] text-amber-800 mt-1">Thang điểm Đúng/Sai: Đúng 1 ý (${rules[1]}đ) • 2 ý (${rules[2]}đ) • 3 ý (${rules[3]}đ) • 4 ý (${rules[4]}đ)</div>`;
         }
         return `
           <div class="p-3 rounded-xl border ${isEditing ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-200' : 'bg-slate-50 border-slate-200'} flex justify-between items-start gap-2 transition">
@@ -1342,7 +1389,6 @@ function importAIJsonQuestions() {
       renderDraftQuestions();
     }
 
-    // Nạp cả một đề thi đã phát hành lên để sửa câu hỏi / thông tin
     function editPublishedExam(examId) {
       const ex = appData.exams.find(e => e.id === examId);
       if (!ex) return;
@@ -1373,7 +1419,7 @@ function importAIJsonQuestions() {
       draftQuestions = [];
       cancelEditDraftQuestion();
 
-      document.getElementById('examFormHeader').innerHTML = `<i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra`;
+      document.getElementById('examFormHeader').innerHTML = `<i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết lập đề kiểm tra`;
       document.getElementById('cancelEditExamBtn').classList.add('hidden');
       const pubBtn = document.getElementById('publishExamBtn');
       pubBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> PHÁT ĐỀ LÊN HỆ THỐNG CHO HỌC SINH`;
@@ -1434,7 +1480,7 @@ function importAIJsonQuestions() {
       await syncToCloud();
     }
 
-    // ==================== HỌC SINH LÀM BÀI & UP ẢNH BÀI LÀM TỰ LUẬN ====================
+    // ==================== HỌC SINH LÀM BÀI (CÓ HỌC SINH VÃNG LAI) ====================
     function openStudentModal(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
@@ -1445,9 +1491,17 @@ function importAIJsonQuestions() {
       const roster = (exam.roster && exam.roster.length > 0) ? exam.roster : appData.parentAccounts.map(a => a.name);
 
       select.innerHTML = `<option value="">-- Chọn đúng tên của em --</option>` +
-        roster.map(name => `<option value="${name}">${name}</option>`).join('');
+        roster.map(name => `<option value="${name}">${name}</option>`).join('') +
+        `<option value="__GUEST__">✨ Học sinh vãng lai (Tự nhập tên & Xem đáp án ngay)</option>`;
 
+      document.getElementById('guestStudentBox').classList.add('hidden');
+      document.getElementById('guestStudentNameInput').value = '';
       document.getElementById('studentSelectModal').classList.remove('hidden');
+    }
+
+    function toggleGuestStudentInput() {
+      const val = document.getElementById('modalStudentSelect').value;
+      document.getElementById('guestStudentBox').classList.toggle('hidden', val !== '__GUEST__');
     }
 
     function closeStudentModal() {
@@ -1461,10 +1515,24 @@ function importAIJsonQuestions() {
         alert("Em vui lòng chọn tên của mình trong danh sách!");
         return;
       }
-      currentStudentName = selected;
+
+      if (selected === '__GUEST__') {
+        const guestName = document.getElementById('guestStudentNameInput').value.trim() || "Học sinh vãng lai";
+        currentStudentName = guestName + " (Vãng lai)";
+        isCurrentStudentGuest = true;
+      } else {
+        currentStudentName = selected;
+        isCurrentStudentGuest = false;
+      }
+
       const examId = pendingExamId;
       closeStudentModal();
       startExamExecution(examId);
+    }
+
+    function closeGuestResultRoom() {
+      document.getElementById('guestResultRoom').classList.add('hidden');
+      document.getElementById('studentLobby').classList.remove('hidden');
     }
 
     function handleStudentEssayImage(event, qIdx) {
@@ -1497,6 +1565,7 @@ function importAIJsonQuestions() {
       pendingStudentEssayImages = {};
 
       document.getElementById('studentLobby').classList.add('hidden');
+      document.getElementById('guestResultRoom').classList.add('hidden');
       document.getElementById('studentExamRoom').classList.remove('hidden');
 
       document.getElementById('activeExamSubject').innerText = exam.subject;
@@ -1523,18 +1592,18 @@ function importAIJsonQuestions() {
             </div>
           `;
         } else if (q.type === 'tf') {
+          const rules = (q.tfRules && q.tfRules.length === 5) ? q.tfRules : [0, 0.1, 0.25, 0.5, q.points || 1.0];
           return `
             <div class="p-5 rounded-2xl border border-amber-200 bg-amber-50/30 space-y-3">
               <div class="font-bold text-slate-800 text-sm">
                 <span class="bg-amber-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-amber-800 font-semibold">(Đúng / Sai - Tổng ${q.points} điểm):</span> ${q.text}
+                <span class="text-amber-800 font-semibold">(Đúng / Sai - Tối đa ${rules[4]}đ: Đúng 1 ý ${rules[1]}đ, 2 ý ${rules[2]}đ, 3 ý ${rules[3]}đ, 4 ý ${rules[4]}đ):</span> ${q.text}
               </div>
               <div class="space-y-2">
                 ${(q.statements || []).map((st, sIdx) => `
                   <div class="flex flex-wrap justify-between items-center gap-2 p-3 bg-white rounded-xl border">
                     <span class="text-sm text-slate-800 flex-1">
                       <b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}
-                      <span class="text-xs text-amber-700 font-semibold ml-1">(${st.points !== undefined ? st.points : (q.points/4)}đ)</span>
                     </span>
                     <div class="flex gap-3">
                       <label class="flex items-center gap-1 text-xs font-bold text-emerald-700 cursor-pointer bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
@@ -1630,7 +1699,8 @@ function importAIJsonQuestions() {
       const answers = [];
 
       currentExam.questions.forEach((q, idx) => {
-        maxScore += q.points;
+        const qMaxPts = (q.type === 'tf' && q.tfRules && q.tfRules.length === 5) ? parseFloat(q.tfRules[4]) : parseFloat(q.points);
+        maxScore += qMaxPts;
         const solutionText = q.solution || "";
         const solutionImg = q.solutionImage || "";
 
@@ -1638,36 +1708,30 @@ function importAIJsonQuestions() {
           const selected = document.querySelector(`input[name="ans_${idx}"]:checked`);
           const chosenIdx = selected ? parseInt(selected.value) : -1;
           const isCorrect = (chosenIdx === q.correct);
-          const earned = isCorrect ? q.points : 0;
+          const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
             type: 'mcq', question: q.text, chosen: chosenIdx, correct: q.correct,
-            options: q.options, isCorrect, points: q.points, earned,
+            options: q.options, isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
         } else if (q.type === 'tf') {
-          let earnedTf = 0;
           let correctCount = 0;
           const stDetails = (q.statements || []).map((st, sIdx) => {
-            const itemPts = (st.points !== undefined) ? parseFloat(st.points) : (q.points / 4);
             const sel = document.querySelector(`input[name="tf_${idx}_${sIdx}"]:checked`);
             const chosenVal = sel ? (sel.value === 'true') : null;
             const isRight = (chosenVal === st.answer);
-            const itemEarned = isRight ? itemPts : 0;
-            if (isRight) {
-              correctCount++;
-              earnedTf += itemEarned;
-            }
+            if (isRight) correctCount++;
             return {
-              text: st.text, chosen: chosenVal, answer: st.answer,
-              isRight, points: itemPts, earned: itemEarned
+              text: st.text, chosen: chosenVal, answer: st.answer, isRight
             };
           });
-          earnedTf = Math.round(earnedTf * 100) / 100;
+          // Tính điểm theo tổng số ý làm đúng (1 ý = 0.1, 2 ý = 0.25, 3 ý = 0.5, 4 ý = 1.0)
+          const earnedTf = Math.round(getTfScoreByCount(q, correctCount) * 100) / 100;
           autoScore += earnedTf;
           answers.push({
             type: 'tf', question: q.text, statements: stDetails,
-            correctCount, points: q.points, earned: earnedTf,
+            correctCount, points: qMaxPts, earned: earnedTf,
             solution: solutionText, solutionImage: solutionImg
           });
         } else if (q.type === 'short') {
@@ -1675,11 +1739,11 @@ function importAIJsonQuestions() {
           const normS = studentVal.toLowerCase().replace(/\s+/g, ' ');
           const normK = (q.correctText || '').trim().toLowerCase().replace(/\s+/g, ' ');
           const isCorrect = (normS !== '' && normS === normK);
-          const earned = isCorrect ? q.points : 0;
+          const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
             type: 'short', question: q.text, studentVal, correctText: q.correctText,
-            isCorrect, points: q.points, earned,
+            isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
         } else {
@@ -1688,17 +1752,16 @@ function importAIJsonQuestions() {
           const essayImage = pendingStudentEssayImages[idx] || "";
           answers.push({
             type: 'essay', question: q.text, essayText, essayImage,
-            points: q.points, earned: 0,
+            points: qMaxPts, earned: 0,
             solution: solutionText, solutionImage: solutionImg
           });
         }
       });
 
-      await syncFromCloud(false);
-
       const newSub = {
         id: "sub_" + Date.now(),
         studentName: currentStudentName,
+        isGuest: isCurrentStudentGuest,
         examId: currentExam.id,
         examTitle: currentExam.title,
         subject: currentExam.subject,
@@ -1715,19 +1778,91 @@ function importAIJsonQuestions() {
         answers
       };
 
+      document.getElementById('studentExamRoom').classList.add('hidden');
+
+      // Nếu là Học sinh vãng lai -> Hiện ngay đáp án và bài chữa, không làm nặng bộ nhớ chính của lớp
+      if (isCurrentStudentGuest) {
+        renderGuestResultView(newSub);
+        return;
+      }
+
+      await syncFromCloud(false);
       if (!appData.submissions) appData.submissions = [];
       appData.submissions.unshift(newSub);
-
       await syncToCloud();
 
-      document.getElementById('studentExamRoom').classList.add('hidden');
       document.getElementById('studentLobby').classList.remove('hidden');
       renderAll();
 
       alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
     }
 
-    // ==================== CHẤM BÀI & UP ẢNH BÀI CHỮA RIÊNG CHO TỪNG HỌC SINH ====================
+    // Hiển thị Đáp án & Bài chữa ngay sau khi thi cho Học sinh vãng lai
+    function renderGuestResultView(s) {
+      document.getElementById('guestResultRoom').classList.remove('hidden');
+      document.getElementById('guestResultTitle').innerText = `📂 Đề kiểm tra: ${s.examTitle}`;
+      document.getElementById('guestResultStudent').innerText = `${s.studentName} • Nộp lúc: ${s.submittedAt}`;
+      document.getElementById('guestResultScore').innerText = `${s.totalScore} / ${s.maxScore}`;
+
+      const box = document.getElementById('guestResultDetails');
+      box.innerHTML = (s.answers || []).map((a, idx) => {
+        let statusHtml = '';
+        if (a.type === 'mcq') {
+          const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${(a.options || [])[a.chosen] || ''}` : 'Bỏ trống';
+          const rightChar = `${['A','B','C','D'][a.correct]}. ${(a.options || [])[a.correct] || ''}`;
+          statusHtml = `
+            <div class="mt-1">Bạn chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
+            ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
+          `;
+        } else if (a.type === 'tf') {
+          statusHtml = `
+            <div class="mt-1.5 space-y-1 bg-slate-50 p-2.5 rounded-lg border">
+              <div class="font-bold text-amber-800 mb-1">Đúng ${a.correctCount}/4 ý — Đạt: ${a.earned} / ${a.points} điểm:</div>
+              ${(a.statements || []).map((st, sIdx) => `
+                <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
+                  <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
+                  <span>
+                    Bạn chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
+                    | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else if (a.type === 'short') {
+          statusHtml = `
+            <div class="mt-1">Câu trả lời của bạn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.studentVal || '(Bỏ trống)'}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
+            <div class="text-emerald-700 font-semibold">Đáp án chuẩn: ${a.correctText}</div>
+          `;
+        } else {
+          statusHtml = `
+            <div class="mt-1 space-y-2">
+              <div><b>Bài làm tự luận của bạn:</b></div>
+              <div class="p-2.5 bg-slate-50 rounded-lg border whitespace-pre-wrap text-slate-700">${a.essayText || '(Trống)'}</div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="pt-3 first:pt-0 space-y-2">
+            <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
+            ${statusHtml}
+            <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
+              <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${a.solution || 'Chưa có lời giải.'}</div>
+              ${a.solutionImage ? `
+                <div>
+                  <img src="${a.solutionImage}" onclick="zoomImage('${a.solutionImage}')" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      triggerMathJax();
+    }
+
+    // ==================== CHẤM BÀI, XÓA BÀI NỘP & GOM THEO MỤC LỤC ĐỀ THI ====================
     function handleTeacherSubImage(event, subId) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1762,6 +1897,28 @@ function importAIJsonQuestions() {
       alert(`✔ Đã lưu điểm, bài chữa LaTeX và hình ảnh cho em ${sub.studentName}!`);
     }
 
+    async function deleteSubmission(subId) {
+      if (!confirm("Xóa bài nộp này để giải phóng bộ nhớ?")) return;
+      appData.submissions = (appData.submissions || []).filter(s => s.id !== subId);
+      renderAll();
+      await syncToCloud();
+    }
+
+    async function deleteSubmissionsByExam(examTitle) {
+      if (!confirm(`Xóa toàn bộ bài nộp thuộc đề "${examTitle}" để giải phóng bộ nhớ?`)) return;
+      appData.submissions = (appData.submissions || []).filter(s => s.examTitle !== examTitle);
+      renderAll();
+      await syncToCloud();
+    }
+
+    async function deleteAllSubmissions() {
+      if (!appData.submissions || appData.submissions.length === 0) return;
+      if (!confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ bài nộp của học sinh để làm sạch bộ nhớ?")) return;
+      appData.submissions = [];
+      renderAll();
+      await syncToCloud();
+    }
+
     // ==================== HIỂN THỊ GIAO DIỆN ====================
     function renderAll() {
       renderDraftQuestions();
@@ -1791,7 +1948,7 @@ function importAIJsonQuestions() {
               <h4 class="font-bold text-slate-800 text-base">${ex.title}</h4>
               <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-2">
                 <span><i class="fa-solid fa-list-ol mr-1 text-blue-500"></i>${ex.questions.length} câu hỏi</span>
-                <span><i class="fa-solid fa-users mr-1 text-emerald-600"></i>Danh sách: ${studentCount} học sinh</span>
+                <span><i class="fa-solid fa-users mr-1 text-emerald-600"></i>Danh sách: ${studentCount} học sinh (+ Vãng lai)</span>
               </div>
             </div>
             <button onclick="openStudentModal('${ex.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition">
@@ -1836,76 +1993,113 @@ function importAIJsonQuestions() {
         return;
       }
 
-      subBox.innerHTML = subs.map(s => `
-        <div class="p-5 rounded-2xl border ${s.graded ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3 shadow-sm">
-          <div class="flex flex-wrap justify-between items-start gap-2 border-b pb-2">
-            <div>
-              <span class="font-bold text-base text-slate-800">${s.studentName}</span>
-              <span class="text-xs text-slate-500 ml-2">• ${s.submittedAt}</span>
-              <div class="text-xs font-semibold text-blue-600 mt-0.5">${s.examTitle}</div>
-            </div>
-            <div class="text-right">
-              <span class="px-3 py-1 rounded-full text-xs font-bold ${s.graded ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                Tổng điểm: ${s.totalScore} / ${s.maxScore}
-              </span>
-            </div>
-          </div>
+      // Gom nhóm bài nộp theo từng Mục lục Đề kiểm tra
+      const groupedByExam = {};
+      subs.forEach(s => {
+        const key = s.examTitle || "Đề kiểm tra chung";
+        if (!groupedByExam[key]) groupedByExam[key] = [];
+        groupedByExam[key].push(s);
+      });
 
-          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-xl border">
-            ${(s.answers || []).map((a, i) => {
-              if (a.type === 'mcq') {
-                return `<div><b>Câu ${i+1} (TN - ${a.earned}/${a.points}đ):</b> Chọn <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Trống'}</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: ${['A','B','C','D'][a.correct]})`}</div>`;
-              } else if (a.type === 'tf') {
-                const detailStr = (a.statements || []).map((st, idx) => `${['a','b','c','d'][idx]}:${st.isRight ? `+${st.earned}đ✔` : '0đ✘'}`).join(' | ');
-                return `<div><b>Câu ${i+1} (Đúng/Sai - ${a.earned}/${a.points}đ):</b> ${detailStr}</div>`;
-              } else if (a.type === 'short') {
-                return `<div><b>Câu ${i+1} (Trả lời ngắn - ${a.earned}/${a.points}đ):</b> Điền <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">"${a.studentVal || 'Trống'}"</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: "${a.correctText}")`}</div>`;
-              } else {
-                return `
-                  <div class="pt-2 border-t mt-2 space-y-1.5">
-                    <b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}
-                    <div class="p-2.5 bg-white border rounded-lg text-slate-800 whitespace-pre-wrap">${a.essayText || (a.essayImage ? '(Học sinh nộp bài bằng ảnh chụp bên dưới)' : '(Học sinh bỏ trống)')}</div>
-                    ${a.essayImage ? `
-                      <div class="pt-1">
-                        <div class="text-[11px] font-bold text-purple-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>Ảnh bài làm tự luận của ${s.studentName} (Chạm vào ảnh để phóng to):</div>
-                        <img src="${a.essayImage}" onclick="zoomImage('${a.essayImage}')" class="max-h-60 rounded-xl border-2 border-purple-200 shadow-sm cursor-zoom-in">
-                      </div>
-                    ` : ''}
+      subBox.innerHTML = Object.keys(groupedByExam).map((examTitle, gIdx) => {
+        const groupSubs = groupedByExam[examTitle];
+        const ungradedCount = groupSubs.filter(item => !item.graded).length;
+        const safeTitle = examTitle.replace(/'/g, "\\'");
+
+        return `
+          <details class="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden shadow-sm" ${gIdx === 0 ? 'open' : ''}>
+            <summary class="p-4 bg-white hover:bg-slate-50 cursor-pointer select-none flex flex-wrap justify-between items-center gap-2 border-b">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-folder-open text-blue-600 text-base"></i>
+                <span class="font-bold text-slate-800 text-sm">${examTitle}</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">${groupSubs.length} bài nộp</span>
+                ${ungradedCount > 0 ? `<span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">${ungradedCount} chờ chấm</span>` : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="event.preventDefault(); deleteSubmissionsByExam('${safeTitle}')" class="text-xs text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg font-semibold border border-red-100">
+                  <i class="fa-solid fa-trash mr-1"></i> Xóa mục này
+                </button>
+                <span class="text-[11px] text-slate-400 underline">Mở / Thu gọn</span>
+              </div>
+            </summary>
+
+            <div class="p-4 space-y-4">
+              ${groupSubs.map(s => `
+                <div class="p-5 rounded-2xl border ${s.graded ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3 shadow-sm">
+                  <div class="flex flex-wrap justify-between items-start gap-2 border-b pb-2">
+                    <div>
+                      <span class="font-bold text-base text-slate-800">${s.studentName}</span>
+                      <span class="text-xs text-slate-500 ml-2">• ${s.submittedAt}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="px-3 py-1 rounded-full text-xs font-bold ${s.graded ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                        Tổng điểm: ${s.totalScore} / ${s.maxScore}
+                      </span>
+                      <button onclick="deleteSubmission('${s.id}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-lg font-bold transition" title="Xóa bài nộp này">
+                        <i class="fa-solid fa-trash"></i> Xóa bài
+                      </button>
+                    </div>
                   </div>
-                `;
-              }
-            }).join('')}
-          </div>
 
-          <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
-            <div class="flex flex-col sm:flex-row gap-2 items-center">
-              <div class="flex items-center gap-1.5 w-full sm:w-auto">
-                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Chấm điểm Tự luận:</label>
-                <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center bg-white">
-              </div>
-              <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi Phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
-            </div>
+                  <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-xl border">
+                    ${(s.answers || []).map((a, i) => {
+                      if (a.type === 'mcq') {
+                        return `<div><b>Câu ${i+1} (TN - ${a.earned}/${a.points}đ):</b> Chọn <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Trống'}</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: ${['A','B','C','D'][a.correct]})`}</div>`;
+                      } else if (a.type === 'tf') {
+                        const detailStr = (a.statements || []).map((st, idx) => `${['a','b','c','d'][idx]}:${st.isRight ? '✔' : '✘'}`).join(' | ');
+                        return `<div><b>Câu ${i+1} (Đúng/Sai - Đúng ${a.correctCount}/4 ý -> +${a.earned}/${a.points}đ):</b> ${detailStr}</div>`;
+                      } else if (a.type === 'short') {
+                        return `<div><b>Câu ${i+1} (Trả lời ngắn - ${a.earned}/${a.points}đ):</b> Điền <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">"${a.studentVal || 'Trống'}"</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: "${a.correctText}")`}</div>`;
+                      } else {
+                        return `
+                          <div class="pt-2 border-t mt-2 space-y-1.5">
+                            <b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}
+                            <div class="p-2.5 bg-white border rounded-lg text-slate-800 whitespace-pre-wrap">${a.essayText || (a.essayImage ? '(Học sinh nộp bài bằng ảnh chụp bên dưới)' : '(Học sinh bỏ trống)')}</div>
+                            ${a.essayImage ? `
+                              <div class="pt-1">
+                                <div class="text-[11px] font-bold text-purple-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>Ảnh bài làm tự luận của ${s.studentName} (Chạm vào ảnh để phóng to):</div>
+                                <img src="${a.essayImage}" onclick="zoomImage('${a.essayImage}')" class="max-h-60 rounded-xl border-2 border-purple-200 shadow-sm cursor-zoom-in">
+                              </div>
+                            ` : ''}
+                          </div>
+                        `;
+                      }
+                    }).join('')}
+                  </div>
 
-            <div class="space-y-1.5">
-              <div class="flex flex-wrap justify-between items-center gap-2">
-                <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
-                <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
-                  <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài của GV
-                  <input type="file" accept="image/*" onchange="handleTeacherSubImage(event, '${s.id}')" class="hidden">
-                </label>
-              </div>
-              <textarea id="custom_sol_${s.id}" rows="2" placeholder="Gõ bài chữa LaTeX riêng cho bài của ${s.studentName} (VD: Ở ảnh chụp câu 4, dòng thứ 2 em biến đổi thiếu dấu $\\Leftrightarrow$...)..." class="w-full px-3 py-2 border rounded-xl text-xs bg-white">${s.teacherCustomSolution || ''}</textarea>
-              <img id="sub_img_preview_${s.id}" src="${s.teacherCustomImage || ''}" class="${s.teacherCustomImage ? '' : 'hidden'} max-h-40 rounded-lg border shadow-sm mt-1">
-            </div>
+                  <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
+                    <div class="flex flex-col sm:flex-row gap-2 items-center">
+                      <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                        <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Chấm điểm Tự luận:</label>
+                        <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center bg-white">
+                      </div>
+                      <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi Phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
+                    </div>
 
-            <div class="flex justify-end">
-              <button onclick="saveTeacherGrading('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2 rounded-xl shadow transition">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu điểm & gửi bài chữa cho phụ huynh
-              </button>
+                    <div class="space-y-1.5">
+                      <div class="flex flex-wrap justify-between items-center gap-2">
+                        <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
+                        <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                          <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài của GV
+                          <input type="file" accept="image/*" onchange="handleTeacherSubImage(event, '${s.id}')" class="hidden">
+                        </label>
+                      </div>
+                      <textarea id="custom_sol_${s.id}" rows="2" placeholder="Gõ bài chữa LaTeX riêng cho bài của ${s.studentName} (VD: Ở ảnh chụp câu 4, dòng thứ 2 em biến đổi thiếu dấu $\\Leftrightarrow$...)..." class="w-full px-3 py-2 border rounded-xl text-xs bg-white">${s.teacherCustomSolution || ''}</textarea>
+                      <img id="sub_img_preview_${s.id}" src="${s.teacherCustomImage || ''}" class="${s.teacherCustomImage ? '' : 'hidden'} max-h-40 rounded-lg border shadow-sm mt-1">
+                    </div>
+
+                    <div class="flex justify-end">
+                      <button onclick="saveTeacherGrading('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2 rounded-xl shadow transition">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu điểm & gửi bài chữa cho phụ huynh
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
             </div>
-          </div>
-        </div>
-      `).join('');
+          </details>
+        `;
+      }).join('');
     }
 
     // ==================== HIỂN THỊ SỔ LIÊN LẠC CÁ NHÂN HÓA CHO PHỤ HUYNH ====================
@@ -1977,14 +2171,13 @@ function importAIJsonQuestions() {
                 } else if (a.type === 'tf') {
                   statusHtml = `
                     <div class="mt-1.5 space-y-1 bg-slate-50 p-2.5 rounded-lg border">
-                      <div class="font-bold text-amber-800 mb-1">Điểm câu Đúng/Sai của con: ${a.earned} / ${a.points} điểm (Tính theo từng ý):</div>
+                      <div class="font-bold text-amber-800 mb-1">Điểm câu Đúng/Sai của con: Đúng ${a.correctCount}/4 ý — Đạt ${a.earned} / ${a.points} điểm:</div>
                       ${(a.statements || []).map((st, sIdx) => `
                         <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
                           <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
                           <span>
                             Con chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
                             | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
-                            <b class="${st.isRight ? 'text-emerald-700' : 'text-slate-400'} ml-1">(${st.isRight ? '+' + st.earned : '0'}/${st.points}đ)</b>
                           </span>
                         </div>
                       `).join('')}
