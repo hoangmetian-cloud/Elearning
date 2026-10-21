@@ -821,41 +821,17 @@
     // ==================== BỘ LỌC TỰ ĐỘNG SỬA LỖI HIỂN THỊ LATEX ====================
     function formatMathText(str, stripPrefix = false) {
       if (str === null || str === undefined) return "";
-      let s = String(str).trim();
 
-      if (stripPrefix) {
+      let s = String(str);
+
+      // Chỉ xóa tiền tố "Câu 1.", "Câu 2." khi được yêu cầu.
+     // Không tự sửa LaTeX, không tự thêm hoặc xóa dấu $.
+     if (stripPrefix) {
         s = s.replace(/^Câu\s+\d+\s*[:.]\s*/i, "");
-      }
-
-      s = s.replace(/\x08egin/g, "\\begin")
-           .replace(/\x08ar/g, "\\bar")
-           .replace(/\x08eta/g, "\\beta")
-           .replace(/\x08igg/g, "\\bigg")
-           .replace(/\x0c/g, "\\f")
-           .replace(/\t(o|imes|ext|heta|an|riangle|au|op|frac)/g, "\\t$1")
-           .replace(/\r(ight|ho|angle)/g, "\\r$1");
-
-      s = s.replace(/(^|[\s(:;])(\\[a-zA-Z]+[^$]*?)\$/g, "$1$$$2$");
-
-      const dollarMatches = s.match(/\$/g);
-      if (dollarMatches && dollarMatches.length % 2 !== 0) {
-        const firstDollarIdx = s.indexOf("$");
-        const firstSlashIdx = s.indexOf("\\");
-        if (firstSlashIdx !== -1 && firstSlashIdx < firstDollarIdx) {
-          s = s.slice(0, firstSlashIdx) + "$" + s.slice(firstSlashIdx);
-        } else {
-          s = s + "$";
-        }
-      }
-
-      if (!s.includes("$") && !s.includes("\\(") && !s.includes("\\[")) {
-        if (/\\(lim|dfrac|frac|sqrt|int|sum|infty|to|ge|le|ne|pm|Leftrightarrow|Rightarrow|Delta|alpha|beta|pi|sin|cos|tan|log|ln)\b/.test(s)) {
-          s = s.replace(/(\\[a-zA-Z]+[^\n.]*)/g, "$$$1$");
-        }
-      }
-
-      return s;
     }
+
+     return s;
+   }
 
     function sanitizeQuestionObject(q) {
       if (!q) return q;
@@ -1444,9 +1420,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
       }
 
-      raw = raw.replace(/\\{2,}/g, '\\\\');
-      raw = raw.replace(/(?<!\\)\\(?![\\"/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
-      raw = raw.replace(/(?<!\\)\\(frac|forall|begin|bar|beta|bigg|binom|neq|nabla|nu|not|ni|right|rho|rangle|Rightarrow|to|times|text|theta|tan|triangle|tau|top|tfrac)/g, '\\\\$1');
 
       raw = raw.replace(/,(\s*[}\]])/g, '$1');
 
