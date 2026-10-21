@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>EduSmart Pro - Hệ Thống Khảo Thí & Sổ Liên Lạc Trực Tuyến</title>
+  <title>EduSmart Pro V4 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- Hỗ trợ hiển thị công thức Toán học đẹp mắt -->
+  <!-- Cấu hình MathJax hiển thị LaTeX chuẩn -->
   <script>
     window.MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
       svg: { fontCache: 'global' }
     };
   </script>
@@ -17,6 +20,7 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; }
     .tab-active { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
+    .subtab-active { background-color: #1e293b; color: white; }
     .pulse-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   </style>
@@ -24,7 +28,7 @@
 <body class="min-h-screen flex flex-col justify-between">
 
   <div>
-    <!-- THANH ĐIỀU HƯỚNG: ẨN MỤC GIÁO VIÊN -->
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG (ẨN MỤC GIÁO VIÊN) -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
         
@@ -42,13 +46,13 @@
           </div>
         </div>
 
-        <!-- Chỉ hiển thị nút Học Sinh & Phụ Huynh -->
+        <!-- Chỉ hiển thị Học Sinh & Phụ Huynh -->
         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button onclick="switchRole('student')" id="btn-student" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active">
             <i class="fa-solid fa-user-pen mr-1"></i> Học Sinh
           </button>
           <button onclick="switchRole('parent')" id="btn-parent" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600">
-            <i class="fa-solid fa-shield-heart mr-1"></i> Phụ Huynh
+            <i class="fa-solid fa-user-shield mr-1"></i> Phụ Huynh
           </button>
         </div>
       </div>
@@ -56,43 +60,39 @@
 
     <main class="max-w-6xl mx-auto px-4 mt-6 pb-12">
 
-      <!-- ==================== GIAO DIỆN HỌC SINH ==================== -->
+      <!-- ==================== 1. GIAO DIỆN HỌC SINH ==================== -->
       <section id="view-student" class="space-y-6">
         <div id="studentLobby" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
             <div>
               <h2 class="font-bold text-lg text-slate-800">Danh Sách Đề Kiểm Tra & Bài Tập</h2>
-              <p class="text-xs text-slate-500">Chọn đề bài bên dưới, sau đó chọn đúng tên của em trong danh sách lớp để bắt đầu tính giờ.</p>
+              <p class="text-xs text-slate-500">Chọn đề bài bên dưới, sau đó chọn đúng tên của em trong danh sách lớp để bắt đầu làm bài.</p>
             </div>
             <button onclick="syncFromCloud(true)" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-xl font-semibold transition">
-              <i class="fa-solid fa-rotate mr-1"></i> Cập nhật đề mới
+              <i class="fa-solid fa-rotate mr-1"></i> Tải đề mới nhất
             </button>
           </div>
 
           <div id="studentExamCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <!-- Hộp thoại chọn tên học sinh trong thư mục đề -->
+        <!-- Hộp thoại chọn tên học sinh -->
         <div id="studentSelectModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Xác Nhận Học Sinh Vào Thi</h3>
+              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Chọn Tên Học Sinh Vào Thi</h3>
               <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="modalExamName" class="text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl"></div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1.5">Chọn tên của em trong danh sách đề này *</label>
-              <select id="modalStudentSelect" onchange="toggleCustomStudentInput()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:border-blue-600">
+              <select id="modalStudentSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:border-blue-600">
               </select>
-            </div>
-            <div id="customStudentBox" class="hidden">
-              <label class="block text-xs font-bold text-slate-700 mb-1">Hoặc tự nhập Họ và Tên của em:</label>
-              <input type="text" id="customStudentInput" placeholder="Nhập đầy đủ Họ và Tên..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-semibold">
             </div>
             <div class="flex justify-end gap-2 pt-2">
               <button onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
               <button onclick="confirmStartExam()" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
-                Vào Làm Bài Ngay <i class="fa-solid fa-play ml-1"></i>
+                Bắt Đầu Tính Giờ <i class="fa-solid fa-play ml-1"></i>
               </button>
             </div>
           </div>
@@ -125,43 +125,47 @@
         </div>
       </section>
 
-      <!-- ==================== GIAO DIỆN PHỤ HUYNH (CÓ MẬT KHẨU & BÀI CHỮA) ==================== -->
+      <!-- ==================== 2. GIAO DIỆN PHỤ HUYNH (MỖI PH 1 PASS RIÊNG) ==================== -->
       <section id="view-parent" class="hidden space-y-6">
         
-        <!-- Màn hình khóa mật khẩu Phụ huynh -->
+        <!-- Màn hình đăng nhập bằng Mật khẩu riêng của từng Phụ huynh -->
         <div id="parentLockScreen" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md mx-auto text-center space-y-4 my-8">
           <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
             <i class="fa-solid fa-user-lock"></i>
           </div>
-          <h2 class="font-bold text-lg text-slate-800">Cổng Thông Tin Phụ Huynh</h2>
-          <p class="text-xs text-slate-500">Vui lòng nhập mật khẩu do Giáo viên cung cấp để xem điểm số, nhận xét và <b>Đáp án + Bài chữa chi tiết</b>.</p>
+          <h2 class="font-bold text-lg text-slate-800">Sổ Liên Lạc Phụ Huynh Bảo Mật</h2>
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
+            Nhập mật khẩu để xem kết quả làm bài, nhận xét và <b>Đáp án + Bài chữa chi tiết (LaTeX & Hình ảnh)</b> của riêng con mình.
+          </p>
           <div class="space-y-3 pt-2">
-            <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu Phụ huynh..." 
+            <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
               onkeydown="if(event.key==='Enter') unlockParentView()"
-              class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
-            <button onclick="unlockParentView()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow transition">
-              Mở Sổ Liên Lạc & Xem Bài Chữa
+              class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
+            <button onclick="unlockParentView()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow transition">
+              <i class="fa-solid fa-unlock-keyhole mr-1"></i> Xem Bài Làm & Bài Chữa Của Con
             </button>
           </div>
         </div>
 
-        <!-- Nội dung Sổ liên lạc & Bài chữa sau khi mở khóa -->
+        <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi Phụ huynh đăng nhập -->
         <div id="parentUnlockedContent" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
-            <div>
-              <h2 class="font-bold text-lg text-slate-800">
-                <i class="fa-solid fa-book-open-reader text-emerald-600 mr-1"></i> Bảng Điểm, Nhận Xét & Bài Chữa Chi Tiết
-              </h2>
-              <p class="text-xs text-slate-500">Bấm vào nút <b>"Xem Đáp Án & Bài Chữa Chi Tiết"</b> ở từng bài làm của con để xem phân tích lỗi sai và lời giải.</p>
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg">
+                <i class="fa-solid fa-user-graduate"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-emerald-600 uppercase">Hồ Sơ Học Tập Cá Nhân</div>
+                <h2 class="font-bold text-lg text-slate-800" id="parentStudentBanner">Học sinh: ...</h2>
+              </div>
             </div>
-            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-              <select id="parentStudentFilter" onchange="renderParentView()" class="px-3 py-2 border rounded-xl text-xs font-semibold bg-slate-50">
-                <option value="">-- Tất cả Học sinh --</option>
-              </select>
-              <input type="text" id="parentSearchInput" oninput="renderParentView()" placeholder="Tìm tên học sinh / tên đề..." 
-                class="px-3.5 py-2 border rounded-xl text-xs flex-1 sm:w-48">
-              <button onclick="syncFromCloud(true)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold">
-                <i class="fa-solid fa-rotate"></i>
+            <div class="flex items-center gap-2">
+              <button onclick="syncFromCloud(true)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <i class="fa-solid fa-rotate mr-1"></i> Làm mới
+              </button>
+              <button onclick="logoutParent()" class="bg-red-50 hover:bg-red-100 text-red-600 px-3.5 py-2 rounded-xl text-xs font-bold">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Thoát tài khoản
               </button>
             </div>
           </div>
@@ -170,45 +174,53 @@
         </div>
       </section>
 
-      <!-- ==================== GIAO DIỆN GIÁO VIÊN (ẨN MẶC ĐỊNH) ==================== -->
+      <!-- ==================== 3. GIAO DIỆN GIÁO VIÊN (3 TAB CHUYÊN BIỆT) ==================== -->
       <section id="view-teacher" class="hidden space-y-6">
         
-        <!-- Thanh điều khiển Quản trị & Cài đặt mật khẩu -->
-        <div class="bg-slate-800 text-white p-4 rounded-2xl shadow space-y-3">
-          <div class="flex flex-wrap justify-between items-center gap-3">
-            <div class="flex items-center gap-2.5">
-              <i class="fa-solid fa-shield-halved text-emerald-400 text-xl"></i>
-              <div>
-                <h2 class="font-bold text-sm">Bảng Quản Trị Giáo Viên (Đã ẩn khỏi Học sinh)</h2>
-                <p class="text-[11px] text-slate-300">Mật khẩu Giáo viên: <b class="text-amber-300">1234</b> | Mật khẩu Phụ huynh hiện tại: <b id="displayParentPass" class="text-emerald-300">ph1234</b></p>
-              </div>
+        <!-- Thanh điều hướng nội bộ của Giáo Viên -->
+        <div class="bg-slate-800 text-white p-4 rounded-2xl shadow flex flex-wrap justify-between items-center gap-3">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-solid fa-shield-halved text-emerald-400 text-xl"></i>
+            <div>
+              <h2 class="font-bold text-sm">Hệ Thống Quản Trị Giáo Viên</h2>
+              <p class="text-[11px] text-slate-300">Mã mở bảng GV: <b class="text-amber-300">1234</b></p>
             </div>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="changeParentPassword()" class="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold px-3 py-2 rounded-xl transition">
-                <i class="fa-solid fa-key mr-1"></i> Đổi MK Phụ huynh
-              </button>
-              <button onclick="syncFromCloud(true)" class="bg-slate-700 hover:bg-slate-600 text-xs font-semibold px-3 py-2 rounded-xl transition">
-                <i class="fa-solid fa-rotate mr-1"></i> Đồng bộ Cloud
-              </button>
-              <button onclick="switchRole('student')" class="bg-red-500 hover:bg-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition">
-                <i class="fa-solid fa-xmark mr-1"></i> Đóng bảng GV
-              </button>
-            </div>
+          </div>
+
+          <!-- 3 Tab con trong Bảng Giáo Viên -->
+          <div class="flex flex-wrap bg-slate-900/80 p-1 rounded-xl gap-1">
+            <button onclick="switchTeacherTab('exams')" id="ttab-exams" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white">
+              <i class="fa-solid fa-file-pen mr-1"></i> 1. Soạn Đề & Kho Đề
+            </button>
+            <button onclick="switchTeacherTab('grading')" id="ttab-grading" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
+              <i class="fa-solid fa-check-to-slot mr-1"></i> 2. Chấm Bài & Up Bài Chữa (<span id="subCountBadge">0</span>)
+            </button>
+            <button onclick="switchTeacherTab('parents')" id="ttab-parents" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
+              <i class="fa-solid fa-users-gear mr-1"></i> 3. Bảng Quản Trị Phụ Huynh & Pass
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="syncFromCloud(true)" class="bg-slate-700 hover:bg-slate-600 text-xs font-semibold px-3 py-2 rounded-xl transition">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+            <button onclick="switchRole('student')" class="bg-red-500 hover:bg-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition">
+              <i class="fa-solid fa-xmark mr-1"></i> Đóng GV
+            </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          <!-- CỘT TRÁI: SOẠN ĐỀ, DANH SÁCH HỌC SINH & AI TỰ CHỌN -->
-          <div class="lg:col-span-6 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <!-- TAB GV 1: SOẠN ĐỀ THI (TÙY CHỈNH ĐIỂM TỪNG Ý ĐÚNG/SAI, LATEX & UP ẢNH BÀI CHỮA) -->
+        <div id="teacher-tab-exams" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <h2 class="font-bold text-slate-800 text-base border-b pb-2">
-              <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> 1. Thông Tin Đề Thi & Danh Sách Học Sinh
+              <i class="fa-solid fa-file-signature text-blue-600 mr-1"></i> Thiết Lập Đề Kiểm Tra Mới
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="sm:col-span-2">
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tên bài kiểm tra / Thư mục đề *</label>
-                <input type="text" id="examTitle" placeholder="VD: Kiểm tra Đại số / Ngữ pháp Tiếng Anh" class="w-full px-3 py-2 rounded-xl border text-sm font-semibold">
+                <input type="text" id="examTitle" placeholder="VD: Kiểm tra 45p Đại số / Tiếng Anh" class="w-full px-3 py-2 rounded-xl border text-sm font-semibold">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Thời gian (Phút)</label>
@@ -227,44 +239,40 @@
               </div>
               <div class="sm:col-span-2">
                 <div class="flex justify-between items-center mb-1">
-                  <label class="block text-xs font-semibold text-slate-600">Danh sách Học sinh trong đề này (cách nhau dấu phẩy)</label>
-                  <button onclick="resetDefaultRoster()" class="text-[11px] text-blue-600 hover:underline">Điền DS lớp mặc định</button>
+                  <label class="block text-xs font-semibold text-slate-600">Học sinh tham gia đề này (cách nhau dấu phẩy)</label>
+                  <button onclick="fillRosterFromParentAccounts()" class="text-[11px] text-blue-600 hover:underline font-semibold">Lấy toàn bộ DS Lớp</button>
                 </div>
-                <input type="text" id="examRoster" class="w-full px-3 py-2 rounded-xl border text-xs text-slate-700" 
-                  placeholder="VD: Khánh Ly, Nhật Phượng, Đăng Khoa, Thiên Vũ...">
+                <input type="text" id="examRoster" class="w-full px-3 py-2 rounded-xl border text-xs text-slate-700">
               </div>
             </div>
 
-            <!-- KHUNG AI SOẠN ĐỀ TÙY Ý THEO YÊU CẦU -->
+            <!-- KHUNG AI SOẠN ĐỀ TỰ CHỌN -->
             <div class="bg-purple-50 p-4 rounded-2xl border border-purple-200 space-y-3">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-purple-900">
-                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 2. AI Soạn Đề Tự Chọn Theo Yêu Cầu Của Bạn
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Trợ Lý AI Soạn Đề Tùy Ý (Có sẵn điểm từng ý Đúng/Sai & LaTeX)
                 </span>
-                <span class="text-[11px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-md font-semibold">Đủ 4 dạng câu hỏi + Bài chữa</span>
               </div>
 
               <textarea id="aiCustomPrompt" rows="2" 
-                placeholder="Gõ yêu cầu bất kỳ của bạn vào đây. VD: Tạo 2 câu trắc nghiệm, 1 câu Đúng/Sai, 1 câu trả lời ngắn, 1 câu tự luận về Đạo hàm & Cực trị (hoặc Thì Hiện tại hoàn thành Tiếng Anh)..."
-                class="w-full p-2.5 rounded-xl border border-purple-200 text-xs bg-white focus:outline-none focus:border-purple-500"></textarea>
+                placeholder="Gõ yêu cầu của bạn: VD: 2 câu trắc nghiệm, 1 câu Đúng/Sai (tính điểm từng ý), 1 câu trả lời ngắn, 1 câu tự luận về Đạo hàm hoặc Ngữ pháp Tiếng Anh..."
+                class="w-full p-2.5 rounded-xl border border-purple-200 text-xs bg-white"></textarea>
 
               <div class="flex flex-wrap gap-2">
                 <button onclick="generateSmartLocalAI()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm transition">
-                  ⚡ Sinh tự động ngay trên web
+                  ⚡ Sinh đề mẫu ngay
                 </button>
                 <button onclick="copyAIPromptToClipboard()" class="flex-1 bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 text-xs font-bold py-2 px-3 rounded-xl transition">
                   📋 B1: Copy Lệnh sang Gemini/ChatGPT
                 </button>
               </div>
 
-              <!-- Ô dán kết quả JSON từ Gemini/ChatGPT -->
-              <details class="text-xs bg-white/80 p-2.5 rounded-xl border border-purple-100">
+              <details class="text-xs bg-white/90 p-2.5 rounded-xl border border-purple-100">
                 <summary class="font-bold text-purple-800 cursor-pointer select-none">
-                  📥 B2: Dán đề từ Gemini / ChatGPT vào đây để nạp 100% câu hỏi & lời giải
+                  📥 B2: Dán mã đề JSON từ Gemini / ChatGPT vào đây để nạp nhanh
                 </summary>
                 <div class="mt-2 space-y-2">
-                  <p class="text-[11px] text-slate-500">Sau khi bấm <b>"B1: Copy Lệnh"</b> và dán vào Gemini/ChatGPT, bạn copy đoạn mã AI trả về dán vào ô dưới đây rồi bấm Nạp Đề:</p>
-                  <textarea id="aiJsonPasteBox" rows="3" placeholder="Dán đoạn mã JSON đề thi từ AI vào đây..." class="w-full p-2 border rounded-lg text-[11px] font-mono bg-slate-50"></textarea>
+                  <textarea id="aiJsonPasteBox" rows="3" placeholder="Dán mã JSON AI trả về vào đây..." class="w-full p-2 border rounded-lg text-[11px] font-mono bg-slate-50"></textarea>
                   <button onclick="importAIJsonQuestions()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 rounded-lg text-xs">
                     📥 Nạp Toàn Bộ Câu Hỏi & Bài Chữa Vào Đề
                   </button>
@@ -272,26 +280,26 @@
               </details>
             </div>
 
-            <!-- THÊM CÂU HỎI THỦ CÔNG (ĐỦ 4 LOẠI + LỜI GIẢI CHI TIẾT) -->
+            <!-- SOẠN TỪNG CÂU HỎI CHI TIẾT -->
             <div class="border-t pt-3 space-y-3">
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <span class="text-xs font-bold text-slate-800">
-                  <i class="fa-solid fa-list-check text-blue-600 mr-1"></i> 3. Soạn Từng Câu Hỏi (4 Dạng) & Bài Chữa
+                  <i class="fa-solid fa-plus-circle text-blue-600 mr-1"></i> Thêm Câu Hỏi & Bài Chữa (LaTeX + Ảnh)
                 </span>
                 <select id="qType" onchange="toggleQuestionType()" class="text-xs border-2 border-blue-200 rounded-xl px-2.5 py-1.5 bg-blue-50 font-bold text-blue-800">
                   <option value="mcq">1. Trắc nghiệm 4 lựa chọn (A, B, C, D)</option>
-                  <option value="tf">2. Đúng / Sai (4 mệnh đề a, b, c, d)</option>
+                  <option value="tf">2. Đúng / Sai (Chấm điểm riêng từng ý a, b, c, d)</option>
                   <option value="short">3. Trả lời ngắn (Điền đáp số / từ)</option>
-                  <option value="essay">4. Tự luận (Trình bày bài giải)</option>
+                  <option value="essay">4. Tự luận (Học sinh trình bày)</option>
                 </select>
               </div>
 
-              <textarea id="qText" rows="2" placeholder="Nhập nội dung câu hỏi (Hỗ trợ gõ công thức Toán $x^2 + 2x = 0$)..." class="w-full px-3 py-2 rounded-xl border text-sm"></textarea>
+              <textarea id="qText" rows="2" placeholder="Nhập câu hỏi (Gõ LaTeX thoải mái, VD: Cho hàm số $f(x) = x^3 - 3x$, tính $f^{\prime}(2)$)..." class="w-full px-3 py-2 rounded-xl border text-sm"></textarea>
 
-              <!-- Khung 1: Trắc nghiệm 4 đáp án -->
+              <!-- 1. Trắc nghiệm 4 lựa chọn -->
               <div id="box-mcq" class="space-y-2 bg-slate-50 p-3 rounded-xl border">
                 <div class="grid grid-cols-2 gap-2">
-                  <input type="text" id="optA" placeholder="Đáp án A" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+                  <input type="text" id="optA" placeholder="Đáp án A (Hỗ trợ LaTeX)" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
                   <input type="text" id="optB" placeholder="Đáp án B" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
                   <input type="text" id="optC" placeholder="Đáp án C" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
                   <input type="text" id="optD" placeholder="Đáp án D" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
@@ -307,112 +315,217 @@
                 </div>
               </div>
 
-              <!-- Khung 2: Trắc nghiệm Đúng / Sai (4 ý a, b, c, d) -->
-              <div id="box-tf" class="hidden space-y-2 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
-                <div class="text-[11px] font-bold text-amber-800">Nhập các mệnh đề Đúng/Sai và chọn đáp án chuẩn cho từng ý:</div>
-                <div class="space-y-1.5">
-                  <div class="flex gap-2 items-center">
-                    <span class="text-xs font-bold w-5">a)</span>
-                    <input type="text" id="tf_text_0" placeholder="Mệnh đề a..." class="flex-1 px-2.5 py-1 border rounded-lg text-xs bg-white">
-                    <select id="tf_ans_0" class="border rounded-lg px-2 py-1 text-xs font-bold bg-white text-emerald-700">
+              <!-- 2. Đúng / Sai (Giáo viên tự cho điểm từng ý a, b, c, d) -->
+              <div id="box-tf" class="hidden space-y-2.5 bg-amber-50/70 p-3.5 rounded-xl border border-amber-200">
+                <div class="flex flex-wrap justify-between items-center gap-2">
+                  <span class="text-xs font-bold text-amber-900">Cấu hình câu Đúng / Sai & Điểm từng ý:</span>
+                  <button type="button" onclick="setEqualTfPoints()" class="text-[11px] bg-white border border-amber-300 px-2 py-0.5 rounded text-amber-800 font-semibold">
+                    Đặt mỗi ý 0.25đ
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  <!-- Ý a -->
+                  <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
+                    <span class="text-xs font-bold w-5 text-slate-700">a)</span>
+                    <input type="text" id="tf_text_0" placeholder="Nội dung mệnh đề a (hỗ trợ LaTeX)..." class="flex-1 px-2 py-1 border rounded text-xs">
+                    <select id="tf_ans_0" class="border rounded px-2 py-1 text-xs font-bold text-emerald-700">
                       <option value="true">Đúng</option>
                       <option value="false">Sai</option>
                     </select>
+                    <div class="flex items-center gap-1 text-xs">
+                      <span class="text-slate-500">Điểm:</span>
+                      <input type="number" id="tf_pts_0" value="0.25" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
+                    </div>
                   </div>
-                  <div class="flex gap-2 items-center">
-                    <span class="text-xs font-bold w-5">b)</span>
-                    <input type="text" id="tf_text_1" placeholder="Mệnh đề b..." class="flex-1 px-2.5 py-1 border rounded-lg text-xs bg-white">
-                    <select id="tf_ans_1" class="border rounded-lg px-2 py-1 text-xs font-bold bg-white text-emerald-700">
+                  <!-- Ý b -->
+                  <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
+                    <span class="text-xs font-bold w-5 text-slate-700">b)</span>
+                    <input type="text" id="tf_text_1" placeholder="Nội dung mệnh đề b..." class="flex-1 px-2 py-1 border rounded text-xs">
+                    <select id="tf_ans_1" class="border rounded px-2 py-1 text-xs font-bold text-emerald-700">
                       <option value="true">Đúng</option>
                       <option value="false">Sai</option>
                     </select>
+                    <div class="flex items-center gap-1 text-xs">
+                      <span class="text-slate-500">Điểm:</span>
+                      <input type="number" id="tf_pts_1" value="0.25" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
+                    </div>
                   </div>
-                  <div class="flex gap-2 items-center">
-                    <span class="text-xs font-bold w-5">c)</span>
-                    <input type="text" id="tf_text_2" placeholder="Mệnh đề c..." class="flex-1 px-2.5 py-1 border rounded-lg text-xs bg-white">
-                    <select id="tf_ans_2" class="border rounded-lg px-2 py-1 text-xs font-bold bg-white text-emerald-700">
+                  <!-- Ý c -->
+                  <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
+                    <span class="text-xs font-bold w-5 text-slate-700">c)</span>
+                    <input type="text" id="tf_text_2" placeholder="Nội dung mệnh đề c..." class="flex-1 px-2 py-1 border rounded text-xs">
+                    <select id="tf_ans_2" class="border rounded px-2 py-1 text-xs font-bold text-emerald-700">
                       <option value="false">Sai</option>
                       <option value="true">Đúng</option>
                     </select>
+                    <div class="flex items-center gap-1 text-xs">
+                      <span class="text-slate-500">Điểm:</span>
+                      <input type="number" id="tf_pts_2" value="0.5" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
+                    </div>
                   </div>
-                  <div class="flex gap-2 items-center">
-                    <span class="text-xs font-bold w-5">d)</span>
-                    <input type="text" id="tf_text_3" placeholder="Mệnh đề d..." class="flex-1 px-2.5 py-1 border rounded-lg text-xs bg-white">
-                    <select id="tf_ans_3" class="border rounded-lg px-2 py-1 text-xs font-bold bg-white text-emerald-700">
+                  <!-- Ý d -->
+                  <div class="flex flex-wrap sm:flex-nowrap gap-1.5 items-center bg-white p-2 rounded-lg border">
+                    <span class="text-xs font-bold w-5 text-slate-700">d)</span>
+                    <input type="text" id="tf_text_3" placeholder="Nội dung mệnh đề d..." class="flex-1 px-2 py-1 border rounded text-xs">
+                    <select id="tf_ans_3" class="border rounded px-2 py-1 text-xs font-bold text-emerald-700">
                       <option value="false">Sai</option>
                       <option value="true">Đúng</option>
                     </select>
+                    <div class="flex items-center gap-1 text-xs">
+                      <span class="text-slate-500">Điểm:</span>
+                      <input type="number" id="tf_pts_3" value="0.5" step="0.05" min="0" oninput="recalcTfTotalPoints()" class="w-16 px-1.5 py-1 border rounded text-center font-bold text-amber-700">
+                    </div>
                   </div>
+                </div>
+                <div class="text-[11px] text-amber-800 italic">
+                  * Học sinh chọn đúng ý nào sẽ được cộng đúng số điểm bạn đặt cho ý đó.
                 </div>
               </div>
 
-              <!-- Khung 3: Trả lời ngắn -->
+              <!-- 3. Trả lời ngắn -->
               <div id="box-short" class="hidden space-y-1.5 bg-emerald-50/60 p-3 rounded-xl border border-emerald-200">
-                <label class="block text-xs font-bold text-emerald-800">Đáp án chuẩn (Máy tự động chấm khớp không phân biệt hoa/thường):</label>
-                <input type="text" id="shortAnswerKey" placeholder="VD: 12.5 hoặc went hoặc x = 3" class="w-full px-3 py-1.5 border rounded-lg text-xs font-bold bg-white">
+                <label class="block text-xs font-bold text-emerald-800">Đáp án chuẩn (Tự động chấm khớp):</label>
+                <input type="text" id="shortAnswerKey" placeholder="VD: 12.5 hoặc had left" class="w-full px-3 py-1.5 border rounded-lg text-xs font-bold bg-white">
               </div>
 
-              <!-- Ô nhập Lời giải / Bài chữa chi tiết gửi Phụ huynh -->
-              <div>
-                <label class="block text-xs font-bold text-emerald-700 mb-1">
-                  <i class="fa-solid fa-chalkboard mr-1"></i> Bài chữa / Lời giải chi tiết câu này (Gửi Phụ huynh xem sau khi nộp):
-                </label>
-                <textarea id="qSolution" rows="2" placeholder="Nhập lời giải chi tiết, công thức áp dụng hoặc giải thích đáp án đúng..." class="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs bg-emerald-50/20"></textarea>
+              <!-- KHUNG BÀI CHỮA CỦA GIÁO VIÊN: HỖ TRỢ GÕ LATEX + UP ẢNH TỪ IPAD -->
+              <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
+                <div class="flex flex-wrap justify-between items-center gap-2">
+                  <label class="text-xs font-bold text-emerald-800">
+                    <i class="fa-solid fa-chalkboard-user mr-1"></i> Bài chữa chi tiết câu này (Gõ LaTeX hoặc Tải ảnh bài giải):
+                  </label>
+                  <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-camera mr-1"></i> Chọn ảnh bài chữa từ iPad
+                    <input type="file" id="qSolutionImageInput" accept="image/*" onchange="handleQuestionSolutionImage(event)" class="hidden">
+                  </label>
+                </div>
+
+                <textarea id="qSolution" rows="2" oninput="previewQuestionLatex()" 
+                  placeholder="Gõ lời giải LaTeX vào đây (VD: Ta có $f^{\prime}(x) = 3x^2 - 3 = 0 \Leftrightarrow x = \pm 1$...) và/hoặc đính kèm ảnh chụp viết tay bên trên." 
+                  class="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs bg-white"></textarea>
+
+                <!-- Xem trước LaTeX và Ảnh bài chữa ngay khi gõ -->
+                <div id="qSolutionLatexPreview" class="hidden p-2.5 bg-white rounded-lg border text-xs text-slate-700"></div>
+                <div id="qSolutionImagePreviewBox" class="hidden relative inline-block">
+                  <img id="qSolutionImagePreview" src="" class="max-h-36 rounded-lg border shadow-sm">
+                  <button type="button" onclick="clearQuestionSolutionImage()" class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full text-xs font-bold shadow">✕</button>
+                </div>
               </div>
 
               <div class="flex items-center justify-between pt-1">
                 <div class="flex items-center gap-2 text-xs">
-                  <span class="font-semibold text-slate-600">Điểm câu này:</span>
-                  <input type="number" id="qPoints" value="2" step="0.25" min="0.25" class="w-20 px-2 py-1 border rounded-lg text-center font-bold">
+                  <span class="font-semibold text-slate-600">Tổng điểm câu này:</span>
+                  <input type="number" id="qPoints" value="1.5" step="0.25" min="0.1" class="w-20 px-2 py-1 border rounded-lg text-center font-bold text-blue-700">
                 </div>
-                <button onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
-                  <i class="fa-solid fa-plus mr-1"></i> Thêm câu này vào đề
+                <button onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
+                  <i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề
                 </button>
               </div>
             </div>
-
-            <!-- Danh sách câu hỏi đang có trong đề nháp -->
-            <div class="border-t pt-3">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-slate-700">Danh sách câu hỏi trong đề (<span id="draftCount">0</span> câu)</span>
-                <button onclick="clearDraft()" class="text-xs text-red-500 hover:underline font-semibold">Xóa trắng đề nháp</button>
-              </div>
-              <div id="draftList" class="space-y-2 max-h-52 overflow-y-auto pr-1 text-xs"></div>
-            </div>
-
-            <button onclick="publishExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm">
-              <i class="fa-solid fa-paper-plane"></i> PHÁT ĐỀ LÊN HỆ THỐNG CHO HỌC SINH
-            </button>
           </div>
 
-          <!-- CỘT PHẢI: CHẤM BÀI, CẬP NHẬT BÀI CHỮA & QUẢN LÝ ĐỀ -->
-          <div class="lg:col-span-6 space-y-6">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-              <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h2 class="font-bold text-slate-800 text-base">
-                  <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Bài Làm Học Sinh Nộp Về (<span id="subCount">0</span>)
-                </h2>
-                <span class="text-xs text-emerald-600 font-semibold">● Tự động đồng bộ</span>
+          <!-- Cột Phải của Tab 1: Xem trước Đề đang soạn & Kho Đề đang mở -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+              <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">
+                  <i class="fa-solid fa-list-ol text-blue-600 mr-1"></i> Các Câu Đã Thêm Vào Đề (<span id="draftCount">0</span>)
+                </h3>
+                <button onclick="clearDraft()" class="text-xs text-red-500 hover:underline font-semibold">Xóa trắng</button>
               </div>
-              <div id="teacherSubmissionsList" class="space-y-4 max-h-[540px] overflow-y-auto pr-1"></div>
+              <div id="draftList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs"></div>
+
+              <button onclick="publishExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-sm">
+                <i class="fa-solid fa-paper-plane"></i> PHÁT ĐỀ LÊN HỆ THỐNG CHO HỌC SINH
+              </button>
             </div>
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-              <h2 class="font-bold text-slate-800 text-base border-b pb-2 mb-3">
-                <i class="fa-solid fa-folder-tree text-amber-500 mr-1"></i> Thư Mục Đề Đang Mở Trên Hệ Thống
+              <h2 class="font-bold text-slate-800 text-sm border-b pb-2 mb-3">
+                <i class="fa-solid fa-folder-open text-amber-500 mr-1"></i> Các Đề Đang Mở Trên Hệ Thống
               </h2>
               <div id="teacherExamsList" class="space-y-2.5"></div>
             </div>
           </div>
-
         </div>
+
+        <!-- TAB GV 2: CHẤM BÀI, GÕ LATEX & UP ẢNH CHỮA BÀI RIÊNG CHO TỪNG HỌC SINH -->
+        <div id="teacher-tab-grading" class="hidden space-y-6">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
+              <div>
+                <h2 class="font-bold text-slate-800 text-base">
+                  <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Danh Sách Bài Nộp Của Học Sinh (<span id="subCount">0</span>)
+                </h2>
+                <p class="text-xs text-slate-500">Bạn có thể chấm điểm Tự luận, gõ lời giải LaTeX hoặc <b>chụp/tải ảnh bài chữa viết tay trên iPad</b> gửi riêng cho từng em.</p>
+              </div>
+            </div>
+            <div id="teacherSubmissionsList" class="space-y-5"></div>
+          </div>
+        </div>
+
+        <!-- TAB GV 3: BẢNG QUẢN TRỊ PHỤ HUYNH & CẤP MẬT KHẨU RIÊNG TỪNG EM -->
+        <div id="teacher-tab-parents" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+            <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
+              <div>
+                <h2 class="font-bold text-lg text-slate-800">
+                  <i class="fa-solid fa-id-card-clip text-emerald-600 mr-1"></i> Bảng Quản Trị Tài Khoản & Mật Khẩu Riêng Của Từng Phụ Huynh
+                </h2>
+                <p class="text-xs text-slate-500">
+                  Mỗi học sinh có một <b>Mật khẩu Phụ huynh riêng biệt</b>. Phụ huynh nhập mật khẩu nào thì hệ thống chỉ mở đúng hồ sơ bài làm và bài chữa của con người đó.
+                </p>
+              </div>
+              <button onclick="saveAllParentAccounts()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Toàn Bộ Bảng Mật Khẩu
+              </button>
+            </div>
+
+            <!-- Thêm học sinh & mật khẩu phụ huynh mới -->
+            <div class="bg-slate-50 p-4 rounded-xl border flex flex-wrap gap-3 items-end">
+              <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Thêm Học Sinh Mới Vào Lớp</label>
+                <input type="text" id="newStudentNameInput" placeholder="Nhập Họ và Tên học sinh..." class="w-full px-3 py-2 border rounded-xl text-xs font-semibold bg-white">
+              </div>
+              <div class="w-48">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu Phụ huynh riêng</label>
+                <input type="text" id="newStudentPassInput" placeholder="VD: ph_minh01" class="w-full px-3 py-2 border rounded-xl text-xs font-bold text-emerald-700 bg-white">
+              </div>
+              <button onclick="addNewParentAccount()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl">
+                <i class="fa-solid fa-user-plus mr-1"></i> Thêm Học Sinh
+              </button>
+            </div>
+
+            <!-- Bảng danh sách Học sinh & Mật khẩu Phụ huynh -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-700 border-b">
+                    <th class="p-3 font-bold">#</th>
+                    <th class="p-3 font-bold">Họ và Tên Học Sinh</th>
+                    <th class="p-3 font-bold">Mật Khẩu Riêng Của Phụ Huynh</th>
+                    <th class="p-3 font-bold text-center">Số Bài Đã Nộp</th>
+                    <th class="p-3 font-bold text-right">Thao Tác Nhanh</th>
+                  </tr>
+                </thead>
+                <tbody id="parentAccountsTableBody" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </section>
 
     </main>
   </div>
 
+  <!-- Modal Phóng to Ảnh bài chữa -->
+  <div id="imageZoomModal" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out">
+    <img id="zoomedImage" src="" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl border-2 border-white">
+  </div>
+
   <footer class="text-center py-4 text-xs text-slate-400 border-t bg-white/60">
-    <span>EduSmart Pro - Hệ thống Giao bài & Sổ liên lạc Phụ huynh bảo mật</span>
+    <span>EduSmart Pro V4 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
     <button onclick="openTeacherLogin()" class="ml-2 text-slate-300 hover:text-blue-600 transition">
       <i class="fa-solid fa-key"></i>
     </button>
@@ -420,63 +533,85 @@
 
   <script>
     // =========================================================================
-    // CẤU HÌNH MẶC ĐỊNH & DANH SÁCH HỌC SINH TRONG LỚP
+    // CẤU HÌNH MẶC ĐỊNH & DANH SÁCH MẬT KHẨU RIÊNG TỪNG PHỤ HUYNH
     // =========================================================================
     const TEACHER_PIN = "1234"; // Mã PIN mở mục Giáo Viên
-    const DEFAULT_CLASS_ROSTER = [
-      "Khánh Lam", "Ngọc Linh", "Duy", "Thắng", "Nhật Vy", "Hoàng Anh", 
-      "Đăng Khoa", "Thiên Vũ", "Hào Quân", "Bình", "Khôi Nguyên", 
-      "Bích Thuỷ", "Thảo Quyên", "Khuất Gia Linh", "Phương Nhi", "Hưng", 
-      "Hoàng Minh", "Nhật Phượng", "Khánh My", "Hà My", "Hoàng Bá Phúc", "Khánh Ly"
-    ];
-
     const BUILTIN_CLOUD_API = "https://jsonblob.com/api/jsonBlob";
     let defaultBlobId = localStorage.getItem('edusmart_blob_id') || "";
-    let isParentUnlocked = false;
+
+    // Danh sách Học sinh kèm Mật khẩu riêng mặc định cho từng Phụ huynh
+    const INITIAL_PARENT_ACCOUNTS = [
+      { name: "Khánh Lam", pass: "kl01" },
+      { name: "Ngọc Linh", pass: "nl02" },
+      { name: "Duy", pass: "duy03" },
+      { name: "Thắng", pass: "thang04" },
+      { name: "Nhật Vy", pass: "nv05" },
+      { name: "Hoàng Anh", pass: "ha06" },
+      { name: "Đăng Khoa", pass: "dk07" },
+      { name: "Thiên Vũ", pass: "tv08" },
+      { name: "Hào Quân", pass: "hq09" },
+      { name: "Bình", pass: "binh10" },
+      { name: "Khôi Nguyên", pass: "kn11" },
+      { name: "Bích Thuỷ", pass: "bt12" },
+      { name: "Thảo Quyên", pass: "tq13" },
+      { name: "Khuất Gia Linh", pass: "kgl14" },
+      { name: "Phương Nhi", pass: "pn15" },
+      { name: "Hưng", pass: "hung16" },
+      { name: "Hoàng Minh", pass: "hm17" },
+      { name: "Nhật Phượng", pass: "np18" },
+      { name: "Khánh My", pass: "km19" },
+      { name: "Hà My", pass: "hmy20" },
+      { name: "Hoàng Bá Phúc", pass: "hbp21" },
+      { name: "Khánh Ly", pass: "kly22" }
+    ];
 
     let appData = {
-      parentPassword: localStorage.getItem('edusmart_parent_pass') || "ph1234",
+      parentAccounts: [...INITIAL_PARENT_ACCOUNTS],
       exams: [
         {
-          id: "exam_demo_pro_1",
-          title: "Đề Kiểm Tra Đánh Giá Năng Lực (Đủ 4 Dạng Câu Hỏi)",
+          id: "exam_v4_demo",
+          title: "Đề Kiểm Tra Đánh Giá Năng Lực (Chuẩn 4 Dạng & Điểm Từng Ý)",
           subject: "Tổng hợp",
-          time: 20,
+          time: 25,
           createdAt: "Hôm nay",
-          roster: [...DEFAULT_CLASS_ROSTER],
+          roster: INITIAL_PARENT_ACCOUNTS.map(a => a.name),
           questions: [
             {
               type: "mcq",
               text: "Tập nghiệm của phương trình bậc hai $x^2 - 5x + 6 = 0$ là:",
               options: ["$S = \\{1; 6\\}$", "$S = \\{2; 3\\}$", "$S = \\{-2; -3\\}$", "$S = \\emptyset$"],
               correct: 1,
-              points: 2.5,
-              solution: "Ta có $\\Delta = (-5)^2 - 4 \\cdot 1 \\cdot 6 = 1 > 0$. Phương trình có 2 nghiệm phân biệt $x_1 = 2$ và $x_2 = 3$. Chọn đáp án B."
+              points: 2,
+              solution: "Ta có $\\Delta = (-5)^2 - 4 \\cdot 1 \\cdot 6 = 1 > 0$. Phương trình có 2 nghiệm phân biệt $x_1 = 2$ và $x_2 = 3$. Chọn đáp án B.",
+              solutionImage: ""
             },
             {
               type: "tf",
-              text: "Cho hàm số $y = f(x) = x^3 - 3x + 2$. Xét tính Đúng/Sai của các mệnh đề sau:",
+              text: "Cho hàm số $y = f(x) = x^3 - 3x + 2$. Xét tính Đúng/Sai của các mệnh đề sau (Mỗi ý đúng được tính điểm riêng):",
               statements: [
-                { text: "Đạo hàm của hàm số là $f^{\\prime}(x) = 3x^2 - 3$.", answer: true },
-                { text: "Hàm số đạt cực đại tại $x = -1$ và giá trị cực đại $y_{CĐ} = 4$.", answer: true },
-                { text: "Hàm số đồng biến trên khoảng $(-1; 1)$.", answer: false },
-                { text: "Đồ thị hàm số cắt trục tung tại điểm có tung độ bằng $0$.", answer: false }
+                { text: "Đạo hàm của hàm số là $f^{\\prime}(x) = 3x^2 - 3$.", answer: true, points: 0.5 },
+                { text: "Hàm số đạt cực đại tại $x = -1$ và $y_{CĐ} = 4$.", answer: true, points: 0.5 },
+                { text: "Hàm số đồng biến trên khoảng $(-1; 1)$.", answer: false, points: 1.0 },
+                { text: "Phương trình tiếp tuyến của đồ thị tại điểm có hoành độ $x_0 = 2$ có hệ số góc bằng $9$.", answer: true, points: 1.0 }
               ],
-              points: 4,
-              solution: "a) Đúng vì $(x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\nb) Đúng vì $f^{\\prime}(-1) = 0$ và đổi dấu từ + sang -, $f(-1) = 4$.\nc) Sai vì trên $(-1; 1)$ có $f^{\\prime}(x) < 0$ nên hàm nghịch biến.\nd) Sai vì tại $x = 0$ thì $y = 2$."
+              points: 3,
+              solution: "Lời giải chi tiết:\n- Ý a) Đúng vì $f^{\\prime}(x) = (x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\n- Ý b) Đúng vì $f^{\\prime}(-1) = 0$ và $f(-1) = (-1)^3 - 3(-1) + 2 = 4$.\n- Ý c) Sai vì trên $(-1; 1)$ ta có $f^{\\prime}(x) < 0$ nên hàm số nghịch biến.\n- Ý d) Đúng vì hệ số góc tiếp tuyến tại $x_0 = 2$ là $k = f^{\\prime}(2) = 3 \\cdot 2^2 - 3 = 9$.",
+              solutionImage: ""
             },
             {
               type: "short",
               text: "Điền dạng đúng của động từ trong ngoặc: 'By the time we arrived, the train (leave) ___ already.' (Chỉ gõ 2 từ đáp án)",
               correctText: "had left",
-              points: 1.5,
-              solution: "Cấu trúc 'By the time + Quá khứ đơn, mệnh đề chính chia Quá khứ hoàn thành (had + V_p2)'. Do đó đáp án đúng là: had left."
+              points: 2,
+              solution: "Cấu trúc 'By the time + QKĐ, mệnh đề chính chia Quá khứ hoàn thành (had + V_p2)'. Đáp án: had left.",
+              solutionImage: ""
             },
             {
               type: "essay",
-              text: "Trình bày chi tiết cách tìm tập xác định của hàm số $y = \\frac{\\sqrt{2x - 4}}{x - 3}$ hoặc đặt 2 câu điều kiện loại 2 bằng Tiếng Anh.",
-              points: 2,
-              solution: "Điều kiện xác định:\n1) Biểu thức trong căn không âm: $2x - 4 \\ge 0 \\Leftrightarrow x \\ge 2$.\n2) Mẫu số khác 0: $x - 3 \\ne 0 \\Leftrightarrow x \\ne 3$.\nVậy tập xác định là $D = [2; +\\infty) \\setminus \\{3\\}$."
+              text: "Tìm tất cả các giá trị thực của tham số $m$ để phương trình $x^2 - 2mx + m^2 - 1 = 0$ có hai nghiệm phân biệt $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$.",
+              points: 3,
+              solution: "Ta có $\\Delta^{\\prime} = m^2 - (m^2 - 1) = 1 > 0, \\forall m \\in \\mathbb{R}$.\nTheo hệ thức Vi-ét: $x_1 + x_2 = 2m$ và $x_1 x_2 = m^2 - 1$.\nKhi đó: $x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1 x_2 = 4m^2 - 2(m^2 - 1) = 2m^2 + 2$.\nYêu cầu bài toán $\\Leftrightarrow 2m^2 + 2 = 10 \\Leftrightarrow m^2 = 4 \\Leftrightarrow m = \\pm 2$.",
+              solutionImage: ""
             }
           ]
         }
@@ -485,6 +620,9 @@
     };
 
     let draftQuestions = [];
+    let currentDraftSolutionImage = "";
+    let pendingSubmissionImages = {}; // Lưu ảnh bài chữa GV tải lên cho từng bài nộp
+    let loggedInParentStudent = null; // Tên học sinh của Phụ huynh đang đăng nhập (`__ALL__` nếu là GV)
     let pendingExamId = null;
     let currentExam = null;
     let currentStudentName = "";
@@ -492,12 +630,17 @@
     let secondsRemaining = 0;
 
     window.onload = async () => {
-      const savedLocal = localStorage.getItem('edusmart_pro_data');
+      const savedLocal = localStorage.getItem('edusmart_v4_data');
       if (savedLocal) {
-        try { appData = JSON.parse(savedLocal); } catch(e) {}
+        try {
+          const parsed = JSON.parse(savedLocal);
+          appData = { ...appData, ...parsed };
+          if (!appData.parentAccounts || appData.parentAccounts.length === 0) {
+            appData.parentAccounts = [...INITIAL_PARENT_ACCOUNTS];
+          }
+        } catch(e) {}
       }
-      if (!appData.parentPassword) appData.parentPassword = "ph1234";
-      resetDefaultRoster();
+      fillRosterFromParentAccounts();
       renderAll();
       await initDatabase();
 
@@ -514,12 +657,40 @@
       }
     }
 
-    function resetDefaultRoster() {
-      const rosterInput = document.getElementById('examRoster');
-      if (rosterInput) rosterInput.value = DEFAULT_CLASS_ROSTER.join(", ");
+    function zoomImage(src) {
+      if (!src) return;
+      document.getElementById('zoomedImage').src = src;
+      document.getElementById('imageZoomModal').classList.remove('hidden');
     }
 
-    // ==================== KẾT NỐI DATABASE TỰ ĐỘNG ====================
+    // Hàm nén ảnh tự động trên iPad để gửi qua Cloud mượt mà
+    function compressImageFile(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 900;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ==================== ĐỒNG BỘ DATABASE CLOUD ====================
     async function initDatabase() {
       const urlParams = new URLSearchParams(window.location.search);
       const roomParam = urlParams.get('room');
@@ -556,17 +727,19 @@
           if (remoteData) {
             appData.exams = remoteData.exams || [];
             appData.submissions = remoteData.submissions || [];
-            if (remoteData.parentPassword) appData.parentPassword = remoteData.parentPassword;
-            localStorage.setItem('edusmart_pro_data', JSON.stringify(appData));
+            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
+              appData.parentAccounts = remoteData.parentAccounts;
+            }
+            localStorage.setItem('edusmart_v4_data', JSON.stringify(appData));
             renderAll();
           }
-          if (showAlert) alert("Đã đồng bộ đề thi, bài nộp và bài chữa mới nhất!");
+          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
         }
       } catch (e) {}
     }
 
     async function syncToCloud() {
-      localStorage.setItem('edusmart_pro_data', JSON.stringify(appData));
+      localStorage.setItem('edusmart_v4_data', JSON.stringify(appData));
       if (!defaultBlobId) {
         await initDatabase();
         return;
@@ -580,37 +753,14 @@
       } catch (e) {}
     }
 
-    // ==================== PHÂN QUYỀN & MẬT KHẨU PHỤ HUYNH / GIÁO VIÊN ====================
+    // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH CÁ NHÂN HÓA ====================
     function openTeacherLogin() {
-      const pin = prompt("🔒 Khu vực Giáo Viên.\nNhập mã PIN để mở bảng điều khiển (Mặc định: 1234):");
+      const pin = prompt("🔒 Khu vực Giáo Viên.\nNhập mã PIN quản trị (Mặc định: 1234):");
       if (pin === null) return;
       if (pin.trim() === TEACHER_PIN) {
         switchRole('teacher');
       } else {
-        alert("Sai mã PIN!");
-      }
-    }
-
-    async function changeParentPassword() {
-      const newPass = prompt("Nhập mật khẩu mới dành cho Phụ huynh tra cứu điểm & bài chữa:", appData.parentPassword || "ph1234");
-      if (!newPass || !newPass.trim()) return;
-      appData.parentPassword = newPass.trim();
-      localStorage.setItem('edusmart_parent_pass', appData.parentPassword);
-      document.getElementById('displayParentPass').innerText = appData.parentPassword;
-      await syncToCloud();
-      alert("Đã đổi mật khẩu Phụ huynh thành: " + appData.parentPassword);
-    }
-
-    function unlockParentView() {
-      const entered = document.getElementById('parentPassInput').value.trim();
-      const targetPass = appData.parentPassword || "ph1234";
-      if (entered === targetPass || entered === TEACHER_PIN) {
-        isParentUnlocked = true;
-        document.getElementById('parentLockScreen').classList.add('hidden');
-        document.getElementById('parentUnlockedContent').classList.remove('hidden');
-        renderParentView();
-      } else {
-        alert("Mật khẩu Phụ huynh chưa chính xác! Vui lòng liên hệ Giáo viên để nhận mật khẩu.");
+        alert("Mã PIN không chính xác!");
       }
     }
 
@@ -628,19 +778,212 @@
       renderAll();
     }
 
-    // ==================== SOẠN CÂU HỎI 4 DẠNG & AI TÙY CHỌN ====================
+    function switchTeacherTab(tabName) {
+      ['exams', 'grading', 'parents'].forEach(t => {
+        document.getElementById('teacher-tab-' + t).classList.add('hidden');
+        document.getElementById('ttab-' + t).className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white";
+      });
+      document.getElementById('teacher-tab-' + tabName).classList.remove('hidden');
+      document.getElementById('ttab-' + tabName).className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow";
+      renderAll();
+    }
+
+    function unlockParentView() {
+      const enteredPass = document.getElementById('parentPassInput').value.trim();
+      if (!enteredPass) {
+        alert("Vui lòng nhập mật khẩu riêng của Phụ huynh!");
+        return;
+      }
+
+      // Nếu nhập mã Giáo viên thì mở xem toàn bộ lớp
+      if (enteredPass === TEACHER_PIN) {
+        loggedInParentStudent = "__ALL__";
+        document.getElementById('parentLockScreen').classList.add('hidden');
+        document.getElementById('parentUnlockedContent').classList.remove('hidden');
+        document.getElementById('parentStudentBanner').innerText = "Chế độ Giáo Viên: Xem tất cả học sinh";
+        renderParentView();
+        return;
+      }
+
+      // Tìm học sinh khớp với mật khẩu Phụ huynh vừa nhập
+      const matchedAccount = (appData.parentAccounts || []).find(
+        acc => acc.pass.toLowerCase() === enteredPass.toLowerCase()
+      );
+
+      if (matchedAccount) {
+        loggedInParentStudent = matchedAccount.name;
+        document.getElementById('parentLockScreen').classList.add('hidden');
+        document.getElementById('parentUnlockedContent').classList.remove('hidden');
+        document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
+        renderParentView();
+      } else {
+        alert("Mật khẩu không đúng! Mỗi Phụ huynh có một mật khẩu riêng do Giáo viên cấp để bảo mật điểm số của con.");
+      }
+    }
+
+    function logoutParent() {
+      loggedInParentStudent = null;
+      document.getElementById('parentPassInput').value = '';
+      document.getElementById('parentUnlockedContent').classList.add('hidden');
+      document.getElementById('parentLockScreen').classList.remove('hidden');
+    }
+
+    // ==================== BẢNG QUẢN TRỊ PHỤ HUYNH (TRONG MỤC GIÁO VIÊN) ====================
+    function fillRosterFromParentAccounts() {
+      const input = document.getElementById('examRoster');
+      if (input) {
+        input.value = (appData.parentAccounts || []).map(a => a.name).join(", ");
+      }
+    }
+
+    function renderParentAccountsTable() {
+      const tbody = document.getElementById('parentAccountsTableBody');
+      if (!tbody) return;
+      const accounts = appData.parentAccounts || [];
+      const subs = appData.submissions || [];
+
+      tbody.innerHTML = accounts.map((acc, idx) => {
+        const subCount = subs.filter(s => s.studentName.toLowerCase() === acc.name.toLowerCase()).length;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-bold text-slate-400">${idx + 1}</td>
+            <td class="p-3">
+              <input type="text" id="p_name_${idx}" value="${acc.name}" class="px-2.5 py-1.5 border rounded-lg font-bold text-slate-800 w-full max-w-[200px]">
+            </td>
+            <td class="p-3">
+              <input type="text" id="p_pass_${idx}" value="${acc.pass}" class="px-2.5 py-1.5 border border-emerald-300 bg-emerald-50/40 rounded-lg font-mono font-bold text-emerald-800 w-36">
+            </td>
+            <td class="p-3 text-center">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${subCount > 0 ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}">
+                ${subCount} bài
+              </span>
+            </td>
+            <td class="p-3 text-right space-x-1 whitespace-nowrap">
+              <button onclick="copyInviteForParent(${idx})" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Copy tin nhắn gửi Phụ huynh">
+                <i class="fa-regular fa-copy mr-1"></i> Copy gửi PH
+              </button>
+              <button onclick="removeParentAccount(${idx})" class="text-red-400 hover:text-red-600 px-2 py-1.5">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function saveAllParentAccounts() {
+      const accounts = appData.parentAccounts || [];
+      const updated = [];
+      for (let i = 0; i < accounts.length; i++) {
+        const nameEl = document.getElementById('p_name_' + i);
+        const passEl = document.getElementById('p_pass_' + i);
+        if (nameEl && passEl && nameEl.value.trim()) {
+          updated.push({
+            name: nameEl.value.trim(),
+            pass: passEl.value.trim() || ("ph" + (i + 1))
+          });
+        }
+      }
+      appData.parentAccounts = updated;
+      fillRosterFromParentAccounts();
+      renderAll();
+      await syncToCloud();
+      alert("✔ Đã lưu toàn bộ danh sách Học sinh & Mật khẩu riêng của từng Phụ huynh!");
+    }
+
+    async function addNewParentAccount() {
+      const name = document.getElementById('newStudentNameInput').value.trim();
+      const pass = document.getElementById('newStudentPassInput').value.trim();
+      if (!name || !pass) {
+        alert("Vui lòng nhập cả Họ tên học sinh và Mật khẩu riêng cho Phụ huynh!");
+        return;
+      }
+      appData.parentAccounts.push({ name, pass });
+      document.getElementById('newStudentNameInput').value = '';
+      document.getElementById('newStudentPassInput').value = '';
+      fillRosterFromParentAccounts();
+      renderAll();
+      await syncToCloud();
+    }
+
+    async function removeParentAccount(idx) {
+      if (!confirm("Xóa học sinh này khỏi bảng quản trị Phụ huynh?")) return;
+      appData.parentAccounts.splice(idx, 1);
+      fillRosterFromParentAccounts();
+      renderAll();
+      await syncToCloud();
+    }
+
+    function copyInviteForParent(idx) {
+      const name = document.getElementById('p_name_' + idx).value.trim();
+      const pass = document.getElementById('p_pass_' + idx).value.trim();
+      const url = window.location.href;
+      const msg = `Kính gửi Phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, nhận xét và bài chữa chi tiết của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của Phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục Phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
+      navigator.clipboard.writeText(msg).then(() => {
+        alert(`📋 Đã copy tin nhắn kèm mật khẩu riêng (${pass}) của Phụ huynh em ${name}! Bạn có thể dán gửi qua Zalo ngay.`);
+      }).catch(() => {
+        prompt("Copy tin nhắn dưới đây gửi Phụ huynh:", msg);
+      });
+    }
+
+    // ==================== SOẠN CÂU HỎI, ĐIỂM TỪNG Ý ĐÚNG/SAI, LATEX & ẢNH BÀI CHỮA ====================
     function toggleQuestionType() {
       const type = document.getElementById('qType').value;
       document.getElementById('box-mcq').classList.toggle('hidden', type !== 'mcq');
       document.getElementById('box-tf').classList.toggle('hidden', type !== 'tf');
       document.getElementById('box-short').classList.toggle('hidden', type !== 'short');
+      if (type === 'tf') recalcTfTotalPoints();
+    }
+
+    function recalcTfTotalPoints() {
+      let sum = 0;
+      for (let i = 0; i < 4; i++) {
+        sum += parseFloat(document.getElementById('tf_pts_' + i).value) || 0;
+      }
+      document.getElementById('qPoints').value = Math.round(sum * 100) / 100;
+    }
+
+    function setEqualTfPoints() {
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('tf_pts_' + i).value = 0.25;
+      }
+      recalcTfTotalPoints();
+    }
+
+    function previewQuestionLatex() {
+      const val = document.getElementById('qSolution').value.trim();
+      const box = document.getElementById('qSolutionLatexPreview');
+      if (!val) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = `<div class="text-[10px] font-bold text-emerald-700 uppercase mb-1">Xem trước hiển thị LaTeX:</div><div>${val.replace(/\n/g, '<br>')}</div>`;
+      triggerMathJax();
+    }
+
+    function handleQuestionSolutionImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressImageFile(file, (base64) => {
+        currentDraftSolutionImage = base64;
+        document.getElementById('qSolutionImagePreview').src = base64;
+        document.getElementById('qSolutionImagePreviewBox').classList.remove('hidden');
+      });
+    }
+
+    function clearQuestionSolutionImage() {
+      currentDraftSolutionImage = "";
+      document.getElementById('qSolutionImageInput').value = "";
+      document.getElementById('qSolutionImagePreviewBox').classList.add('hidden');
     }
 
     function addQuestionToDraft() {
       const type = document.getElementById('qType').value;
       const text = document.getElementById('qText').value.trim();
-      const points = parseFloat(document.getElementById('qPoints').value) || 2;
-      const solution = document.getElementById('qSolution').value.trim() || "Xem hướng dẫn chi tiết của Giáo viên.";
+      let points = parseFloat(document.getElementById('qPoints').value) || 1;
+      const solution = document.getElementById('qSolution').value.trim() || "Xem lời giải chi tiết của Giáo viên.";
+      const solutionImage = currentDraftSolutionImage;
 
       if (!text) { alert("Vui lòng nhập nội dung câu hỏi!"); return; }
 
@@ -650,176 +993,138 @@
         const c = document.getElementById('optC').value.trim() || "Đáp án C";
         const d = document.getElementById('optD').value.trim() || "Đáp án D";
         const correct = parseInt(document.getElementById('qCorrect').value);
-        draftQuestions.push({ type: 'mcq', text, options: [a, b, c, d], correct, points, solution });
+        draftQuestions.push({ type: 'mcq', text, options: [a, b, c, d], correct, points, solution, solutionImage });
         ['optA','optB','optC','optD'].forEach(id => document.getElementById(id).value = '');
       } else if (type === 'tf') {
-        const statements = [0, 1, 2, 3].map(i => ({
-          text: document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`,
-          answer: document.getElementById('tf_ans_' + i).value === 'true'
-        }));
-        draftQuestions.push({ type: 'tf', text, statements, points, solution });
+        let totalTfPts = 0;
+        const statements = [0, 1, 2, 3].map(i => {
+          const itemPts = parseFloat(document.getElementById('tf_pts_' + i).value) || 0.25;
+          totalTfPts += itemPts;
+          return {
+            text: document.getElementById('tf_text_' + i).value.trim() || `Mệnh đề ${['a','b','c','d'][i]}`,
+            answer: document.getElementById('tf_ans_' + i).value === 'true',
+            points: itemPts
+          };
+        });
+        points = Math.round(totalTfPts * 100) / 100;
+        draftQuestions.push({ type: 'tf', text, statements, points, solution, solutionImage });
         [0,1,2,3].forEach(i => document.getElementById('tf_text_' + i).value = '');
       } else if (type === 'short') {
         const correctText = document.getElementById('shortAnswerKey').value.trim();
         if (!correctText) { alert("Vui lòng nhập đáp án chuẩn cho câu trả lời ngắn!"); return; }
-        draftQuestions.push({ type: 'short', text, correctText, points, solution });
+        draftQuestions.push({ type: 'short', text, correctText, points, solution, solutionImage });
         document.getElementById('shortAnswerKey').value = '';
       } else {
-        draftQuestions.push({ type: 'essay', text, points, solution });
+        draftQuestions.push({ type: 'essay', text, points, solution, solutionImage });
       }
 
       document.getElementById('qText').value = '';
       document.getElementById('qSolution').value = '';
+      document.getElementById('qSolutionLatexPreview').classList.add('hidden');
+      clearQuestionSolutionImage();
       renderDraftQuestions();
     }
 
-    // Tạo câu hỏi tự động trên web dựa theo yêu cầu Giáo viên gõ vào
     function generateSmartLocalAI() {
       const promptText = document.getElementById('aiCustomPrompt').value.trim();
-      const topicLabel = promptText || "Kiến thức trọng tâm";
-      const isEng = /anh|english|grammar|tense|vocabulary|word|thì|câu điều kiện/i.test(promptText);
-
-      if (isEng) {
-        draftQuestions.push(
-          {
-            type: 'mcq',
-            text: `[${topicLabel}] Choose the best answer: If she ___ harder, she would pass the exam easily.`,
-            options: ["studies", "studied", "had studied", "would study"],
-            correct: 1,
-            points: 2,
-            solution: "Câu điều kiện loại 2 (mệnh đề chính có 'would + V'), mệnh đề If chia ở thì Quá khứ đơn (studied)."
-          },
-          {
-            type: 'tf',
-            text: `[${topicLabel}] Xét tính Đúng (True) hoặc Sai (False) về mặt ngữ pháp của các câu sau:`,
-            statements: [
-              { text: "She has lived in Hanoi for 5 years.", answer: true },
-              { text: "They didn't went to school yesterday.", answer: false },
-              { text: "Neither the teacher nor the students are in the classroom.", answer: true },
-              { text: "I look forward to hear from you soon.", answer: false }
-            ],
-            points: 4,
-            solution: "a) Đúng (Hiện tại hoàn thành với for + khoảng thời gian).\nb) Sai (Sau trợ động từ didn't phải dùng động từ nguyên thể 'go').\nc) Đúng (Chia động từ theo chủ ngữ gần nhất 'the students').\nd) Sai (Cấu trúc look forward to + V-ing: hearing)."
-          },
-          {
-            type: 'short',
-            text: `[${topicLabel}] Điền giới từ thích hợp vào chỗ trống: 'My sister is very interested ___ learning Mathematics.' (Chỉ điền 1 từ)`,
-            correctText: "in",
-            points: 2,
-            solution: "Cấu trúc cố định: to be interested in + N/V-ing (quan tâm, yêu thích cái gì)."
-          },
-          {
-            type: 'essay',
-            text: `[${topicLabel}] Viết lại câu sau sao cho nghĩa không đổi: 'The last time I saw him was 3 years ago.' -> 'I haven't...'`,
-            points: 2,
-            solution: "Đáp án chuẩn: I haven't seen him for 3 years."
-          }
-        );
-      } else {
-        draftQuestions.push(
-          {
-            type: 'mcq',
-            text: `[${topicLabel}] Cho hàm số $y = x^3 - 3x^2 + 2$. Giá trị cực tiểu của hàm số bằng:`,
-            options: ["$y = 2$", "$y = -2$", "$y = 0$", "$y = 4$"],
-            correct: 1,
-            points: 2,
-            solution: "Ta có $y^{\\prime} = 3x^2 - 6x = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$. Hàm số đạt cực tiểu tại $x = 2$, suy ra $y_{CT} = 2^3 - 3 \\cdot 2^2 + 2 = -2$."
-          },
-          {
-            type: 'tf',
-            text: `[${topicLabel}] Cho phương trình $x^2 - 2mx + m^2 - 1 = 0$ ($m$ là tham số). Xét tính Đúng/Sai của các mệnh đề:`,
-            statements: [
-              { text: "Biệt thức $\\Delta^{\\prime}$ của phương trình luôn bằng $1$ với mọi $m$.", answer: true },
-              { text: "Phương trình luôn có 2 nghiệm phân biệt là $x = m - 1$ và $x = m + 1$.", answer: true },
-              { text: "Khi $m = 0$, tổng hai nghiệm của phương trình bằng $2$.", answer: false },
-              { text: "Tích hai nghiệm của phương trình là $x_1 x_2 = m^2 - 1$.", answer: true }
-            ],
-            points: 4,
-            solution: "a) Đúng vì $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1 > 0$.\nb) Đúng theo công thức nghiệm $x = m \\pm 1$.\nc) Sai vì theo Vi-ét $x_1 + x_2 = 2m = 0$ khi $m = 0$.\nd) Đúng theo hệ thức Vi-ét $x_1 x_2 = c/a = m^2 - 1$."
-          },
-          {
-            type: 'short',
-            text: `[${topicLabel}] Tìm giá trị lớn nhất của hàm số $y = -x^2 + 4x + 5$ trên $\\mathbb{R}$ (Chỉ điền số):`,
-            correctText: "9",
-            points: 2,
-            solution: "Ta có $y = -(x - 2)^2 + 9 \\le 9$ với mọi $x \\in \\mathbb{R}$. Dấu bằng xảy ra khi $x = 2$. Vậy GTLN bằng 9."
-          },
-          {
-            type: 'essay',
-            text: `[${topicLabel}] Giải và trình bày chi tiết bài toán theo yêu cầu: Tìm $m$ để hai nghiệm $x_1, x_2$ của phương trình $x^2 - 2mx + m^2 - 1 = 0$ thỏa mãn $x_1^2 + x_2^2 = 10$.`,
-            points: 2,
-            solution: "Theo Vi-ét: $x_1 + x_2 = 2m$ và $x_1 x_2 = m^2 - 1$.\nTa có $x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1 x_2 = 4m^2 - 2(m^2 - 1) = 2m^2 + 2$.\nTheo đề bài: $2m^2 + 2 = 10 \\Leftrightarrow m^2 = 4 \\Leftrightarrow m = \\pm 2$."
-          }
-        );
-      }
+      const topicLabel = promptText || "Chuyên đề nâng cao";
+      draftQuestions.push(
+        {
+          type: 'mcq',
+          text: `[${topicLabel}] Cho hàm số $y = x^3 - 3x^2 + 2$. Giá trị cực tiểu của hàm số bằng:`,
+          options: ["$y = 2$", "$y = -2$", "$y = 0$", "$y = 4$"],
+          correct: 1,
+          points: 2,
+          solution: "Ta có $y^{\\prime} = 3x^2 - 6x = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$. Hàm số đạt cực tiểu tại $x = 2 \\Rightarrow y_{CT} = -2$.",
+          solutionImage: ""
+        },
+        {
+          type: 'tf',
+          text: `[${topicLabel}] Xét phương trình $x^2 - 2mx + m^2 - 1 = 0$. Xét tính Đúng/Sai của các mệnh đề sau:`,
+          statements: [
+            { text: "Biệt thức $\\Delta^{\\prime} = 1 > 0$ với mọi $m$.", answer: true, points: 0.5 },
+            { text: "Phương trình luôn có 2 nghiệm là $x = m - 1$ và $x = m + 1$.", answer: true, points: 0.5 },
+            { text: "Khi $m = 0$, tổng hai nghiệm bằng $2$.", answer: false, points: 1.0 },
+            { text: "Để $x_1^2 + x_2^2 = 10$ thì $m = \\pm 2$.", answer: true, points: 1.0 }
+          ],
+          points: 3,
+          solution: "a) Đúng (0.5đ): $\\Delta^{\\prime} = (-m)^2 - (m^2 - 1) = 1$.\nb) Đúng (0.5đ): Nghiệm $x = m \\pm 1$.\nc) Sai (1.0đ): Khi $m = 0$ thì $x_1 + x_2 = 2m = 0$.\nd) Đúng (1.0đ): $x_1^2 + x_2^2 = (x_1+x_2)^2 - 2x_1x_2 = 2m^2 + 2 = 10 \\Leftrightarrow m = \\pm 2$.",
+          solutionImage: ""
+        },
+        {
+          type: 'short',
+          text: `[${topicLabel}] Tìm giá trị lớn nhất của hàm số $y = -x^2 + 4x + 5$ trên $\\mathbb{R}$:`,
+          correctText: "9",
+          points: 2,
+          solution: "Ta có $y = -(x - 2)^2 + 9 \\le 9, \\forall x \\in \\mathbb{R}$. Vậy GTLN bằng $9$ tại $x = 2$.",
+          solutionImage: ""
+        }
+      );
       renderDraftQuestions();
-      alert("Đã sinh bộ câu hỏi (Trắc nghiệm, Đúng/Sai, Trả lời ngắn, Tự luận) kèm bài chữa chi tiết!");
     }
 
-    // Copy lệnh Prompt chuẩn để giáo viên dán vào Gemini / ChatGPT
     function copyAIPromptToClipboard() {
-      const userReq = document.getElementById('aiCustomPrompt').value.trim() || "Tạo 2 câu trắc nghiệm, 1 câu đúng sai, 1 câu trả lời ngắn, 1 câu tự luận Toán/Tiếng Anh";
-      const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi chuyên nghiệp. Dựa trên yêu cầu sau của tôi:
+      const userReq = document.getElementById('aiCustomPrompt').value.trim() || "Tạo đề kiểm tra gồm Trắc nghiệm, Đúng/Sai (tính điểm riêng từng ý), Trả lời ngắn và Tự luận";
+      const fullPrompt = `Hãy đóng vai trợ lý soạn đề thi. Dựa trên yêu cầu của tôi:
 "${userReq}"
 
-Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài chữa) và trả về ĐÚNG ĐỊNH DẠNG MẢNG JSON dưới đây (không giải thích thêm ngoài khối JSON, dùng ký hiệu \\prime thay cho dấu ' trong công thức LaTeX nếu có):
+Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết chữ nào bên ngoài khối JSON, công thức Toán bọc trong dấu $...$ và dùng \\prime thay cho dấu '):
 
 [
   {
     "type": "mcq",
-    "text": "Nội dung câu hỏi trắc nghiệm 4 lựa chọn?",
+    "text": "Nội dung câu hỏi trắc nghiệm?",
     "options": ["Phương án A", "Phương án B", "Phương án C", "Phương án D"],
     "correct": 0,
     "points": 2,
-    "solution": "Lời giải chi tiết vì sao chọn đáp án đúng"
+    "solution": "Lời giải chi tiết có LaTeX"
   },
   {
     "type": "tf",
-    "text": "Nội dung câu hỏi Đúng/Sai gồm 4 mệnh đề:",
+    "text": "Nội dung câu hỏi Đúng/Sai:",
     "statements": [
-      { "text": "Mệnh đề a", "answer": true },
-      { "text": "Mệnh đề b", "answer": false },
-      { "text": "Mệnh đề c", "answer": true },
-      { "text": "Mệnh đề d", "answer": false }
+      { "text": "Mệnh đề a", "answer": true, "points": 0.5 },
+      { "text": "Mệnh đề b", "answer": false, "points": 0.5 },
+      { "text": "Mệnh đề c", "answer": true, "points": 1.0 },
+      { "text": "Mệnh đề d", "answer": false, "points": 1.0 }
     ],
-    "points": 4,
+    "points": 3,
     "solution": "Giải thích chi tiết từng mệnh đề a, b, c, d"
   },
   {
     "type": "short",
-    "text": "Nội dung câu hỏi trả lời ngắn (điền số hoặc từ)?",
-    "correctText": "Đáp án ngắn gọn",
+    "text": "Câu hỏi trả lời ngắn?",
+    "correctText": "Đáp số",
     "points": 2,
-    "solution": "Cách tính ra đáp số"
+    "solution": "Lời giải chi tiết"
   },
   {
     "type": "essay",
-    "text": "Nội dung câu hỏi tự luận?",
-    "points": 2,
-    "solution": "Hướng dẫn chấm và lời giải chi tiết"
+    "text": "Câu hỏi tự luận?",
+    "points": 3,
+    "solution": "Hướng dẫn chấm chi tiết"
   }
 ]`;
-
       navigator.clipboard.writeText(fullPrompt).then(() => {
-        alert("📋 Đã Copy lệnh AI thành công!\n\nBây giờ bạn chỉ cần dán (Paste) vào cuộc trò chuyện Gemini này (hoặc ChatGPT), sau đó copy kết quả JSON dán vào ô B2 bên dưới!");
+        alert("📋 Đã Copy lệnh AI chuẩn!\nHãy dán vào Gemini hoặc ChatGPT, sau đó copy đoạn JSON kết quả dán vào ô B2 bên dưới.");
       }).catch(() => {
-        prompt("Hãy copy đoạn lệnh dưới đây dán vào Gemini/ChatGPT:", fullPrompt);
+        prompt("Copy lệnh dưới đây:", fullPrompt);
       });
     }
 
     function importAIJsonQuestions() {
       let raw = document.getElementById('aiJsonPasteBox').value.trim();
-      if (!raw) { alert("Vui lòng dán đoạn mã từ AI vào ô trước!"); return; }
+      if (!raw) return;
       raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
       try {
         const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) throw new Error("Không phải danh sách câu hỏi");
+        if (!Array.isArray(parsed)) throw new Error("Format error");
         draftQuestions.push(...parsed);
         document.getElementById('aiJsonPasteBox').value = '';
         renderDraftQuestions();
-        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi kèm bài chữa vào đề thi!`);
+        alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
       } catch (e) {
-        alert("Định dạng mã chưa chuẩn JSON. Hãy copy đúng phần nằm trong cặp ngoặc vuông [ ... ] mà AI trả về nhé!");
+        alert("Đoạn mã chưa đúng chuẩn JSON [ ... ]. Hãy kiểm tra lại!");
       }
     }
 
@@ -832,41 +1137,43 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       document.getElementById('draftCount').innerText = draftQuestions.length;
       const box = document.getElementById('draftList');
       if (draftQuestions.length === 0) {
-        box.innerHTML = `<div class="text-slate-400 italic py-2">Chưa có câu hỏi nào trong đề.</div>`;
+        box.innerHTML = `<div class="text-slate-400 italic py-4 text-center">Chưa có câu hỏi nào trong đề.</div>`;
         return;
       }
-      const badgeMap = {
-        mcq: '<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Trắc nghiệm</span>',
-        tf: '<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Đúng/Sai</span>',
-        short: '<span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Trả lời ngắn</span>',
-        essay: '<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">Tự luận</span>'
-      };
-      box.innerHTML = draftQuestions.map((q, idx) => `
-        <div class="p-2.5 bg-slate-50 rounded-xl border flex justify-between items-start gap-2">
-          <div class="space-y-1">
-            <div>
-              ${badgeMap[q.type] || ''}
-              <span class="font-bold text-slate-800 ml-1">Câu ${idx+1} (${q.points}đ):</span>
-              <span class="text-slate-700">${q.text}</span>
+      box.innerHTML = draftQuestions.map((q, idx) => {
+        let tfDetail = '';
+        if (q.type === 'tf' && q.statements) {
+          tfDetail = `<div class="text-[11px] text-amber-800 mt-1">Điểm từng ý: ` +
+            q.statements.map((s, i) => `${['a','b','c','d'][i]}(${s.points || 0.25}đ)`).join(', ') + `</div>`;
+        }
+        return `
+          <div class="p-3 bg-slate-50 rounded-xl border flex justify-between items-start gap-2">
+            <div class="space-y-1 flex-1">
+              <div>
+                <span class="font-bold text-blue-700">Câu ${idx+1} (${q.points}đ):</span>
+                <span class="text-slate-800">${q.text}</span>
+              </div>
+              ${tfDetail}
+              <div class="text-[11px] text-emerald-700"><b>Bài chữa:</b> ${q.solution}</div>
+              ${q.solutionImage ? `<img src="${q.solutionImage}" class="h-14 rounded border mt-1">` : ''}
             </div>
-            <div class="text-[11px] text-emerald-700"><b>Bài chữa:</b> ${q.solution || 'Đã có'}</div>
+            <button onclick="draftQuestions.splice(${idx},1);renderDraftQuestions();" class="text-red-400 hover:text-red-600 px-1">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
-          <button onclick="draftQuestions.splice(${idx},1);renderDraftQuestions();" class="text-red-400 hover:text-red-600 px-1">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       triggerMathJax();
     }
 
     async function publishExam() {
       const title = document.getElementById('examTitle').value.trim();
       const subject = document.getElementById('examSubject').value;
-      const time = parseInt(document.getElementById('examTime').value) || 20;
+      const time = parseInt(document.getElementById('examTime').value) || 25;
       const rosterRaw = document.getElementById('examRoster').value;
       const roster = rosterRaw.split(',').map(s => s.trim()).filter(Boolean);
 
-      if (!title) { alert("Hãy nhập Tên bài kiểm tra / Thư mục đề!"); return; }
+      if (!title) { alert("Vui lòng nhập Tên bài kiểm tra!"); return; }
       if (draftQuestions.length === 0) { alert("Hãy thêm ít nhất 1 câu hỏi vào đề!"); return; }
 
       const newExam = {
@@ -875,7 +1182,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
         subject,
         time,
         createdAt: new Date().toLocaleString('vi-VN'),
-        roster: roster.length > 0 ? roster : [...DEFAULT_CLASS_ROSTER],
+        roster: roster.length > 0 ? roster : appData.parentAccounts.map(a => a.name),
         questions: [...draftQuestions]
       };
 
@@ -884,38 +1191,30 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       document.getElementById('examTitle').value = '';
       renderAll();
       await syncToCloud();
-      alert("🎉 Đã phát đề kèm danh sách học sinh và bài chữa lên hệ thống!");
+      alert("🎉 Đã phát đề thành công lên hệ thống!");
     }
 
     async function deleteExam(examId) {
-      if (!confirm("Bạn có chắc muốn xóa đề này?")) return;
+      if (!confirm("Xóa đề kiểm tra này?")) return;
       appData.exams = appData.exams.filter(e => e.id !== examId);
       renderAll();
       await syncToCloud();
     }
 
-    // ==================== HỌC SINH CHỌN TÊN TRONG THƯ MỤC ĐỀ & LÀM BÀI ====================
+    // ==================== HỌC SINH LÀM BÀI & TÍNH ĐIỂM TỪNG Ý ĐÚNG/SAI ====================
     function openStudentModal(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
       pendingExamId = examId;
 
-      document.getElementById('modalExamName').innerText = `📂 Đề thi: ${exam.title} (${exam.time} phút)`;
+      document.getElementById('modalExamName').innerText = `📂 ${exam.title} (${exam.time} phút)`;
       const select = document.getElementById('modalStudentSelect');
-      const roster = (exam.roster && exam.roster.length > 0) ? exam.roster : DEFAULT_CLASS_ROSTER;
+      const roster = (exam.roster && exam.roster.length > 0) ? exam.roster : appData.parentAccounts.map(a => a.name);
 
-      select.innerHTML = `<option value="">-- Chọn tên của em trong danh sách --</option>` +
-        roster.map(name => `<option value="${name}">${name}</option>`).join('') +
-        `<option value="__custom__">+ Tên khác (Tự nhập tên)...</option>`;
+      select.innerHTML = `<option value="">-- Chọn đúng tên của em --</option>` +
+        roster.map(name => `<option value="${name}">${name}</option>`).join('');
 
-      document.getElementById('customStudentBox').classList.add('hidden');
-      document.getElementById('customStudentInput').value = '';
       document.getElementById('studentSelectModal').classList.remove('hidden');
-    }
-
-    function toggleCustomStudentInput() {
-      const val = document.getElementById('modalStudentSelect').value;
-      document.getElementById('customStudentBox').classList.toggle('hidden', val !== '__custom__');
     }
 
     function closeStudentModal() {
@@ -925,15 +1224,11 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
 
     function confirmStartExam() {
       const selected = document.getElementById('modalStudentSelect').value;
-      let finalName = selected;
-      if (selected === '__custom__') {
-        finalName = document.getElementById('customStudentInput').value.trim();
-      }
-      if (!finalName) {
-        alert("Em vui lòng chọn đúng tên của mình trong danh sách để bắt đầu làm bài nhé!");
+      if (!selected) {
+        alert("Em vui lòng chọn tên của mình trong danh sách!");
         return;
       }
-      currentStudentName = finalName;
+      currentStudentName = selected;
       const examId = pendingExamId;
       closeStudentModal();
       startExamExecution(examId);
@@ -975,12 +1270,15 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
             <div class="p-5 rounded-2xl border border-amber-200 bg-amber-50/30 space-y-3">
               <div class="font-bold text-slate-800 text-sm">
                 <span class="bg-amber-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-amber-800 font-semibold">(Đúng / Sai - ${q.points} điểm):</span> ${q.text}
+                <span class="text-amber-800 font-semibold">(Đúng / Sai - Tổng ${q.points} điểm):</span> ${q.text}
               </div>
               <div class="space-y-2">
                 ${(q.statements || []).map((st, sIdx) => `
                   <div class="flex flex-wrap justify-between items-center gap-2 p-3 bg-white rounded-xl border">
-                    <span class="text-sm text-slate-800 flex-1"><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
+                    <span class="text-sm text-slate-800 flex-1">
+                      <b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}
+                      <span class="text-xs text-amber-700 font-semibold ml-1">(${st.points !== undefined ? st.points : (q.points/4)}đ)</span>
+                    </span>
                     <div class="flex gap-3">
                       <label class="flex items-center gap-1 text-xs font-bold text-emerald-700 cursor-pointer bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
                         <input type="radio" name="tf_${idx}_${sIdx}" value="true"> Đúng
@@ -1001,7 +1299,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
                 <span class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                 <span class="text-emerald-800 font-semibold">(Trả lời ngắn - ${q.points} điểm):</span> ${q.text}
               </div>
-              <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn của em..." 
+              <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn..." 
                 class="w-full sm:w-80 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:outline-none focus:border-emerald-600">
             </div>
           `;
@@ -1012,7 +1310,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
                 <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                 <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${q.text}
               </div>
-              <textarea id="ans_essay_${idx}" rows="4" placeholder="Trình bày lời giải chi tiết của em vào đây..." 
+              <textarea id="ans_essay_${idx}" rows="4" placeholder="Trình bày bài giải của em vào đây..." 
                 class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-purple-600"></textarea>
             </div>
           `;
@@ -1029,7 +1327,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
         updateTimerUI();
         if (secondsRemaining <= 0) {
           clearInterval(timerInterval);
-          alert("Đã hết thời gian làm bài! Hệ thống sẽ tự động thu bài.");
+          alert("Đã hết thời gian làm bài! Hệ thống tự động thu bài.");
           submitStudentExam(true);
         }
       }, 1000);
@@ -1042,15 +1340,15 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
     }
 
     function cancelExam() {
-      if (!confirm("Nếu thoát bây giờ bài làm sẽ không được lưu. Em chắc chắn muốn thoát?")) return;
+      if (!confirm("Nếu thoát bây giờ bài làm sẽ không được lưu. Em chắc chắn chứ?")) return;
       clearInterval(timerInterval);
       document.getElementById('studentExamRoom').classList.add('hidden');
       document.getElementById('studentLobby').classList.remove('hidden');
     }
 
-    // Chấm tự động cả 3 phần: Trắc nghiệm + Đúng/Sai + Trả lời ngắn
+    // Chấm điểm chuẩn từng ý Đúng/Sai theo đúng điểm Giáo viên thiết lập cho từng ý
     async function submitStudentExam(autoSubmit = false) {
-      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ toàn bộ bài và muốn nộp bài ngay?")) return;
+      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ và muốn nộp bài ngay?")) return;
       clearInterval(timerInterval);
 
       let autoScore = 0;
@@ -1060,7 +1358,8 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
 
       currentExam.questions.forEach((q, idx) => {
         maxScore += q.points;
-        const solutionText = q.solution || "Xem hướng dẫn của Giáo viên.";
+        const solutionText = q.solution || "";
+        const solutionImg = q.solutionImage || "";
 
         if (q.type === 'mcq') {
           const selected = document.querySelector(`input[name="ans_${idx}"]:checked`);
@@ -1070,40 +1369,53 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
           autoScore += earned;
           answers.push({
             type: 'mcq', question: q.text, chosen: chosenIdx, correct: q.correct,
-            options: q.options, isCorrect, points: q.points, earned, solution: solutionText
+            options: q.options, isCorrect, points: q.points, earned,
+            solution: solutionText, solutionImage: solutionImg
           });
         } else if (q.type === 'tf') {
+          let earnedTf = 0;
           let correctCount = 0;
           const stDetails = (q.statements || []).map((st, sIdx) => {
+            const itemPts = (st.points !== undefined) ? parseFloat(st.points) : (q.points / 4);
             const sel = document.querySelector(`input[name="tf_${idx}_${sIdx}"]:checked`);
             const chosenVal = sel ? (sel.value === 'true') : null;
             const isRight = (chosenVal === st.answer);
-            if (isRight) correctCount++;
-            return { text: st.text, chosen: chosenVal, correct: st.answer, isRight };
+            const itemEarned = isRight ? itemPts : 0;
+            if (isRight) {
+              correctCount++;
+              earnedTf += itemEarned;
+            }
+            return {
+              text: st.text, chosen: chosenVal, answer: st.answer,
+              isRight, points: itemPts, earned: itemEarned
+            };
           });
-          const earned = Math.round((correctCount / 4) * q.points * 100) / 100;
-          autoScore += earned;
+          earnedTf = Math.round(earnedTf * 100) / 100;
+          autoScore += earnedTf;
           answers.push({
             type: 'tf', question: q.text, statements: stDetails,
-            correctCount, points: q.points, earned, solution: solutionText
+            correctCount, points: q.points, earned: earnedTf,
+            solution: solutionText, solutionImage: solutionImg
           });
         } else if (q.type === 'short') {
           const studentVal = (document.getElementById(`ans_short_${idx}`).value || '').trim();
-          const normalizedStudent = studentVal.toLowerCase().replace(/\s+/g, ' ');
-          const normalizedKey = (q.correctText || '').trim().toLowerCase().replace(/\s+/g, ' ');
-          const isCorrect = (normalizedStudent !== '' && normalizedStudent === normalizedKey);
+          const normS = studentVal.toLowerCase().replace(/\s+/g, ' ');
+          const normK = (q.correctText || '').trim().toLowerCase().replace(/\s+/g, ' ');
+          const isCorrect = (normS !== '' && normS === normK);
           const earned = isCorrect ? q.points : 0;
           autoScore += earned;
           answers.push({
             type: 'short', question: q.text, studentVal, correctText: q.correctText,
-            isCorrect, points: q.points, earned, solution: solutionText
+            isCorrect, points: q.points, earned,
+            solution: solutionText, solutionImage: solutionImg
           });
         } else {
           hasEssay = true;
           const essayText = document.getElementById(`ans_essay_${idx}`).value.trim();
           answers.push({
             type: 'essay', question: q.text, essayText,
-            points: q.points, earned: 0, solution: solutionText
+            points: q.points, earned: 0,
+            solution: solutionText, solutionImage: solutionImg
           });
         }
       });
@@ -1123,8 +1435,9 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
         maxScore: Math.round(maxScore * 100) / 100,
         hasEssay,
         graded: !hasEssay,
-        teacherComment: hasEssay ? "Đã chấm tự động phần Trắc nghiệm/Đúng-Sai/Trả lời ngắn. Đang chờ thầy chấm Tự luận." : "Đã hoàn thành và chấm tự động 100%.",
+        teacherComment: hasEssay ? "Đã chấm tự động phần Trắc nghiệm, Đúng/Sai (từng ý) và Trả lời ngắn. Đang chờ thầy chấm Tự luận." : "Đã hoàn thành và chấm tự động 100%.",
         teacherCustomSolution: "",
+        teacherCustomImage: "",
         answers
       };
 
@@ -1137,10 +1450,23 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       document.getElementById('studentLobby').classList.remove('hidden');
       renderAll();
 
-      alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.\n\nPhụ huynh có thể vào mục Phụ Huynh nhập mật khẩu để xem điểm và toàn bộ Bài chữa chi tiết!`);
+      alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
     }
 
-    // ==================== CHẤM ĐIỂM TỰ LUẬN & GỬI BÀI CHỮA CHO PHỤ HUYNH ====================
+    // ==================== CHẤM BÀI & UP ẢNH BÀI CHỮA RIÊNG CHO TỪNG HỌC SINH ====================
+    function handleTeacherSubImage(event, subId) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressImageFile(file, (base64) => {
+        pendingSubmissionImages[subId] = base64;
+        const imgEl = document.getElementById('sub_img_preview_' + subId);
+        if (imgEl) {
+          imgEl.src = base64;
+          imgEl.classList.remove('hidden');
+        }
+      });
+    }
+
     async function saveTeacherGrading(subId) {
       const sub = appData.submissions.find(s => s.id === subId);
       if (!sub) return;
@@ -1152,21 +1478,23 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       sub.totalScore = Math.round((sub.mcqScore + manualScore) * 100) / 100;
       sub.teacherComment = comment;
       sub.teacherCustomSolution = customSol;
+      if (pendingSubmissionImages[subId] !== undefined) {
+        sub.teacherCustomImage = pendingSubmissionImages[subId];
+      }
       sub.graded = true;
 
       renderAll();
       await syncToCloud();
-      alert("✔ Đã lưu điểm, lời phê và cập nhật bài chữa gửi Phụ huynh!");
+      alert(`✔ Đã lưu điểm, bài chữa LaTeX và hình ảnh cho em ${sub.studentName}!`);
     }
 
     // ==================== HIỂN THỊ GIAO DIỆN ====================
     function renderAll() {
-      const passSpan = document.getElementById('displayParentPass');
-      if (passSpan) passSpan.innerText = appData.parentPassword || "ph1234";
       renderDraftQuestions();
       renderTeacherView();
+      renderParentAccountsTable();
       renderStudentLobby();
-      if (isParentUnlocked) renderParentView();
+      if (loggedInParentStudent) renderParentView();
       triggerMathJax();
     }
 
@@ -1178,7 +1506,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
         return;
       }
       container.innerHTML = exams.map(ex => {
-        const studentCount = (ex.roster && ex.roster.length) ? ex.roster.length : DEFAULT_CLASS_ROSTER.length;
+        const studentCount = (ex.roster && ex.roster.length) ? ex.roster.length : appData.parentAccounts.length;
         return `
           <div class="p-5 rounded-2xl border border-slate-200 hover:border-blue-400 transition bg-slate-50/70 flex flex-col justify-between gap-4 shadow-sm">
             <div>
@@ -1210,9 +1538,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
             <div>
               <span class="text-xs font-bold text-blue-600">[${ex.subject}]</span>
               <span class="font-bold text-sm text-slate-800 ml-1">${ex.title}</span>
-              <div class="text-[11px] text-slate-500 mt-0.5">
-                ${ex.questions.length} câu • ${ex.time} phút • Danh sách: ${(ex.roster || DEFAULT_CLASS_ROSTER).slice(0, 5).join(', ')}...
-              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">${ex.questions.length} câu • ${ex.time} phút</div>
             </div>
             <button onclick="deleteExam('${ex.id}')" class="text-xs text-red-500 hover:bg-red-50 px-2.5 py-1.5 rounded-lg font-semibold">
               <i class="fa-solid fa-trash"></i> Xóa
@@ -1224,6 +1550,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       const subBox = document.getElementById('teacherSubmissionsList');
       const subs = appData.submissions || [];
       document.getElementById('subCount').innerText = subs.length;
+      document.getElementById('subCountBadge').innerText = subs.length;
 
       if (subs.length === 0) {
         subBox.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Chưa có học sinh nào nộp bài.</div>`;
@@ -1231,7 +1558,7 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       }
 
       subBox.innerHTML = subs.map(s => `
-        <div class="p-4 rounded-2xl border ${s.graded ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3">
+        <div class="p-5 rounded-2xl border ${s.graded ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3 shadow-sm">
           <div class="flex flex-wrap justify-between items-start gap-2 border-b pb-2">
             <div>
               <span class="font-bold text-base text-slate-800">${s.studentName}</span>
@@ -1248,30 +1575,43 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
           <div class="space-y-1.5 text-xs bg-slate-50 p-3 rounded-xl border">
             ${(s.answers || []).map((a, i) => {
               if (a.type === 'mcq') {
-                return `<div><b>Câu ${i+1} (TN):</b> Chọn <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Bỏ trống'}</b> ${a.isCorrect ? '✔ Đúng' : `✘ Sai (Đ/A: ${['A','B','C','D'][a.correct]})`}</div>`;
+                return `<div><b>Câu ${i+1} (TN - ${a.earned}/${a.points}đ):</b> Chọn <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Trống'}</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: ${['A','B','C','D'][a.correct]})`}</div>`;
               } else if (a.type === 'tf') {
-                return `<div><b>Câu ${i+1} (Đúng/Sai):</b> Đúng <b>${a.correctCount}/4</b> ý (+${a.earned}đ)</div>`;
+                const detailStr = (a.statements || []).map((st, idx) => `${['a','b','c','d'][idx]}:${st.isRight ? `+${st.earned}đ✔` : '0đ✘'}`).join(' | ');
+                return `<div><b>Câu ${i+1} (Đúng/Sai - ${a.earned}/${a.points}đ):</b> ${detailStr}</div>`;
               } else if (a.type === 'short') {
-                return `<div><b>Câu ${i+1} (Trả lời ngắn):</b> Điền <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">"${a.studentVal || 'Trống'}"</b> ${a.isCorrect ? '✔ Đúng' : `✘ Sai (Đ/A: "${a.correctText}")`}</div>`;
+                return `<div><b>Câu ${i+1} (Trả lời ngắn - ${a.earned}/${a.points}đ):</b> Điền <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">"${a.studentVal || 'Trống'}"</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: "${a.correctText}")`}</div>`;
               } else {
-                return `<div class="pt-1 border-t mt-1"><b class="text-purple-700">Câu ${i+1} (Tự luận - ${a.points}đ):</b> ${a.question}<div class="mt-1 p-2 bg-white border rounded text-slate-800 whitespace-pre-wrap">${a.essayText || '(Học sinh bỏ trống)'}</div></div>`;
+                return `<div class="pt-1 border-t mt-1"><b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}<div class="mt-1 p-2 bg-white border rounded text-slate-800 whitespace-pre-wrap">${a.essayText || '(Học sinh bỏ trống)'}</div></div>`;
               }
             }).join('')}
           </div>
 
-          <!-- Khung chấm điểm & bổ sung bài chữa của Giáo viên -->
-          <div class="space-y-2 pt-1">
+          <!-- Khung chấm điểm, gõ LaTeX & tải ảnh bài chữa riêng cho học sinh này -->
+          <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
             <div class="flex flex-col sm:flex-row gap-2 items-center">
               <div class="flex items-center gap-1.5 w-full sm:w-auto">
-                <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Điểm Tự luận:</label>
-                <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center">
+                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Điểm Tự luận:</label>
+                <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center bg-white">
               </div>
-              <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét gửi Phụ huynh..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs">
+              <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi Phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
             </div>
-            <div class="flex flex-col sm:flex-row gap-2 items-center">
-              <input type="text" id="custom_sol_${s.id}" value="${s.teacherCustomSolution || ''}" placeholder="Bổ sung bài chữa riêng / dặn dò thêm cho bài của ${s.studentName} (nếu có)..." class="flex-1 w-full px-3 py-1.5 border border-emerald-200 rounded-lg text-xs bg-emerald-50/30">
-              <button onclick="saveTeacherGrading('${s.id}')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg whitespace-nowrap transition">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Điểm & Bài Chữa
+
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap justify-between items-center gap-2">
+                <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi chi tiết cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
+                <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                  <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài từ iPad
+                  <input type="file" accept="image/*" onchange="handleTeacherSubImage(event, '${s.id}')" class="hidden">
+                </label>
+              </div>
+              <textarea id="custom_sol_${s.id}" rows="2" placeholder="Gõ bài chữa LaTeX riêng cho bài của ${s.studentName} (VD: Câu tự luận em thiếu điều kiện $x \\ne 3$...)..." class="w-full px-3 py-2 border rounded-xl text-xs bg-white">${s.teacherCustomSolution || ''}</textarea>
+              <img id="sub_img_preview_${s.id}" src="${s.teacherCustomImage || ''}" class="${s.teacherCustomImage ? '' : 'hidden'} max-h-40 rounded-lg border shadow-sm mt-1">
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="saveTeacherGrading('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2 rounded-xl shadow transition">
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Điểm & Gửi Bài Chữa Cho Phụ Huynh
               </button>
             </div>
           </div>
@@ -1279,45 +1619,51 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
       `).join('');
     }
 
-    // ==================== GIAO DIỆN PHỤ HUYNH XEM ĐIỂM & FULL BÀI CHỮA ====================
+    // ==================== HIỂN THỊ SỔ LIÊN LẠC CÁ NHÂN HÓA CHO PHỤ HUYNH ====================
     function renderParentView() {
-      const filterSelect = document.getElementById('parentStudentFilter');
-      const currentSelected = filterSelect.value;
-      const allSubmittedNames = [...new Set((appData.submissions || []).map(s => s.studentName))];
-      filterSelect.innerHTML = `<option value="">-- Tất cả Học sinh (${allSubmittedNames.length}) --</option>` +
-        allSubmittedNames.map(n => `<option value="${n}" ${n === currentSelected ? 'selected' : ''}>${n}</option>`).join('');
-
-      const query = (document.getElementById('parentSearchInput').value || '').toLowerCase().trim();
+      if (!loggedInParentStudent) return;
       const box = document.getElementById('parentResultsList');
 
+      // Chỉ lọc đúng bài của con vị Phụ huynh đã đăng nhập bằng mật khẩu riêng
       const subs = (appData.submissions || []).filter(s => {
-        const matchFilter = !currentSelected || s.studentName === currentSelected;
-        const matchQuery = s.studentName.toLowerCase().includes(query) || s.examTitle.toLowerCase().includes(query);
-        return matchFilter && matchQuery;
+        if (loggedInParentStudent === "__ALL__") return true;
+        return s.studentName.trim().toLowerCase() === loggedInParentStudent.trim().toLowerCase();
       });
 
       if (subs.length === 0) {
-        box.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Chưa có bài làm nào phù hợp.</div>`;
+        box.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">Hiện chưa có bài nộp nào của em <b>${loggedInParentStudent}</b> trên hệ thống.</div>`;
         return;
       }
 
       box.innerHTML = subs.map(s => `
-        <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-4">
+        <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-4 shadow-sm">
           <div class="flex flex-col sm:flex-row justify-between gap-4">
-            <div class="space-y-1.5 flex-1">
+            <div class="space-y-2 flex-1">
               <div class="flex items-center gap-2">
                 <span class="font-bold text-lg text-slate-800">${s.studentName}</span>
                 <span class="text-xs px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-700 font-bold">${s.subject}</span>
               </div>
-              <div class="text-sm font-bold text-slate-700">📂 Đề bài: ${s.examTitle}</div>
-              <div class="text-xs text-slate-400">Thời gian nộp: ${s.submittedAt}</div>
-              <div class="text-xs text-slate-700 bg-white p-3 rounded-xl border border-emerald-200 mt-2 space-y-1">
+              <div class="text-sm font-bold text-slate-700">📂 Đề kiểm tra: ${s.examTitle}</div>
+              <div class="text-xs text-slate-400">Thời gian nộp bài: ${s.submittedAt}</div>
+
+              <!-- Khung Nhận xét & Bài chữa riêng của Giáo viên cho con -->
+              <div class="text-xs text-slate-700 bg-white p-3.5 rounded-xl border border-emerald-200 mt-2 space-y-2">
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${s.teacherComment || 'Chưa có nhận xét.'}</div>
-                ${s.teacherCustomSolution ? `<div class="pt-1 border-t text-blue-800"><b><i class="fa-solid fa-pen-nib mr-1"></i>Chữa bài riêng của Giáo viên:</b> ${s.teacherCustomSolution}</div>` : ''}
+                ${s.teacherCustomSolution ? `
+                  <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
+                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & Hướng dẫn riêng của Thầy cho ${s.studentName}:</b>\n${s.teacherCustomSolution}
+                  </div>
+                ` : ''}
+                ${s.teacherCustomImage ? `
+                  <div class="pt-2">
+                    <div class="text-[11px] font-bold text-blue-700 mb-1"><i class="fa-solid fa-image mr-1"></i>Ảnh chụp bài chữa viết tay của Giáo viên (Bấm vào ảnh để phóng to):</div>
+                    <img src="${s.teacherCustomImage}" onclick="zoomImage('${s.teacherCustomImage}')" class="max-h-64 rounded-xl border shadow cursor-zoom-in">
+                  </div>
+                ` : ''}
               </div>
             </div>
 
-            <div class="sm:text-right flex sm:flex-col justify-between items-center sm:items-end bg-white p-4 rounded-2xl border shadow-sm min-w-[160px]">
+            <div class="sm:text-right flex sm:flex-col justify-between items-center sm:items-end bg-white p-4 rounded-2xl border shadow-sm min-w-[165px]">
               <span class="text-xs font-bold text-slate-500 uppercase">Tổng Điểm</span>
               <div class="text-3xl font-black text-blue-600">${s.totalScore} <span class="text-sm font-normal text-slate-400">/ ${s.maxScore}</span></div>
               <span class="text-[11px] font-bold ${s.graded ? 'text-emerald-600' : 'text-amber-600'}">
@@ -1326,52 +1672,62 @@ Hãy tạo bộ câu hỏi kèm đáp án và lời giải chi tiết (bài ch�
             </div>
           </div>
 
-          <!-- Bấm để mở Toàn bộ Đáp án & Bài chữa chi tiết từng câu -->
-          <details class="bg-white rounded-xl border border-blue-200 overflow-hidden">
-            <summary class="px-4 py-2.5 bg-blue-50/70 text-blue-800 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
-              <span><i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i> Xem Chi Tiết Bài Làm Của Con & Bài Chữa Từng Câu (${(s.answers || []).length} câu)</span>
-              <span class="text-[11px] underline">Bấm để mở/đóng</span>
+          <!-- Mở xem Chi tiết từng câu & Bài chữa LaTeX / Hình ảnh -->
+          <details class="bg-white rounded-xl border border-blue-200 overflow-hidden" open>
+            <summary class="px-4 py-3 bg-blue-50/80 text-blue-900 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
+              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem Đáp Án & Bài Chữa Chi Tiết Từng Câu (${(s.answers || []).length} câu)</span>
+              <span class="text-[11px] underline">Thu gọn / Mở rộng</span>
             </summary>
-            <div class="p-4 space-y-3 text-xs divide-y">
+            <div class="p-4 space-y-4 text-xs divide-y">
               ${(s.answers || []).map((a, idx) => {
                 let statusHtml = '';
                 if (a.type === 'mcq') {
                   const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${(a.options || [])[a.chosen] || ''}` : 'Bỏ trống';
                   const rightChar = `${['A','B','C','D'][a.correct]}. ${(a.options || [])[a.correct] || ''}`;
                   statusHtml = `
-                    <div class="mt-1">Bài làm của con: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> ${a.isCorrect ? '✔ (Đúng)' : '✘ (Sai)'}</div>
+                    <div class="mt-1">Con chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
                     ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
                   `;
                 } else if (a.type === 'tf') {
                   statusHtml = `
-                    <div class="mt-1 space-y-1">
+                    <div class="mt-1.5 space-y-1 bg-slate-50 p-2.5 rounded-lg border">
+                      <div class="font-bold text-amber-800 mb-1">Điểm câu Đúng/Sai của con: ${a.earned} / ${a.points} điểm (Tính theo từng ý):</div>
                       ${(a.statements || []).map((st, sIdx) => `
-                        <div>
-                          <b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text} 
-                          — Con chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Bỏ trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
-                          (Đáp án chuẩn: <b>${st.answer ? 'Đúng' : 'Sai'}</b>)
+                        <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
+                          <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${st.text}</span>
+                          <span>
+                            Con chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
+                            | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
+                            <b class="${st.isRight ? 'text-emerald-700' : 'text-slate-400'} ml-1">(${st.isRight ? '+' + st.earned : '0'}/${st.points}đ)</b>
+                          </span>
                         </div>
                       `).join('')}
                     </div>
                   `;
                 } else if (a.type === 'short') {
                   statusHtml = `
-                    <div class="mt-1">Câu trả lời của con: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.studentVal || '(Bỏ trống)'}</b></div>
+                    <div class="mt-1">Câu trả lời của con: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.studentVal || '(Bỏ trống)'}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
                     <div class="text-emerald-700 font-semibold">Đáp án chuẩn: ${a.correctText}</div>
                   `;
                 } else {
                   statusHtml = `
                     <div class="mt-1"><b>Bài trình bày tự luận của con:</b></div>
-                    <div class="p-2 bg-slate-50 rounded border whitespace-pre-wrap text-slate-700">${a.essayText || '(Học sinh bỏ trống)'}</div>
+                    <div class="p-2.5 bg-slate-50 rounded-lg border whitespace-pre-wrap text-slate-700">${a.essayText || '(Học sinh bỏ trống)'}</div>
                   `;
                 }
 
                 return `
-                  <div class="pt-3 first:pt-0 space-y-1.5">
-                    <div class="font-bold text-slate-800">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
+                  <div class="pt-3 first:pt-0 space-y-2">
+                    <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
                     ${statusHtml}
-                    <div class="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-slate-800 whitespace-pre-wrap mt-1">
-                      <b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Giải thích chi tiết:</b>\n${a.solution || 'Đã cập nhật trong nhận xét chung.'}
+                    <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
+                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải chi tiết:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
+                      ${a.solutionImage ? `
+                        <div>
+                          <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải minh họa (Bấm để phóng to):</div>
+                          <img src="${a.solutionImage}" onclick="zoomImage('${a.solutionImage}')" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
+                        </div>
+                      ` : ''}
                     </div>
                   </div>
                 `;
