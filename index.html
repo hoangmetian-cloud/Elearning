@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>EduSmart Pro V4 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
+  <title>EduSmart Pro V5 - Hệ Thống Khảo Thí & Sổ Liên Lạc Cá Nhân Hóa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Cấu hình MathJax hiển thị LaTeX chuẩn -->
@@ -20,7 +20,6 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; }
     .tab-active { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
-    .subtab-active { background-color: #1e293b; color: white; }
     .pulse-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   </style>
@@ -136,7 +135,7 @@
           <h2 class="font-bold text-lg text-slate-800">Sổ Liên Lạc Phụ Huynh Bảo Mật</h2>
           <p class="text-xs text-slate-500 leading-relaxed">
             Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
-            Nhập mật khẩu để xem kết quả làm bài, nhận xét và <b>Đáp án + Bài chữa chi tiết (LaTeX & Hình ảnh)</b> của riêng con mình.
+            Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa chi tiết</b>.
           </p>
           <div class="space-y-3 pt-2">
             <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
@@ -290,7 +289,7 @@
                   <option value="mcq">1. Trắc nghiệm 4 lựa chọn (A, B, C, D)</option>
                   <option value="tf">2. Đúng / Sai (Chấm điểm riêng từng ý a, b, c, d)</option>
                   <option value="short">3. Trả lời ngắn (Điền đáp số / từ)</option>
-                  <option value="essay">4. Tự luận (Học sinh trình bày)</option>
+                  <option value="essay">4. Tự luận (Học sinh gõ bài hoặc Chụp ảnh vở)</option>
                 </select>
               </div>
 
@@ -415,7 +414,7 @@
               <div class="flex items-center justify-between pt-1">
                 <div class="flex items-center gap-2 text-xs">
                   <span class="font-semibold text-slate-600">Tổng điểm câu này:</span>
-                  <input type="number" id="qPoints" value="1.5" step="0.25" min="0.1" class="w-20 px-2 py-1 border rounded-lg text-center font-bold text-blue-700">
+                  <input type="number" id="qPoints" value="2" step="0.25" min="0.1" class="w-20 px-2 py-1 border rounded-lg text-center font-bold text-blue-700">
                 </div>
                 <button onclick="addQuestionToDraft()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
                   <i class="fa-solid fa-plus mr-1"></i> Thêm Câu Này Vào Đề
@@ -449,7 +448,7 @@
           </div>
         </div>
 
-        <!-- TAB GV 2: CHẤM BÀI, GÕ LATEX & UP ẢNH CHỮA BÀI RIÊNG CHO TỪNG HỌC SINH -->
+        <!-- TAB GV 2: CHẤM BÀI (XEM ẢNH TỰ LUẬN CỦA HS), GÕ LATEX & UP ẢNH CHỮA BÀI RIÊNG -->
         <div id="teacher-tab-grading" class="hidden space-y-6">
           <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
@@ -457,7 +456,7 @@
                 <h2 class="font-bold text-slate-800 text-base">
                   <i class="fa-solid fa-inbox text-blue-600 mr-1"></i> Danh Sách Bài Nộp Của Học Sinh (<span id="subCount">0</span>)
                 </h2>
-                <p class="text-xs text-slate-500">Bạn có thể chấm điểm Tự luận, gõ lời giải LaTeX hoặc <b>chụp/tải ảnh bài chữa viết tay trên iPad</b> gửi riêng cho từng em.</p>
+                <p class="text-xs text-slate-500">Bấm vào ảnh chụp bài làm tự luận của học sinh để phóng to, chấm điểm và tải ảnh bài chữa của bạn lên.</p>
               </div>
             </div>
             <div id="teacherSubmissionsList" class="space-y-5"></div>
@@ -519,13 +518,13 @@
     </main>
   </div>
 
-  <!-- Modal Phóng to Ảnh bài chữa -->
+  <!-- Modal Phóng to Ảnh bài làm / bài chữa -->
   <div id="imageZoomModal" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out">
     <img id="zoomedImage" src="" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl border-2 border-white">
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-400 border-t bg-white/60">
-    <span>EduSmart Pro V4 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
+    <span>EduSmart Pro V5 - Hệ thống Khảo thí & Sổ Liên Lạc Phụ Huynh Bảo Mật Từng Cá Nhân</span>
     <button onclick="openTeacherLogin()" class="ml-2 text-slate-300 hover:text-blue-600 transition">
       <i class="fa-solid fa-key"></i>
     </button>
@@ -569,8 +568,8 @@
       parentAccounts: [...INITIAL_PARENT_ACCOUNTS],
       exams: [
         {
-          id: "exam_v4_demo",
-          title: "Đề Kiểm Tra Đánh Giá Năng Lực (Chuẩn 4 Dạng & Điểm Từng Ý)",
+          id: "exam_v5_demo",
+          title: "Đề Kiểm Tra Đánh Giá Năng Lực (Chuẩn 4 Dạng & Up Ảnh Tự Luận)",
           subject: "Tổng hợp",
           time: 25,
           createdAt: "Hôm nay",
@@ -608,7 +607,7 @@
             },
             {
               type: "essay",
-              text: "Tìm tất cả các giá trị thực của tham số $m$ để phương trình $x^2 - 2mx + m^2 - 1 = 0$ có hai nghiệm phân biệt $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$.",
+              text: "Tìm tất cả các giá trị thực của tham số $m$ để phương trình $x^2 - 2mx + m^2 - 1 = 0$ có hai nghiệm phân biệt $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$. (Em có thể gõ lời giải hoặc chụp ảnh bài làm trong vở tải lên).",
               points: 3,
               solution: "Ta có $\\Delta^{\\prime} = m^2 - (m^2 - 1) = 1 > 0, \\forall m \\in \\mathbb{R}$.\nTheo hệ thức Vi-ét: $x_1 + x_2 = 2m$ và $x_1 x_2 = m^2 - 1$.\nKhi đó: $x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1 x_2 = 4m^2 - 2(m^2 - 1) = 2m^2 + 2$.\nYêu cầu bài toán $\\Leftrightarrow 2m^2 + 2 = 10 \\Leftrightarrow m^2 = 4 \\Leftrightarrow m = \\pm 2$.",
               solutionImage: ""
@@ -621,6 +620,7 @@
 
     let draftQuestions = [];
     let currentDraftSolutionImage = "";
+    let pendingStudentEssayImages = {}; // Lưu ảnh bài làm tự luận của Học sinh theo chỉ số câu hỏi (idx)
     let pendingSubmissionImages = {}; // Lưu ảnh bài chữa GV tải lên cho từng bài nộp
     let loggedInParentStudent = null; // Tên học sinh của Phụ huynh đang đăng nhập (`__ALL__` nếu là GV)
     let pendingExamId = null;
@@ -630,7 +630,7 @@
     let secondsRemaining = 0;
 
     window.onload = async () => {
-      const savedLocal = localStorage.getItem('edusmart_v4_data');
+      const savedLocal = localStorage.getItem('edusmart_v5_data') || localStorage.getItem('edusmart_v4_data');
       if (savedLocal) {
         try {
           const parsed = JSON.parse(savedLocal);
@@ -663,7 +663,7 @@
       document.getElementById('imageZoomModal').classList.remove('hidden');
     }
 
-    // Hàm nén ảnh tự động trên iPad để gửi qua Cloud mượt mà
+    // Hàm nén ảnh tự động trên iPad/điện thoại để gửi qua Cloud mượt mà
     function compressImageFile(file, callback) {
       if (!file) return;
       const reader = new FileReader();
@@ -730,7 +730,7 @@
             if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
               appData.parentAccounts = remoteData.parentAccounts;
             }
-            localStorage.setItem('edusmart_v4_data', JSON.stringify(appData));
+            localStorage.setItem('edusmart_v5_data', JSON.stringify(appData));
             renderAll();
           }
           if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất thành công!");
@@ -739,7 +739,7 @@
     }
 
     async function syncToCloud() {
-      localStorage.setItem('edusmart_v4_data', JSON.stringify(appData));
+      localStorage.setItem('edusmart_v5_data', JSON.stringify(appData));
       if (!defaultBlobId) {
         await initDatabase();
         return;
@@ -795,7 +795,6 @@
         return;
       }
 
-      // Nếu nhập mã Giáo viên thì mở xem toàn bộ lớp
       if (enteredPass === TEACHER_PIN) {
         loggedInParentStudent = "__ALL__";
         document.getElementById('parentLockScreen').classList.add('hidden');
@@ -805,7 +804,6 @@
         return;
       }
 
-      // Tìm học sinh khớp với mật khẩu Phụ huynh vừa nhập
       const matchedAccount = (appData.parentAccounts || []).find(
         acc => acc.pass.toLowerCase() === enteredPass.toLowerCase()
       );
@@ -918,7 +916,7 @@
       const name = document.getElementById('p_name_' + idx).value.trim();
       const pass = document.getElementById('p_pass_' + idx).value.trim();
       const url = window.location.href;
-      const msg = `Kính gửi Phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, nhận xét và bài chữa chi tiết của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của Phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục Phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
+      const msg = `Kính gửi Phụ huynh em ${name},\nThầy gửi đường link tra cứu điểm số, bài làm và bài chữa chi tiết của con:\n🔗 Link: ${url}\n🔑 Mật khẩu riêng của Phụ huynh em ${name}: ${pass}\n(Phụ huynh bấm vào link -> chọn mục Phụ Huynh ở góc trên -> nhập mật khẩu trên để xem bài của con).`;
       navigator.clipboard.writeText(msg).then(() => {
         alert(`📋 Đã copy tin nhắn kèm mật khẩu riêng (${pass}) của Phụ huynh em ${name}! Bạn có thể dán gửi qua Zalo ngay.`);
       }).catch(() => {
@@ -1057,6 +1055,13 @@
           correctText: "9",
           points: 2,
           solution: "Ta có $y = -(x - 2)^2 + 9 \\le 9, \\forall x \\in \\mathbb{R}$. Vậy GTLN bằng $9$ tại $x = 2$.",
+          solutionImage: ""
+        },
+        {
+          type: 'essay',
+          text: `[${topicLabel}] Trình bày lời giải chi tiết hoặc chụp ảnh vở làm bài cho bài toán: Giải bất phương trình $\\sqrt{x^2 - 3x + 2} \\le x - 1$.`,
+          points: 3,
+          solution: "Điều kiện: $x - 1 \\ge 0 \\Leftrightarrow x \\ge 1$ và $x^2 - 3x + 2 \\ge 0$. Bình phương hai vế ta được $x^2 - 3x + 2 \\le x^2 - 2x + 1 \\Leftrightarrow x \\ge 1$. Kết hợp điều kiện suy ra tập nghiệm $S = \\{1\\} \\cup [2; +\\infty)$.",
           solutionImage: ""
         }
       );
@@ -1201,7 +1206,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       await syncToCloud();
     }
 
-    // ==================== HỌC SINH LÀM BÀI & TÍNH ĐIỂM TỪNG Ý ĐÚNG/SAI ====================
+    // ==================== HỌC SINH LÀM BÀI & UP ẢNH BÀI LÀM TỰ LUẬN ====================
     function openStudentModal(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
@@ -1234,11 +1239,36 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       startExamExecution(examId);
     }
 
+    // Xử lý khi Học sinh chọn/chụp ảnh bài làm tự luận ở câu idx
+    function handleStudentEssayImage(event, qIdx) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressImageFile(file, (base64) => {
+        pendingStudentEssayImages[qIdx] = base64;
+        const previewImg = document.getElementById(`student_essay_img_preview_${qIdx}`);
+        const previewBox = document.getElementById(`student_essay_img_box_${qIdx}`);
+        if (previewImg && previewBox) {
+          previewImg.src = base64;
+          previewBox.classList.remove('hidden');
+        }
+      });
+    }
+
+    function clearStudentEssayImage(qIdx) {
+      delete pendingStudentEssayImages[qIdx];
+      const fileInput = document.getElementById(`student_essay_file_${qIdx}`);
+      const previewBox = document.getElementById(`student_essay_img_box_${qIdx}`);
+      if (fileInput) fileInput.value = "";
+      if (previewBox) previewBox.classList.add('hidden');
+    }
+
     function startExamExecution(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
 
       currentExam = exam;
+      pendingStudentEssayImages = {}; // Xóa bộ nhớ ảnh tạm trước khi làm bài mới
+
       document.getElementById('studentLobby').classList.add('hidden');
       document.getElementById('studentExamRoom').classList.remove('hidden');
 
@@ -1305,13 +1335,32 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           `;
         } else {
           return `
-            <div class="p-5 rounded-2xl border border-purple-200 bg-purple-50/30 space-y-2.5">
-              <div class="font-bold text-slate-800 text-sm">
-                <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
-                <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${q.text}
+            <div class="p-5 rounded-2xl border border-purple-200 bg-purple-50/30 space-y-3">
+              <div class="flex flex-wrap justify-between items-start gap-2">
+                <div class="font-bold text-slate-800 text-sm flex-1">
+                  <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
+                  <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${q.text}
+                </div>
+                <!-- Nút Học sinh Chụp ảnh / Tải ảnh bài làm tự luận -->
+                <label class="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5">
+                  <i class="fa-solid fa-camera"></i> Chụp / Tải ảnh bài làm
+                  <input type="file" id="student_essay_file_${idx}" accept="image/*" onchange="handleStudentEssayImage(event, ${idx})" class="hidden">
+                </label>
               </div>
-              <textarea id="ans_essay_${idx}" rows="4" placeholder="Trình bày bài giải của em vào đây..." 
+
+              <textarea id="ans_essay_${idx}" rows="4" placeholder="Gõ lời giải của em vào đây HOẶC bấm nút 'Chụp / Tải ảnh bài làm' ở góc phải để gửi ảnh chụp vở..." 
                 class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-purple-600"></textarea>
+
+              <!-- Khung hiển thị ảnh bài làm tự luận Học sinh vừa tải lên -->
+              <div id="student_essay_img_box_${idx}" class="hidden bg-white p-3 rounded-xl border border-purple-200 space-y-1.5">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-purple-700"><i class="fa-solid fa-image mr-1"></i> Ảnh bài làm tự luận của em đã đính kèm:</span>
+                  <button type="button" onclick="clearStudentEssayImage(${idx})" class="text-xs text-red-500 hover:underline font-bold">
+                    <i class="fa-solid fa-trash mr-1"></i> Xóa ảnh
+                  </button>
+                </div>
+                <img id="student_essay_img_preview_${idx}" src="" onclick="zoomImage(this.src)" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
+              </div>
             </div>
           `;
         }
@@ -1346,9 +1395,9 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       document.getElementById('studentLobby').classList.remove('hidden');
     }
 
-    // Chấm điểm chuẩn từng ý Đúng/Sai theo đúng điểm Giáo viên thiết lập cho từng ý
+    // Chấm điểm & Lưu cả ảnh chụp bài làm Tự luận của học sinh
     async function submitStudentExam(autoSubmit = false) {
-      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ và muốn nộp bài ngay?")) return;
+      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ bài làm (và ảnh chụp tự luận nếu có) để nộp bài ngay?")) return;
       clearInterval(timerInterval);
 
       let autoScore = 0;
@@ -1412,8 +1461,9 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         } else {
           hasEssay = true;
           const essayText = document.getElementById(`ans_essay_${idx}`).value.trim();
+          const essayImage = pendingStudentEssayImages[idx] || "";
           answers.push({
-            type: 'essay', question: q.text, essayText,
+            type: 'essay', question: q.text, essayText, essayImage,
             points: q.points, earned: 0,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -1435,7 +1485,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         maxScore: Math.round(maxScore * 100) / 100,
         hasEssay,
         graded: !hasEssay,
-        teacherComment: hasEssay ? "Đã chấm tự động phần Trắc nghiệm, Đúng/Sai (từng ý) và Trả lời ngắn. Đang chờ thầy chấm Tự luận." : "Đã hoàn thành và chấm tự động 100%.",
+        teacherComment: hasEssay ? "Đã chấm tự động phần Trắc nghiệm, Đúng/Sai và Trả lời ngắn. Đang chờ thầy chấm bài Tự luận." : "Đã hoàn thành và chấm tự động 100%.",
         teacherCustomSolution: "",
         teacherCustomImage: "",
         answers
@@ -1572,7 +1622,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             </div>
           </div>
 
-          <div class="space-y-1.5 text-xs bg-slate-50 p-3 rounded-xl border">
+          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-xl border">
             ${(s.answers || []).map((a, i) => {
               if (a.type === 'mcq') {
                 return `<div><b>Câu ${i+1} (TN - ${a.earned}/${a.points}đ):</b> Chọn <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Trống'}</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: ${['A','B','C','D'][a.correct]})`}</div>`;
@@ -1582,7 +1632,18 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               } else if (a.type === 'short') {
                 return `<div><b>Câu ${i+1} (Trả lời ngắn - ${a.earned}/${a.points}đ):</b> Điền <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">"${a.studentVal || 'Trống'}"</b> ${a.isCorrect ? '✔' : `✘ (Đ/A: "${a.correctText}")`}</div>`;
               } else {
-                return `<div class="pt-1 border-t mt-1"><b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}<div class="mt-1 p-2 bg-white border rounded text-slate-800 whitespace-pre-wrap">${a.essayText || '(Học sinh bỏ trống)'}</div></div>`;
+                return `
+                  <div class="pt-2 border-t mt-2 space-y-1.5">
+                    <b class="text-purple-700">Câu ${i+1} (Tự luận - tối đa ${a.points}đ):</b> ${a.question}
+                    <div class="p-2.5 bg-white border rounded-lg text-slate-800 whitespace-pre-wrap">${a.essayText || (a.essayImage ? '(Học sinh nộp bài bằng ảnh chụp bên dưới)' : '(Học sinh bỏ trống)')}</div>
+                    ${a.essayImage ? `
+                      <div class="pt-1">
+                        <div class="text-[11px] font-bold text-purple-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>Ảnh bài làm tự luận của ${s.studentName} (Chạm vào ảnh để phóng to):</div>
+                        <img src="${a.essayImage}" onclick="zoomImage('${a.essayImage}')" class="max-h-60 rounded-xl border-2 border-purple-200 shadow-sm cursor-zoom-in">
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
               }
             }).join('')}
           </div>
@@ -1591,7 +1652,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
           <div class="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
             <div class="flex flex-col sm:flex-row gap-2 items-center">
               <div class="flex items-center gap-1.5 w-full sm:w-auto">
-                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Điểm Tự luận:</label>
+                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Chấm điểm Tự luận:</label>
                 <input type="number" id="grade_essay_${s.id}" value="${s.essayScore || 0}" step="0.25" class="w-20 px-2 py-1.5 border rounded-lg text-xs font-bold text-center bg-white">
               </div>
               <input type="text" id="comment_${s.id}" value="${s.teacherComment || ''}" placeholder="Nhận xét chung gửi Phụ huynh em ${s.studentName}..." class="flex-1 w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
@@ -1601,11 +1662,11 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <label class="text-xs font-bold text-emerald-800">Bài chữa riêng / Sửa lỗi chi tiết cho ${s.studentName} (Hỗ trợ gõ LaTeX & Đính kèm ảnh):</label>
                 <label class="cursor-pointer bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
-                  <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài từ iPad
+                  <i class="fa-solid fa-camera mr-1"></i> Up ảnh chữa bài của GV
                   <input type="file" accept="image/*" onchange="handleTeacherSubImage(event, '${s.id}')" class="hidden">
                 </label>
               </div>
-              <textarea id="custom_sol_${s.id}" rows="2" placeholder="Gõ bài chữa LaTeX riêng cho bài của ${s.studentName} (VD: Câu tự luận em thiếu điều kiện $x \\ne 3$...)..." class="w-full px-3 py-2 border rounded-xl text-xs bg-white">${s.teacherCustomSolution || ''}</textarea>
+              <textarea id="custom_sol_${s.id}" rows="2" placeholder="Gõ bài chữa LaTeX riêng cho bài của ${s.studentName} (VD: Ở ảnh chụp câu 4, dòng thứ 2 em biến đổi thiếu dấu $\\Leftrightarrow$...)..." class="w-full px-3 py-2 border rounded-xl text-xs bg-white">${s.teacherCustomSolution || ''}</textarea>
               <img id="sub_img_preview_${s.id}" src="${s.teacherCustomImage || ''}" class="${s.teacherCustomImage ? '' : 'hidden'} max-h-40 rounded-lg border shadow-sm mt-1">
             </div>
 
@@ -1624,7 +1685,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (!loggedInParentStudent) return;
       const box = document.getElementById('parentResultsList');
 
-      // Chỉ lọc đúng bài của con vị Phụ huynh đã đăng nhập bằng mật khẩu riêng
       const subs = (appData.submissions || []).filter(s => {
         if (loggedInParentStudent === "__ALL__") return true;
         return s.studentName.trim().toLowerCase() === loggedInParentStudent.trim().toLowerCase();
@@ -1672,10 +1732,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
             </div>
           </div>
 
-          <!-- Mở xem Chi tiết từng câu & Bài chữa LaTeX / Hình ảnh -->
+          <!-- Mở xem Chi tiết từng câu (Bao gồm ảnh bài làm của con & bài chữa của Thầy) -->
           <details class="bg-white rounded-xl border border-blue-200 overflow-hidden" open>
             <summary class="px-4 py-3 bg-blue-50/80 text-blue-900 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
-              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem Đáp Án & Bài Chữa Chi Tiết Từng Câu (${(s.answers || []).length} câu)</span>
+              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem Chi Tiết Bài Làm Của Con & Bài Chữa Từng Câu (${(s.answers || []).length} câu)</span>
               <span class="text-[11px] underline">Thu gọn / Mở rộng</span>
             </summary>
             <div class="p-4 space-y-4 text-xs divide-y">
@@ -1711,8 +1771,16 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                   `;
                 } else {
                   statusHtml = `
-                    <div class="mt-1"><b>Bài trình bày tự luận của con:</b></div>
-                    <div class="p-2.5 bg-slate-50 rounded-lg border whitespace-pre-wrap text-slate-700">${a.essayText || '(Học sinh bỏ trống)'}</div>
+                    <div class="mt-1 space-y-2">
+                      <div><b>Bài trình bày tự luận của con:</b></div>
+                      <div class="p-2.5 bg-slate-50 rounded-lg border whitespace-pre-wrap text-slate-700">${a.essayText || (a.essayImage ? '(Con nộp bài bằng ảnh chụp vở bên dưới)' : '(Học sinh bỏ trống)')}</div>
+                      ${a.essayImage ? `
+                        <div>
+                          <div class="text-[11px] font-bold text-purple-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>Ảnh chụp vở làm bài tự luận của con (Bấm vào ảnh để phóng to):</div>
+                          <img src="${a.essayImage}" onclick="zoomImage('${a.essayImage}')" class="max-h-60 rounded-xl border-2 border-purple-200 shadow-sm cursor-zoom-in">
+                        </div>
+                      ` : ''}
+                    </div>
                   `;
                 }
 
@@ -1721,10 +1789,10 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                     <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${a.question}</div>
                     ${statusHtml}
                     <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải chi tiết:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
+                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải chi tiết của Thầy:</b>\n${a.solution || 'Xem trong phần nhận xét của Giáo viên.'}</div>
                       ${a.solutionImage ? `
                         <div>
-                          <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải minh họa (Bấm để phóng to):</div>
+                          <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải chuẩn của Giáo viên (Bấm để phóng to):</div>
                           <img src="${a.solutionImage}" onclick="zoomImage('${a.solutionImage}')" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
                         </div>
                       ` : ''}
