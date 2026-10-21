@@ -1243,39 +1243,44 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       });
     }
 
-    function importAIJsonQuestions() {
+function importAIJsonQuestions() {
   const pasteBox = document.getElementById('aiJsonPasteBox');
   if (!pasteBox) return;
 
   let raw = pasteBox.value.trim();
   if (!raw) return;
 
-  // Xóa các thẻ markdown bọc ngoài JSON (nếu có)
-  raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```\$/, '').trim();
+  // 1. Regex mạnh hơn để bóc tách chính xác phần bên trong dấu ```json ... ```
+  // Bất kể AI có xuống dòng hay cách ra bao nhiêu khoảng trắng
+  const match = raw.match(/```json\s*([\s\S]*?)\s*```/) || raw.match(/```\s*([\s\S]*?)\s*```/);
+  if (match) {
+    raw = match[1].trim();
+  }
+
+  // 2. Tự động sửa lỗi dấu phẩy dư thừa ở cuối mảng/object (Lỗi AI hay gặp nhất)
+  raw = raw.replace(/,(\s*[}\]])/g, '\$1');
 
   try {
     const parsed = JSON.parse(raw);
     
-    // Kiểm tra cấu hình dữ liệu phải là một mảng và không rỗng
     if (!Array.isArray(parsed)) {
-      throw new Error("Dữ liệu không phải là một danh sách [ ... ]");
+      throw new Error("Format error");
     }
     if (parsed.length === 0) {
-      alert("⚠️ Không tìm thấy câu hỏi nào trong đoạn mã JSON của bạn!");
+      alert("⚠️ Không tìm thấy câu hỏi nào trong đoạn JSON!");
       return;
     }
 
-    // Nạp dữ liệu vào mảng tạm
     draftQuestions.push(...parsed);
-    
-    // Xóa hộp văn bản và cập nhật giao diện
     pasteBox.value = '';
     renderDraftQuestions();
-    
-    alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề! Bạn có thể bấm nút "Sửa" ở từng câu nếu muốn điều chỉnh thêm.`);
+    alert(`🎉 Đã nạp thành công ${parsed.length} câu hỏi vào đề!`);
   } catch (e) {
-    alert("❌ Đoạn mã chưa đúng chuẩn JSON [ ... ]. Hãy kiểm tra lại định dạng dấu ngoặc, dấu phẩy!");
-    console.error("JSON Parse Error:", e); // Giúp bạn dễ debug hơn khi phát triển
+    // In hẳn lỗi ra console để bạn bấm F12 lên là biết AI đang sai ở ký tự nào
+    console.error("Lỗi Parse JSON thực tế:", e);
+    console.log("Chuỗi JSON sau khi xử lý thất bại:", raw);
+    
+    alert("❌ Đoạn mã chưa đúng chuẩn JSON. Hãy kiểm tra lại dấu ngoặc hoặc dấu phẩy!");
   }
 }
 
