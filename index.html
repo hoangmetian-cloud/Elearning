@@ -679,7 +679,7 @@
             statusText.className = "text-emerald-700 font-semibold";
             statusText.innerText = "Đã kết nối Database Trực Tuyến";
           }
-          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất từ Database:\n" + normalizeDbBaseUrl(activeDatabaseUrl) + "/");
+          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất");
         } else {
           throw new Error("HTTP " + res.status);
         }
