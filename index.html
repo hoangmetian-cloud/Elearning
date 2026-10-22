@@ -1099,41 +1099,63 @@
     }
 
     // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
-        function openTeacherLogin() {
-      let modal = document.getElementById('teacherLoginModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'teacherLoginModal';
-        modal.className = 'fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4';
-        modal.innerHTML = `
-          <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-xl space-y-4 text-center">
-            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto text-xl">
-              <i class="fa-solid fa-key"></i>
-            </div>
-            <h3 class="font-bold text-base text-slate-800">Khu vực giáo viên</h3>
-            <div class="relative">
-              <input type="password" id="teacherPinInput" placeholder="Nhập mã PIN giáo viên..." 
-                onkeydown="if(event.key==='Enter') submitTeacherPin()"
-                class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm font-bold text-center focus:outline-none focus:border-blue-600">
-              <button type="button" onclick="togglePasswordVisibility('teacherPinInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
-                <i class="fa-solid fa-eye"></i>
-              </button>
-            </div>
-            <div class="flex gap-2 pt-1">
-              <button onclick="document.getElementById('teacherLoginModal').remove()" class="flex-1 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
-              <button onclick="submitTeacherPin()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">Xác nhận</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-      } else {
-        modal.classList.remove('hidden');
-      }
-      setTimeout(() => {
-        const inp = document.getElementById('teacherPinInput');
-        if (inp) { inp.value = ''; inp.focus(); }
-      }, 100);
+function openTeacherLogin() {
+  let modal = document.getElementById('teacherLoginModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'teacherLoginModal';
+    modal.className = 'fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-xl space-y-4 text-center">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto text-xl">
+          <i class="fa-solid fa-key"></i>
+        </div>
+        <h3 class="font-bold text-base text-slate-800">Khu vực giáo viên</h3>
+        <div class="relative">
+          <input type="password" id="teacherPinInput" placeholder="Nhập mã PIN giáo viên..." 
+            onkeydown="if(event.key==='Enter') submitTeacherPin()"
+            class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm font-bold text-center focus:outline-none focus:border-blue-600">
+          <button type="button" onclick="togglePasswordVisibility('teacherPinInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="document.getElementById('teacherLoginModal').remove()" class="flex-1 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
+          <button onclick="submitTeacherPin()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">Xác nhận</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.classList.remove('hidden');
+  }
+  setTimeout(() => {
+    const inp = document.getElementById('teacherPinInput');
+    if (inp) { inp.value = ''; inp.focus(); }
+  }, 100);
+}
+
+// Bổ sung hàm bật/tắt hiển thị mật khẩu nếu dự án của bạn chưa có
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
     }
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+}
+
 
     function submitTeacherPin() {
       const inp = document.getElementById('teacherPinInput');
