@@ -636,9 +636,20 @@
 
   <script>
     // =========================================================================
+    // =========================================================================
     // CẤU HÌNH MẶC ĐỊNH & LINK DATABASE FIREBASE CỦA GIÁO VIÊN
     // =========================================================================
-    const TEACHER_PIN = "27112004"; // Mã PIN mở mục Giáo Viên
+    const TEACHER_PIN_HASH = "2f04e1baca9e6cf121515a3e2885513001403138e051d0ecbf06d0aa8df5dd84";
+
+    async function checkTeacherPinSecure(inputPin) {
+      const msgBuffer = new TextEncoder().encode(inputPin.trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex === TEACHER_PIN_HASH;
+    }
+
+
     const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
     let activeDatabaseUrl = localStorage.getItem('edusmart_custom_db_url') || DEFAULT_DATABASE_URL;
 
@@ -983,7 +994,7 @@
 
         // Mã đã kích hoạt của bạn lấy từ mail FormSubmit
     const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
-    const ACTIVATED_TEACHER_EMAIL = "snowdrop13121989@gmail.com";
+    const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
 
     async function sendEmailViaService(toEmail, subject, messageText) {
       if (!toEmail || !toEmail.includes("@")) return false;
@@ -1141,52 +1152,17 @@ function openTeacherLogin() {
   }, 100);
 }
 
-// Bổ sung hàm bật/tắt hiển thị mật khẩu nếu dự án của bạn chưa có
-function togglePasswordVisibility(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  
-  const icon = btn.querySelector('i');
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (icon) {
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    }
-  } else {
-    input.type = 'password';
-    if (icon) {
-      icon.classList.remove('fa-eye-slash');
-      icon.classList.add('fa-eye');
-    }
-  }
-}
-
-
-    function submitTeacherPin() {
+    async function submitTeacherPin() {
       const inp = document.getElementById('teacherPinInput');
       if (!inp) return;
       const pin = inp.value.trim();
-      if (pin === TEACHER_PIN) {
+      if (await checkTeacherPinSecure(pin)) {
         const modal = document.getElementById('teacherLoginModal');
         if (modal) modal.remove();
         switchRole('teacher');
       } else {
         alert("Mã PIN không chính xác!");
         inp.focus();
-      }
-    }
-
-    // Hàm phụ trợ ẩn/hiện mật khẩu (dùng chung cho cả Phụ huynh và Giáo viên)
-    function togglePasswordVisibility(inputId, btnEl) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-      if (input.type === "password") {
-        input.type = "text";
-        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-      } else {
-        input.type = "password";
-        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i>';
       }
     }
 
@@ -1215,14 +1191,15 @@ function togglePasswordVisibility(inputId, btn) {
       renderAll();
     }
 
-    function unlockParentView() {
+        async function unlockParentView() {
       const enteredPass = document.getElementById('parentPassInput').value.trim();
       if (!enteredPass) {
         alert("Vui lòng nhập mật khẩu riêng của phụ huynh!");
         return;
       }
 
-      if (enteredPass === TEACHER_PIN) {
+      if (await checkTeacherPinSecure(enteredPass)) {
+
         loggedInParentStudent = "__ALL__";
         document.getElementById('parentLockScreen').classList.add('hidden');
         document.getElementById('parentUnlockedContent').classList.remove('hidden');
@@ -2035,12 +2012,16 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       if (previewBox) previewBox.classList.add('hidden');
     }
 
+    let tabSwitchCount = 0;
+
     function startExamExecution(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
 
       currentExam = exam;
       pendingStudentEssayImages = {};
+      tabSwitchCount = 0;
+
 
       document.getElementById('studentLobby').classList.add('hidden');
       document.getElementById('guestResultRoom').classList.add('hidden');
@@ -2168,8 +2149,12 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       document.getElementById('studentLobby').classList.remove('hidden');
     }
 
+    let isSubmittingExam = false;
     async function submitStudentExam(autoSubmit = false) {
-      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ bài làm (và ảnh chụp tự luận nếu có) để nộp bài ngay?")) return;
+      if (isSubmittingExam) return;
+      if (!autoSubmit && !confirm("Em đã kiểm tra kỹ bài làm (và ảnh chụp tự luận nếu có) để nộp bài chưa?")) return;
+      isSubmittingExam = true;
+      setTimeout(() => { isSubmittingExam = false; }, 4000);
       clearInterval(timerInterval);
 
       let autoScore = 0;
@@ -2243,7 +2228,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         examId: currentExam.id,
         examTitle: currentExam.title,
         subject: currentExam.subject,
-        submittedAt: new Date().toLocaleString('vi-VN'),
+        submittedAt: new Date().toLocaleString('vi-VN') + (tabSwitchCount > 0 ? ` (Rời màn hình ${tabSwitchCount} lần)` : ''),
         mcqScore: Math.round(autoScore * 100) / 100,
         essayScore: 0,
         totalScore: Math.round(autoScore * 100) / 100,
@@ -2798,9 +2783,15 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       triggerMathJax();
     }
 
-    // Chặn phím F12, Ctrl+Shift+I, Ctrl+U
+    // Chặn F12, Ctrl+Shift+I/J/C, Ctrl+U (xem nguồn), Ctrl+S (lưu trang) trên cả Windows và Mac
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) {
+      const key = (e.key || '').toLowerCase();
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+      if (
+        e.key === 'F12' ||
+        (ctrlOrCmd && e.shiftKey && ['i', 'j', 'c'].includes(key)) ||
+        (ctrlOrCmd && ['u', 's'].includes(key))
+      ) {
         e.preventDefault();
         return false;
       }
@@ -2810,6 +2801,16 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
     });
+
+    // Cảnh báo và đếm số lần học sinh chuyển tab hoặc thoát màn hình khi đang làm bài
+    document.addEventListener('visibilitychange', function() {
+      const examRoom = document.getElementById('studentExamRoom');
+      if (document.hidden && examRoom && !examRoom.classList.contains('hidden')) {
+        tabSwitchCount++;
+        alert(`⚠️ CẢNH BÁO!\nEm vừa rời khỏi màn hình làm bài (${tabSwitchCount} lần).\nHệ thống đã ghi nhận vào bài nộp gửi cho giáo viên.`);
+      }
+    });
+
     // Hàm bấm vào nút con mắt để ẩn/hiện mật khẩu
     function togglePasswordVisibility(inputId, btnEl) {
       const input = document.getElementById(inputId);
@@ -2824,5 +2825,6 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     }
 
   </script>
+
 </body>
 </html>
