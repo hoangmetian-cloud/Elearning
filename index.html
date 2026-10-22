@@ -170,15 +170,21 @@
             Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
             Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa</b>.
           </p>
-          <div class="space-y-3 pt-2">
-            <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
-              onkeydown="if(event.key==='Enter') unlockParentView()"
-              class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
+                    <div class="space-y-3 pt-2">
+            <div class="relative">
+              <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
+                onkeydown="if(event.key==='Enter') unlockParentView()"
+                class="w-full px-4 py-3 pr-10 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
+              <!-- Nút bấm hiện/ẩn mật khẩu -->
+              <button type="button" onclick="togglePasswordVisibility('parentPassInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
             <button onclick="unlockParentView()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow transition">
               <i class="fa-solid fa-unlock-keyhole mr-1"></i> Xem bài làm & bài chữa của con
             </button>
           </div>
-        </div>
+
 
         <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi Phụ huynh đăng nhập -->
         <div id="parentUnlockedContent" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
@@ -1093,15 +1099,69 @@
     }
 
     // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
-    function openTeacherLogin() {
-      const pin = prompt("🔒 Khu vực giáo viên.\nNhập mã PIN quản trị đã được cấp");
-      if (pin === null) return;
-      if (pin.trim() === TEACHER_PIN) {
+        function openTeacherLogin() {
+      let modal = document.getElementById('teacherLoginModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'teacherLoginModal';
+        modal.className = 'fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-xl space-y-4 text-center">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <h3 class="font-bold text-base text-slate-800">Khu vực giáo viên</h3>
+            <div class="relative">
+              <input type="password" id="teacherPinInput" placeholder="Nhập mã PIN giáo viên..." 
+                onkeydown="if(event.key==='Enter') submitTeacherPin()"
+                class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm font-bold text-center focus:outline-none focus:border-blue-600">
+              <button type="button" onclick="togglePasswordVisibility('teacherPinInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button onclick="document.getElementById('teacherLoginModal').remove()" class="flex-1 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
+              <button onclick="submitTeacherPin()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">Xác nhận</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        modal.classList.remove('hidden');
+      }
+      setTimeout(() => {
+        const inp = document.getElementById('teacherPinInput');
+        if (inp) { inp.value = ''; inp.focus(); }
+      }, 100);
+    }
+
+    function submitTeacherPin() {
+      const inp = document.getElementById('teacherPinInput');
+      if (!inp) return;
+      const pin = inp.value.trim();
+      if (pin === TEACHER_PIN) {
+        const modal = document.getElementById('teacherLoginModal');
+        if (modal) modal.remove();
         switchRole('teacher');
       } else {
         alert("Mã PIN không chính xác!");
+        inp.focus();
       }
     }
+
+    // Hàm phụ trợ ẩn/hiện mật khẩu (dùng chung cho cả Phụ huynh và Giáo viên)
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        input.type = "password";
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    }
+
 
     function switchRole(role) {
       ['student', 'parent', 'teacher'].forEach(r => {
@@ -2635,6 +2695,18 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
     });
+    // Hàm bấm vào nút con mắt để ẩn/hiện mật khẩu
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        input.type = "password";
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    }
 
   </script>
 </body>
