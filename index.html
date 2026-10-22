@@ -1046,13 +1046,8 @@
       renderAll();
       await initDatabase();
 
-            setInterval(() => {
-        const activeEl = document.activeElement;
-        const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
-        const inExam = !document.getElementById('studentExamRoom').classList.contains('hidden');
-        const inTeacherView = !document.getElementById('view-teacher').classList.contains('hidden');
-        // Không tự động vẽ lại giao diện khi Giáo viên đang mở bảng quản trị hoặc đang gõ phím
-        if (!inExam && !isTyping && !inTeacherView) {
+      setInterval(() => {
+        if (document.getElementById('studentExamRoom').classList.contains('hidden')) {
           syncFromCloud(false);
         }
       }, 7000);
@@ -2272,8 +2267,8 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         sendEmailViaService(appData.teacherEmail, mailSubject, mailBody);
       }
 
-            if (isCurrentStudentGuest) {
-        // Học sinh vãng lai: gửi đáp án về mail đã đăng ký (không hiện trực tiếp)
+      if (isCurrentStudentGuest) {
+        // Học sinh vãng lai: gửi đáp án về mail đã đăng ký (đồng thời tự gửi 1 bản về mail GV)
         if (currentGuestEmail) {
           sendEmailViaService(currentGuestEmail, `[Kết quả & Đáp án] ${newSub.examTitle}`, mailBody);
         }
@@ -2281,13 +2276,14 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         return;
       }
 
-      // Học sinh có tên trong lớp: hiển thị ngay kết quả, đáp án và lời giải sau khi làm xong
+
+      document.getElementById('studentLobby').classList.remove('hidden');
       renderAll();
-      renderGuestResultView(newSub);
+
       alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
     }
 
-    // Màn hình kết quả sau khi nộp bài (HS vãng lai chỉ hiện thông báo gửi mail, HS trong lớp hiện đầy đủ đáp án)
+    // Màn hình kết quả cho Học sinh vãng lai (Chỉ hiện điểm và thông báo đã gửi đáp án về mail)
     function renderGuestResultView(s) {
       document.getElementById('guestResultRoom').classList.remove('hidden');
       document.getElementById('guestResultTitle').innerText = `📂 Đề kiểm tra: ${s.examTitle}`;
@@ -2295,79 +2291,17 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       document.getElementById('guestResultScore').innerText = `${s.totalScore} / ${s.maxScore}`;
 
       const box = document.getElementById('guestResultDetails');
-
-      if (s.isGuest) {
-        box.innerHTML = `
-          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-            <div class="font-bold text-emerald-800 text-sm">
-              <i class="fa-solid fa-envelope-circle-check mr-1"></i> Đáp án và lời giải đã được gửi về mail: <span class="text-blue-700">${escapeAttr(s.guestEmail)}</span>
-            </div>
-            <p class="text-xs text-slate-600">
-              Để tránh gian lận cho các bạn học sinh đang làm bài, hệ thống không hiển thị trực tiếp đáp án trên màn hình. Em vui lòng kiểm tra hộp thư mail (bao gồm cả mục thư rác / spam) để xem đáp án và lời giải. Với học sinh lần đầu nhận mail, vui lòng bấm "ACTIVATE FORM" trong thư được gửi về để nhận kết quả của mình. Xin chân thành cảm ơn!
-            </p>
+      box.innerHTML = `
+        <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
+          <div class="font-bold text-emerald-800 text-sm">
+            <i class="fa-solid fa-envelope-circle-check mr-1"></i> Đáp án và lời giải đã được gửi về mail: <span class="text-blue-700">${escapeAttr(s.guestEmail)}</span>
           </div>
-        `;
-        return;
-      }
-
-      // Hiển thị đáp án & lời giải cho học sinh chính thức trong lớp
-      box.innerHTML = (s.answers || []).map((a, idx) => {
-        let statusHtml = '';
-        if (a.type === 'mcq') {
-          const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${formatMathText((a.options || [])[a.chosen] || '')}` : 'Bỏ trống';
-          const rightChar = `${['A','B','C','D'][a.correct]}. ${formatMathText((a.options || [])[a.correct] || '')}`;
-          statusHtml = `
-            <div class="mt-1">Em chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
-            ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
-          `;
-        } else if (a.type === 'tf') {
-          statusHtml = `
-            <div class="mt-1.5 space-y-1 bg-slate-50 p-2.5 rounded-lg border">
-              <div class="font-bold text-amber-800 mb-1">Đúng ${a.correctCount}/4 ý — Đạt: ${a.earned} / ${a.points} điểm:</div>
-              ${(a.statements || []).map((st, sIdx) => `
-                <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
-                  <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
-                  <span>
-                    Em chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
-                    | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
-                  </span>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        } else if (a.type === 'short') {
-          statusHtml = `
-            <div class="mt-1">Câu trả lời của em: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${escapeAttr(a.studentVal || '(Bỏ trống)')}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
-            <div class="text-emerald-700 font-semibold">Đáp án chuẩn: ${escapeAttr(a.correctText)}</div>
-          `;
-        } else {
-          statusHtml = `
-            <div class="mt-1 space-y-2">
-              <div><b>Bài làm tự luận của em:</b></div>
-              <div class="p-2.5 bg-slate-50 rounded-lg border whitespace-pre-wrap text-slate-700">${escapeAttr(a.essayText || '(Trống)')}</div>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="pt-3 first:pt-0 space-y-2">
-            <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
-            ${statusHtml}
-            <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-              <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Chưa có lời giải.')}</div>
-              ${a.solutionImage ? `
-                <div>
-                  <img src="${a.solutionImage}" onclick="zoomImage(this.src)" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      triggerMathJax();
+          <p class="text-xs text-slate-600">
+            Để tránh gian lận cho các bạn học sinh đang làm bài, hệ thống không hiển thị trực tiếp đáp án trên màn hình. Em vui lòng kiểm tra hộp thư mail (bao gồm cả mục thư rác / spam) để xem đáp án và lời giải. Với học sinh lần đầu nhận mail, vui lòng bấm "ACTIVATE FORM" trong thư được gửi về để nhận kết quả của mình. Xin chân thành cảm ơn!
+          </p>
+        </div>
+      `;
     }
-
 
     // ==================== CHẤM BÀI, GỬI MAIL PHỤ HUYNH & GOM THEO MỤC LỤC ĐỀ THI ====================
     function handleTeacherSubImage(event, subId) {
@@ -2384,83 +2318,29 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
     }
 
     // Chỉ khi Giáo viên bấm gửi cho phụ huynh (sendToParent = true) thì mới gửi mail cho phụ huynh
-        async function saveTeacherGrading(subId, sendToParent = false) {
-      // Đọc dữ liệu Giáo viên vừa gõ trên giao diện TRƯỚC KHI đồng bộ để không bị mất chữ
-      const gradeInput = document.getElementById('grade_essay_' + subId);
-      const commentInput = document.getElementById('comment_' + subId);
-      const customSolInput = document.getElementById('custom_sol_' + subId);
-
-      const manualScore = gradeInput ? (parseFloat(gradeInput.value) || 0) : 0;
-      const comment = commentInput ? commentInput.value.trim() : "";
-      const customSol = customSolInput ? formatMathText(customSolInput.value.trim()) : "";
-      const customImg = pendingSubmissionImages[subId];
-
-      // Đồng bộ danh sách email phụ huynh nếu giáo viên vừa nhập ở Tab 3 mà quên bấm Lưu
-      syncParentDomInputsToMemory();
-
-      const sub = (appData.submissions || []).find(s => s.id === subId);
-      if (!sub) {
-        alert("Không tìm thấy bài nộp này!");
-        return;
-      }
+    async function saveTeacherGrading(subId, sendToParent = false) {
+      const sub = appData.submissions.find(s => s.id === subId);
+      if (!sub) return;
+      const manualScore = parseFloat(document.getElementById('grade_essay_' + subId).value) || 0;
+      const comment = document.getElementById('comment_' + subId).value.trim();
+      const customSol = formatMathText(document.getElementById('custom_sol_' + subId).value.trim());
 
       sub.essayScore = manualScore;
-      sub.totalScore = Math.round(((parseFloat(sub.mcqScore) || 0) + manualScore) * 100) / 100;
+      sub.totalScore = Math.round((sub.mcqScore + manualScore) * 100) / 100;
       sub.teacherComment = comment;
       sub.teacherCustomSolution = customSol;
-      if (customImg !== undefined) {
-        sub.teacherCustomImage = customImg;
+      if (pendingSubmissionImages[subId] !== undefined) {
+        sub.teacherCustomImage = pendingSubmissionImages[subId];
       }
       sub.graded = true;
 
-      // Lưu ngay lên Firebase và cập nhật lại giao diện
-      await syncToCloud();
       renderAll();
+      await syncToCloud();
 
       if (!sendToParent) {
         alert(`✔ Đã lưu điểm, bài chữa LaTeX và hình ảnh cho em ${sub.studentName}!`);
         return;
       }
-
-      // Tìm mail phụ huynh (hoặc mail của học sinh vãng lai nếu chấm bài vãng lai)
-      const cleanSubName = sub.studentName.replace(/\s*\(Vãng lai\)\s*$/i, "").trim().toLowerCase();
-      const matchedAcc = (appData.parentAccounts || []).find(
-        a => a.name.trim().toLowerCase() === cleanSubName || a.name.trim().toLowerCase() === sub.studentName.trim().toLowerCase()
-      );
-
-      let targetEmail = "";
-      if (matchedAcc && matchedAcc.parentEmail && matchedAcc.parentEmail.trim()) {
-        targetEmail = matchedAcc.parentEmail.trim();
-      } else if (sub.guestEmail && sub.guestEmail.trim()) {
-        targetEmail = sub.guestEmail.trim();
-      }
-
-      if (!targetEmail) {
-        const entered = prompt(`Học sinh ${sub.studentName} chưa có mail phụ huynh trong bảng quản trị.\nNhập mail phụ huynh để gửi kết quả ngay:`, "");
-        if (!entered || !entered.trim()) {
-          alert(`✔ Đã lưu điểm và bài chữa cho em ${sub.studentName} (Chưa gửi mail do chưa nhập địa chỉ mail).`);
-          return;
-        }
-        targetEmail = entered.trim();
-        if (matchedAcc) {
-          matchedAcc.parentEmail = targetEmail;
-          await syncToCloud();
-          renderAll();
-        }
-      }
-
-      const subject = `[Kết quả học tập] ${sub.studentName} - ${sub.examTitle}`;
-      const bodyText = createMailTextFromSub(sub, true);
-      const sentOk = await sendEmailViaService(targetEmail, subject, bodyText);
-
-      if (sentOk) {
-        alert(`✔ Đã lưu điểm và gửi mail kết quả + bài chữa tới phụ huynh em ${sub.studentName} (${targetEmail})!`);
-      } else {
-        alert(`✔ Đã lưu điểm! Hệ thống sẽ mở ứng dụng Mail để bạn gửi cho phụ huynh (${targetEmail}).`);
-        openMailApp(targetEmail, subject, bodyText);
-      }
-    }
-
 
       // Khi giáo viên bấm nút gửi phụ huynh
       const matchedAcc = (appData.parentAccounts || []).find(
