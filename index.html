@@ -2179,18 +2179,20 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
       const mailBody = createMailTextFromSub(newSub, true);
 
       // Khi học sinh nộp bài: chỉ gửi về mail giáo viên (nếu có), KHÔNG gửi cho phụ huynh
-      if (appData.teacherEmail) {
+            // Khi học sinh trong lớp nộp bài: gửi về mail giáo viên (nếu là HS vãng lai thì lệnh bên dưới đã gửi cho cả GV và HS rồi)
+      if (appData.teacherEmail && !isCurrentStudentGuest) {
         sendEmailViaService(appData.teacherEmail, mailSubject, mailBody);
       }
 
       if (isCurrentStudentGuest) {
-        // Học sinh vãng lai: gửi đáp án về mail đã đăng ký, không hiện đáp án trực tiếp
+        // Học sinh vãng lai: gửi đáp án về mail đã đăng ký (đồng thời tự gửi 1 bản về mail GV)
         if (currentGuestEmail) {
           sendEmailViaService(currentGuestEmail, `[Kết quả & Đáp án] ${newSub.examTitle}`, mailBody);
         }
         renderGuestResultView(newSub);
         return;
       }
+
 
       document.getElementById('studentLobby').classList.remove('hidden');
       renderAll();
