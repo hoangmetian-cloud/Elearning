@@ -2611,7 +2611,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${escapeAttr(s.teacherComment || 'Chưa có nhận xét.')}</div>
                 ${s.teacherCustomSolution ? `
                   <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
-                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ coo cho ${escapeAttr(s.studentName)}:</b>\n${formatMathText(s.teacherCustomSolution)}
+                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ cô cho ${escapeAttr(s.studentName)}:</b>\n${formatMathText(s.teacherCustomSolution)}
                   </div>
                 ` : ''}
                 ${s.teacherCustomImage ? `
@@ -2634,7 +2634,7 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
 
           <details class="bg-white rounded-xl border border-blue-200 overflow-hidden" open>
             <summary class="px-4 py-3 bg-blue-50/80 text-blue-900 font-bold text-xs cursor-pointer select-none flex justify-between items-center">
-              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem bài làm của con và bãi chữa của thầy/cô (${(s.answers || []).length} câu)</span>
+              <span><i class="fa-solid fa-book-open mr-1.5 text-blue-600"></i> Xem bài làm của con và bài chữa của thầy/cô (${(s.answers || []).length} câu)</span>
               <span class="text-[11px] underline">Thu gọn / Mở rộng</span>
             </summary>
             <div class="p-4 space-y-4 text-xs divide-y">
