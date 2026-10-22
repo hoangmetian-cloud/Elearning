@@ -974,25 +974,41 @@
       return lines.join("\n");
     }
 
+        // Mã đã kích hoạt của bạn lấy từ mail FormSubmit
+    const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
+    const ACTIVATED_TEACHER_EMAIL = "snowdrop13121989@gmail.com";
+
     async function sendEmailViaService(toEmail, subject, messageText) {
       if (!toEmail || !toEmail.includes("@")) return false;
+      const target = toEmail.trim();
+      const isTeacher = (target.toLowerCase() === ACTIVATED_TEACHER_EMAIL.toLowerCase());
+
+      // Luôn gửi qua mã Token đã kích hoạt của giáo viên để KHÔNG bao giờ gửi mail Activate nữa.
+      // Nếu người nhận là học sinh vãng lai hoặc phụ huynh thì thêm _cc để gửi thẳng tới mail của họ.
+      const payload = {
+        _subject: subject,
+        _captcha: "false",
+        message: messageText
+      };
+      if (!isTeacher) {
+        payload._cc = target;
+      }
+
       try {
-        const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(toEmail.trim())}`, {
+        const res = await fetch(`https://formsubmit.co/ajax/${FORMSUBMIT_TOKEN}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({
-            _subject: subject,
-            message: messageText
-          })
+          body: JSON.stringify(payload)
         });
         return res.ok;
       } catch (e) {
         return false;
       }
     }
+
 
     function openMailApp(toEmail, subject, messageText) {
       if (!toEmail) return;
