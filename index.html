@@ -774,9 +774,33 @@
       }
     }
 
-    async function syncToCloud() {
-      localStorage.setItem('edusmart_v6_data', JSON.stringify(appData));
+        async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
+      const statusText = document.getElementById('cloudStatusText');
+      const endpoint = getDatabaseEndpoint();
+      try {
+        const res = await fetch(endpoint, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(appData)
+        });
+        if (res.ok) {
+          if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
+          if (statusText) {
+            statusText.className = "text-emerald-700 font-semibold";
+            statusText.innerText = "Đã kết nối Database Trực Tuyến";
+          }
+        } else {
+          throw new Error("HTTP " + res.status);
+        }
+      } catch (e) {
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+        if (statusText) {
+          statusText.className = "text-red-600 font-semibold";
+          statusText.innerText = "Chưa đẩy được lên Database (Kiểm tra mạng/Rules)";
+        }
+      }
+    }
       const statusText = document.getElementById('cloudStatusText');
       const endpoint = getDatabaseEndpoint();
       try {
@@ -1011,24 +1035,10 @@
       window.open(link, "_blank");
     }
 
-    window.onload = async () => {
-      const savedLocal = localStorage.getItem('edusmart_v6_data') || localStorage.getItem('edusmart_v5_data');
-      if (savedLocal) {
-        try {
-          const parsed = JSON.parse(savedLocal);
-          appData = { ...appData, ...parsed };
-          if (!appData.parentAccounts || appData.parentAccounts.length === 0) {
-            appData.parentAccounts = [...INITIAL_PARENT_ACCOUNTS];
-          } else {
-            appData.parentAccounts = appData.parentAccounts.map((acc, idx) => ({
-              name: acc.name || "",
-              pass: acc.pass || ("ph" + (idx + 1)),
-              className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
-              parentEmail: acc.parentEmail || ""
-            }));
-          }
-        } catch(e) {}
-      }
+        window.onload = async () => {
+      // Xóa sạch mọi rác trong Local Storage nếu có sẵn trước đó
+      localStorage.clear();
+
       fillRosterFromParentAccounts();
       updateDbUrlUI();
       renderAll();
