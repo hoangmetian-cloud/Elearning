@@ -1036,13 +1036,18 @@
     }
 
         window.onload = async () => {
-      // Xóa sạch mọi rác trong Local Storage nếu có sẵn trước đó
+      // Xóa sạch các dữ liệu cũ/rác trong Local Storage nhưng GIỮ LẠI link database cấu hình của bạn
+      const dbUrlCache = localStorage.getItem('edusmart_custom_db_url');
       localStorage.clear();
+      if (dbUrlCache) {
+        localStorage.setItem('edusmart_custom_db_url', dbUrlCache);
+      }
 
       fillRosterFromParentAccounts();
       updateDbUrlUI();
       renderAll();
       await initDatabase();
+
 
             setInterval(() => {
         const activeEl = document.activeElement;
