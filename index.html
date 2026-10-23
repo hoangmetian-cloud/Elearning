@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Hệ thống học tập - Vương</title>
+    <!-- 1. Chặn rò rỉ thông tin đường dẫn nguồn khi chuyển trang (Sửa lỗi Referrer-Policy) -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- 2. Chính sách bảo mật nội dung (Content-Security-Policy) - Chỉ cho phép tải từ Tailwind, FontAwesome, MathJax, Firebase và FormSubmit -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co;">
+
   <!-- Icon tab trình duyệt chuẩn đẹp -->
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3445/3445175.png">
   <script src="https://cdn.tailwindcss.com"></script>
