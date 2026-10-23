@@ -319,13 +319,15 @@
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
-      const endpoint = getDatabaseEndpoint();
+      // Học sinh chỉ được quyền đẩy dữ liệu vào nhánh submissions
+      const subEndpoint = `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data/submissions.json`;
       try {
-        const res = await fetch(endpoint, {
+        const res = await fetch(subEndpoint, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(appData)
+          body: JSON.stringify(appData.submissions || [])
         });
+
         if (res.ok) {
           if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
           if (statusText) {
@@ -650,9 +652,16 @@
         return;
       }
 
-      const matchedAccount = (appData.parentAccounts || []).find(
-        acc => acc.pass && acc.pass.toLowerCase() === enteredPass.toLowerCase()
-      );
+      const msgBuffer = new TextEncoder().encode(enteredPass.toLowerCase());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const enteredHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const matchedAccount = (appData.parentAccounts || []).find(acc => {
+        if (!acc.pass) return false;
+        const stored = acc.pass.trim().toLowerCase();
+        return stored === enteredPass.toLowerCase() || stored === enteredHash;
+      });
+
 
       if (matchedAccount) {
         loggedInParentStudent = matchedAccount.name;
