@@ -403,6 +403,16 @@
       ],
       submissions: []
     };
+    // Hàm tổng hợp hiển thị giao diện khi có dữ liệu từ Database tải về
+    function renderAll() {
+      renderStudentLobby();
+      if (typeof loggedInParentStudent !== 'undefined' && loggedInParentStudent) {
+        if (typeof renderParentView === 'function') renderParentView();
+      }
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise().catch(() => {});
+      }
+    }
 
     let draftQuestions = [];
     let editingDraftQuestionIdx = null;
