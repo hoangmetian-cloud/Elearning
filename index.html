@@ -2534,7 +2534,13 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
                 <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">${groupSubs.length} bài nộp</span>
                 ${ungradedCount > 0 ? `<span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">${ungradedCount} chờ chấm</span>` : ''}
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="event.preventDefault(); sendBatchEmailsForGroup(${gIdx}, 'all')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg font-bold shadow-sm transition">
+                  <i class="fa-solid fa-envelopes-bulk mr-1"></i> Gửi mail tất cả bài đã chấm
+                </button>
+                <button type="button" onclick="event.preventDefault(); sendBatchEmailsForGroup(${gIdx}, 'selected')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold shadow-sm transition">
+                  <i class="fa-solid fa-user-check mr-1"></i> Gửi các bài đã tích chọn
+                </button>
                 <button type="button" data-exam-id="${escapeAttr(firstExamId)}" data-exam-title="${escapeAttr(examTitle)}" onclick="event.preventDefault(); deleteSubmissionsByExam(this.getAttribute('data-exam-id'), this.getAttribute('data-exam-title'))" class="text-xs text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg font-semibold border border-red-100">
                   <i class="fa-solid fa-trash mr-1"></i> Xóa mục này
                 </button>
@@ -2542,11 +2548,20 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
               </div>
             </summary>
 
+            <div class="px-4 pt-3 flex items-center justify-between text-xs text-slate-600">
+              <label class="flex items-center gap-2 font-bold cursor-pointer select-none text-blue-700">
+                <input type="checkbox" onchange="toggleSelectAllSubsInGroup(${gIdx}, this.checked)" class="w-4 h-4 rounded accent-blue-600">
+                Chọn / Bỏ chọn tất cả bài đã chấm trong đề này
+              </label>
+              <span class="text-[11px] italic text-slate-400">* Tích chọn các học sinh cần gửi rồi bấm nút "Gửi các bài đã tích chọn" ở trên</span>
+            </div>
+
             <div class="p-4 space-y-4">
               ${groupSubs.map(s => `
                 <div class="p-5 rounded-2xl border ${s.graded ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3 shadow-sm">
                   <div class="flex flex-wrap justify-between items-start gap-2 border-b pb-2">
-                    <div>
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" class="sub-check-group-${gIdx} w-4 h-4 rounded accent-blue-600 cursor-pointer" value="${s.id}" ${s.graded ? 'checked' : ''}>
                       <span class="font-bold text-base text-slate-800">${escapeAttr(s.studentName)}</span>
                       ${s.guestEmail ? `<span class="text-xs text-blue-600 ml-1">(${escapeAttr(s.guestEmail)})</span>` : ''}
                       <span class="text-xs text-slate-500 ml-2">• ${s.submittedAt}</span>
@@ -2790,6 +2805,109 @@ Hãy trả về ĐÚNG ĐỊNG DẠNG MẢNG JSON dưới đây (không viết c
         input.type = "password";
         if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i>';
       }
+    }
+
+    // Chọn hoặc bỏ chọn tất cả bài nộp trong 1 mục đề thi
+    function toggleSelectAllSubsInGroup(gIdx, isChecked) {
+      const checkboxes = document.querySelectorAll(`.sub-check-group-${gIdx}`);
+      checkboxes.forEach(cb => { cb.checked = isChecked; });
+    }
+
+    // Gửi mail đồng loạt cho Tất cả bài đã chấm hoặc Các bài được tích chọn trong đề
+    async function sendBatchEmailsForGroup(gIdx, mode = 'all') {
+      syncParentDomInputsToMemory();
+      const checkboxes = Array.from(document.querySelectorAll(`.sub-check-group-${gIdx}`));
+      if (checkboxes.length === 0) return;
+
+      let targetSubIds = [];
+      if (mode === 'selected') {
+        targetSubIds = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+        if (targetSubIds.length === 0) {
+          alert("Vui lòng tích chọn ít nhất 1 bài làm của học sinh bên dưới để gửi mail!");
+          return;
+        }
+      } else {
+        targetSubIds = checkboxes.map(cb => cb.value);
+      }
+
+      // Lọc ra các bài đã chấm (hoặc đang chọn) và lưu điểm/nhận xét hiện tại trên màn hình trước khi gửi
+      const subsToSend = [];
+      for (const subId of targetSubIds) {
+        const sub = (appData.submissions || []).find(s => s.id === subId);
+        if (!sub) continue;
+
+        // Cập nhật điểm tự luận, nhận xét và bài chữa đang gõ trên giao diện
+        const gradeInput = document.getElementById('grade_essay_' + subId);
+        const commentInput = document.getElementById('comment_' + subId);
+        const customSolInput = document.getElementById('custom_sol_' + subId);
+        if (gradeInput) sub.essayScore = parseFloat(gradeInput.value) || 0;
+        sub.totalScore = Math.round(((parseFloat(sub.mcqScore) || 0) + (sub.essayScore || 0)) * 100) / 100;
+        if (commentInput) sub.teacherComment = commentInput.value.trim();
+        if (customSolInput) sub.teacherCustomSolution = formatMathText(customSolInput.value.trim());
+        if (pendingSubmissionImages[subId] !== undefined) {
+          sub.teacherCustomImage = pendingSubmissionImages[subId];
+        }
+
+        // Nếu chọn chế độ gửi "all" thì chỉ gửi các bài đã chấm hoàn tất (sub.graded === true)
+        if (mode === 'all' && !sub.graded) continue;
+
+        const cleanName = sub.studentName.replace(/\s*\(Vãng lai\)\s*$/i, "").trim().toLowerCase();
+        const matchedAcc = (appData.parentAccounts || []).find(
+          a => a.name.trim().toLowerCase() === cleanName || a.name.trim().toLowerCase() === sub.studentName.trim().toLowerCase()
+        );
+        const email = (matchedAcc && matchedAcc.parentEmail && matchedAcc.parentEmail.trim())
+          ? matchedAcc.parentEmail.trim()
+          : (sub.guestEmail ? sub.guestEmail.trim() : "");
+
+        subsToSend.push({ sub, email });
+      }
+
+      if (subsToSend.length === 0) {
+        alert("Không có bài nào đã chấm hoàn tất trong danh sách chọn!");
+        return;
+      }
+
+      const validList = subsToSend.filter(item => item.email && item.email.includes("@"));
+      const missingList = subsToSend.filter(item => !item.email || !item.email.includes("@")).map(item => item.sub.studentName);
+
+      if (validList.length === 0) {
+        alert(`Các học sinh được chọn (${missingList.join(", ")}) hiện chưa có mail phụ huynh trong Bảng quản trị phụ huynh (Tab 3).\nVui lòng nhập mail phụ huynh ở Tab 3 trước khi gửi hàng loạt!`);
+        return;
+      }
+
+      let confirmMsg = `Bạn chuẩn bị gửi mail kết quả & bài chữa đồng loạt cho ${validList.length} phụ huynh:\n- ${validList.map(i => `${i.sub.studentName} (${i.email})`).join("\n- ")}`;
+      if (missingList.length > 0) {
+        confirmMsg += `\n\n(Bỏ qua ${missingList.length} học sinh chưa có mail phụ huynh: ${missingList.join(", ")})`;
+      }
+      confirmMsg += `\n\nBấm OK để bắt đầu gửi tự động!`;
+
+      if (!confirm(confirmMsg)) return;
+
+      await syncToCloud();
+
+      let successCount = 0;
+      let failList = [];
+
+      for (const item of validList) {
+        const subject = `[Kết quả học tập] ${item.sub.studentName} - ${item.sub.examTitle}`;
+        const bodyText = createMailTextFromSub(item.sub, true);
+        const ok = await sendEmailViaService(item.email, subject, bodyText);
+        if (ok) {
+          successCount++;
+        } else {
+          failList.push(`${item.sub.studentName} (${item.email})`);
+        }
+        // Nghỉ 600ms giữa mỗi mail để tránh bị FormSubmit chặn vì gửi quá nhanh cùng lúc
+        await new Promise(r => setTimeout(r, 600));
+      }
+
+      renderAll();
+
+      let resultAlert = `🎉 Đã gửi mail thành công cho ${successCount}/${validList.length} phụ huynh!`;
+      if (failList.length > 0) {
+        resultAlert += `\n⚠️ Chưa gửi được cho: ${failList.join(", ")}`;
+      }
+      alert(resultAlert);
     }
 
   </script>
