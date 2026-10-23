@@ -280,27 +280,18 @@
           if (remoteData && typeof remoteData === 'object') {
             appData.exams = remoteData.exams || [];
             appData.submissions = remoteData.submissions || [];
+            appData.parentAccounts = remoteData.parentAccounts || [];
             if (remoteData.teacherEmail !== undefined) {
               appData.teacherEmail = remoteData.teacherEmail;
             }
-            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
-              appData.parentAccounts = remoteData.parentAccounts.map((acc, idx) => ({
-                name: acc.name || "",
-                pass: acc.pass || ("ph" + (idx + 1)),
-                className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
-                parentEmail: acc.parentEmail || ""
-              }));
-            }
             renderAll();
-          } else {
-            await syncToCloud();
           }
           if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
           if (statusText) {
             statusText.className = "text-emerald-700 font-semibold";
             statusText.innerText = "Đang trực tuyến";
           }
-          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất");
+          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất!");
         } else {
           throw new Error("HTTP " + res.status);
         }
@@ -308,13 +299,11 @@
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
-          statusText.innerText = "Lỗi kết nối Database (Kiểm tra link hoặc Rules Firebase)";
-        }
-        if (showAlert) {
-          alert("Không thể kết nối tới Database:\n" + normalizeDbBaseUrl(activeDatabaseUrl) + "/\n\nHãy kiểm tra lại đường link hoặc đảm bảo mục Rules trong Firebase Realtime Database đã để .read: true và .write: true.");
+          statusText.innerText = "Lỗi kết nối Database";
         }
       }
     }
+
 
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
