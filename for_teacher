@@ -672,10 +672,14 @@
       return u;
     }
 
+        // Dán mã Database Secret lấy từ Firebase vào giữa dấu ngoặc kép dưới đây (Chỉ lưu ở file máy Giáo viên)
+    const FIREBASE_ADMIN_SECRET = "rJyTQbNzajbcwzDHjvn81ID0QcIc9rU9IQg9a4Sg";
+
     function getDatabaseEndpoint() {
       const base = normalizeDbBaseUrl(activeDatabaseUrl);
-      return `${base}/edusmart_data.json`;
+      return `${base}/edusmart_data.json?auth=${FIREBASE_ADMIN_SECRET}`;
     }
+
 
     function updateDbUrlUI() {
       const cleanUrl = normalizeDbBaseUrl(activeDatabaseUrl) + "/";
@@ -1176,9 +1180,16 @@ function openTeacherLogin() {
         return;
       }
 
-      const matchedAccount = (appData.parentAccounts || []).find(
-        acc => acc.pass.toLowerCase() === enteredPass.toLowerCase()
-      );
+      const msgBuffer = new TextEncoder().encode(enteredPass.toLowerCase());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const enteredHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const matchedAccount = (appData.parentAccounts || []).find(acc => {
+        if (!acc.pass) return false;
+        const stored = acc.pass.trim().toLowerCase();
+        return stored === enteredPass.toLowerCase() || stored === enteredHash;
+      });
+
 
       if (matchedAccount) {
         loggedInParentStudent = matchedAccount.name;
