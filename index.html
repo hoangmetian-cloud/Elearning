@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Hệ thống học tập - Vương</title>
-    <!-- 1. Chặn rò rỉ thông tin đường dẫn nguồn khi chuyển trang (Sửa lỗi Referrer-Policy) -->
+  <!-- 1. Chặn rò rỉ thông tin đường dẫn nguồn khi chuyển trang -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- 2. Chính sách bảo mật nội dung (Content-Security-Policy) - Chỉ cho phép tải từ Tailwind, FontAwesome, MathJax, Firebase và FormSubmit -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co;">
+  <!-- 2. Chính sách bảo mật nội dung (Đã mở khóa font-src của cdn.jsdelivr.net cho MathJax hiển thị đẹp) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co https://cdn.jsdelivr.net;">
 
   <!-- Icon tab trình duyệt chuẩn đẹp -->
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3445/3445175.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- Cấu hình MathJax hiển thị LaTeX chuẩn -->
+
+  <!-- Cấu hình MathJax CHTML chuẩn sách giáo khoa -->
   <script>
     window.MathJax = {
       tex: {
@@ -22,25 +23,82 @@
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
         processEscapes: true
       },
-      svg: { fontCache: 'global' }
+      chtml: {
+        scale: 1.05,
+        mtextInheritFont: true,
+        displayAlign: 'left'
+      }
     };
   </script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
+    }
     .tab-active { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
     .pulse-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Chuẩn hóa hiển thị MathJax không bao giờ làm phình khung */
+    mjx-container {
+      font-size: 106% !important;
+      line-height: 1.65 !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      vertical-align: middle;
+    }
+    mjx-container[display="true"] {
+      display: block !important;
+      margin: 0.5em 0 !important;
+      padding: 0.2em 0;
+    }
+    .math-content {
+      line-height: 1.85;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    /* Đảm bảo toàn bộ khung chính của HS, PH luôn căn giữa và không tràn ngang */
+    body > div {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    header, main, footer, section {
+      width: 100%;
+      min-width: 0;
+    }
+    .grid > *, .flex > * {
+      min-width: 0;
+    }
+    #studentExamCards > div,
+    #parentResultsList > div {
+      min-width: 0;
+      max-width: 100%;
+    }
+    img, video, iframe, canvas, table {
+      max-width: 100%;
+    }
   </style>
 </head>
+
 <body class="min-h-screen flex flex-col justify-between">
 
   <div>
-    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG (ẨN MỤC GIÁO VIÊN) -->
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG (DÀNH CHO HỌC SINH & PHỤ HUYNH) -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
         
-        <!-- Logo Giáo Viên -->
         <div class="flex items-center gap-2.5 select-none">
           <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow">
             <i class="fa-solid fa-graduation-cap text-xl"></i>
@@ -143,7 +201,7 @@
           </div>
         </div>
 
-        <!-- Màn hình Xem kết quả dành cho Học sinh vãng lai (Gửi đáp án qua mail) -->
+        <!-- Màn hình Xem kết quả sau khi nộp bài -->
         <div id="guestResultRoom" class="hidden bg-white p-6 rounded-2xl shadow-md border border-emerald-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
             <div>
@@ -178,7 +236,7 @@
             Mỗi Phụ huynh được Giáo viên cấp <b>1 mật khẩu riêng</b>.<br>
             Nhập mật khẩu để xem kết quả làm bài (bao gồm cả ảnh bài làm tự luận của con), nhận xét và <b>Đáp án + Bài chữa</b>.
           </p>
-                    <div class="space-y-3 pt-2">
+          <div class="space-y-3 pt-2">
             <div class="relative">
               <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
                 onkeydown="if(event.key==='Enter') unlockParentView()"
@@ -193,7 +251,6 @@
             </button>
           </div>
         </div>
-
 
         <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi Phụ huynh đăng nhập -->
         <div id="parentUnlockedContent" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
@@ -233,7 +290,10 @@
     <span>Hệ thống học tập online</span>
   </footer>
 
-    <script>
+  <script>
+    // =========================================================================
+    // CẤU HÌNH KẾT NỐI FIREBASE DÀNH CHO HỌC SINH & PHỤ HUYNH
+    // =========================================================================
     const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
     let activeDatabaseUrl = DEFAULT_DATABASE_URL;
 
@@ -249,27 +309,20 @@
 
     function normalizeDbBaseUrl(url) {
       if (!url) return DEFAULT_DATABASE_URL.replace(/\/+$/, "");
-      return url.trim().replace(/\/edusmart_data\.json.*$/i, "").replace(/\.json$/i, "").replace(/\/+$/, "");
+      return url.trim()
+        .replace(/\/edusmart_data\.json.*$/i, "")
+        .replace(/\.json$/i, "")
+        .replace(/\/+$/, "");
     }
 
     function getDatabaseEndpoint() {
       return `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data.json`;
     }
 
-    function updateDbUrlUI() {}
-
-    async function resetDefaultDatabaseUrl() {
-      activeDatabaseUrl = DEFAULT_DATABASE_URL;
-      localStorage.removeItem('edusmart_custom_db_url');
-      updateDbUrlUI();
-      await syncFromCloud(true);
-    }
-
     // =========================================================================
-    // CẤU HÌNH & ĐỒNG BỘ DATABASE FIREBASE TRỰC TUYẾN
+    // ĐỒNG BỘ DỮ LIỆU FIREBASE TRỰC TUYẾN
     // =========================================================================
     async function initDatabase() {
-      updateDbUrlUI();
       await syncFromCloud(false);
     }
 
@@ -277,8 +330,9 @@
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
       const endpoint = getDatabaseEndpoint();
+      const sep = endpoint.includes('?') ? '&' : '?';
       try {
-        const res = await fetch(`${endpoint}?t=${Date.now()}`, {
+        const res = await fetch(`${endpoint}${sep}t=${Date.now()}`, {
           method: "GET",
           cache: "no-store"
         });
@@ -288,9 +342,16 @@
           if (remoteData && typeof remoteData === 'object') {
             appData.exams = remoteData.exams || [];
             appData.submissions = remoteData.submissions || [];
-            appData.parentAccounts = remoteData.parentAccounts || [];
             if (remoteData.teacherEmail !== undefined) {
               appData.teacherEmail = remoteData.teacherEmail;
+            }
+            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
+              appData.parentAccounts = remoteData.parentAccounts.map((acc, idx) => ({
+                name: acc.name || "",
+                pass: acc.pass || ("ph" + (idx + 1)),
+                className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
+                parentEmail: acc.parentEmail || ""
+              }));
             }
             renderAll();
           }
@@ -299,7 +360,7 @@
             statusText.className = "text-emerald-700 font-semibold";
             statusText.innerText = "Đang trực tuyến";
           }
-          if (showAlert) alert("Đã đồng bộ dữ liệu mới nhất!");
+          if (showAlert) alert("Đã đồng bộ đề thi và dữ liệu mới nhất!");
         } else {
           throw new Error("HTTP " + res.status);
         }
@@ -309,14 +370,16 @@
           statusText.className = "text-red-600 font-semibold";
           statusText.innerText = "Lỗi kết nối Database";
         }
+        if (showAlert) {
+          alert("Không thể kết nối tới Database. Vui lòng kiểm tra kết nối mạng!");
+        }
       }
     }
-
 
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
-      // Học sinh chỉ được quyền đẩy dữ liệu vào nhánh submissions
+      // Học sinh chỉ đẩy bài nộp vào nhánh submissions để bảo mật đề thi và tài khoản phụ huynh
       const subEndpoint = `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data/submissions.json`;
       try {
         const res = await fetch(subEndpoint, {
@@ -324,7 +387,6 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(appData.submissions || [])
         });
-
         if (res.ok) {
           if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
           if (statusText) {
@@ -338,7 +400,7 @@
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
-          statusText.innerText = "Chưa đẩy được lên Database (Kiểm tra mạng/Rules)";
+          statusText.innerText = "Chưa đẩy được bài nộp lên Database";
         }
       }
     }
@@ -348,75 +410,11 @@
     let appData = {
       teacherEmail: "",
       parentAccounts: [...INITIAL_PARENT_ACCOUNTS],
-      exams: [
-        {
-          id: "exam_v6_demo",
-          title: "Đề Kiểm Tra Đánh Giá",
-          subject: "Tổng hợp",
-          time: 25,
-          createdAt: "Hôm nay",
-          roster: INITIAL_PARENT_ACCOUNTS.map(a => a.name),
-          questions: [
-            {
-              type: "mcq",
-              text: "Tập nghiệm của phương trình bậc hai $x^2 - 5x + 6 = 0$ là:",
-              options: ["$S = \\{1; 6\\}$", "$S = \\{2; 3\\}$", "$S = \\{-2; -3\\}$", "$S = \\emptyset$"],
-              correct: 1,
-              points: 2,
-              solution: "Ta có $\\Delta = (-5)^2 - 4 \\cdot 1 \\cdot 6 = 1 > 0$. Phương trình có 2 nghiệm phân biệt $x_1 = 2$ và $x_2 = 3$. Chọn đáp án B.",
-              solutionImage: ""
-            },
-            {
-              type: "tf",
-              text: "Cho hàm số $y = f(x) = x^3 - 3x + 2$. Xét tính Đúng/Sai của các mệnh đề sau:",
-              statements: [
-                { text: "Đạo hàm của hàm số là $f^{\\prime}(x) = 3x^2 - 3$.", answer: true },
-                { text: "Hàm số đạt cực đại tại $x = -1$ và $y_{CĐ} = 4$.", answer: true },
-                { text: "Hàm số đồng biến trên khoảng $(-1; 1)$.", answer: false },
-                { text: "Phương trình tiếp tuyến của đồ thị tại điểm có hoành độ $x_0 = 2$ có hệ số góc bằng $9$.", answer: true }
-              ],
-              tfRules: [0, 0.1, 0.25, 0.5, 1.0],
-              points: 1,
-              solution: "Lời giải :\n- Ý a) Đúng vì $f^{\\prime}(x) = (x^3 - 3x + 2)^{\\prime} = 3x^2 - 3$.\n- Ý b) Đúng vì $f^{\\prime}(-1) = 0$ và $f(-1) = (-1)^3 - 3(-1) + 2 = 4$.\n- Ý c) Sai vì trên $(-1; 1)$ ta có $f^{\\prime}(x) < 0$ nên hàm số nghịch biến.\n- Ý d) Đúng vì hệ số góc tiếp tuyến tại $x_0 = 2$ là $k = f^{\\prime}(2) = 3 \\cdot 2^2 - 3 = 9$.",
-              solutionImage: ""
-            },
-            {
-              type: "short",
-              text: "Điền dạng đúng của động từ trong ngoặc: 'By the time we arrived, the train (leave) ___ already.' (Chỉ gõ 2 từ đáp án)",
-              correctText: "had left ; 'd left",
-              points: 2,
-              solution: "Cấu trúc 'By the time + QKĐ, mệnh đề chính chia Quá khứ hoàn thành (had + V_p2)'. Đáp án: had left.",
-              solutionImage: ""
-            },
-            {
-              type: "essay",
-              text: "Tìm tất cả các giá trị thực của tham số $m$ để phương trình $x^2 - 2mx + m^2 - 1 = 0$ có hai nghiệm phân biệt $x_1, x_2$ thỏa mãn $x_1^2 + x_2^2 = 10$. (Em có thể gõ lời giải hoặc chụp ảnh bài làm trong vở tải lên).",
-              points: 3,
-              solution: "Ta có $\\Delta^{\\prime} = m^2 - (m^2 - 1) = 1 > 0, \\forall m \\in \\mathbb{R}$.\nTheo hệ thức Vi-ét: $x_1 + x_2 = 2m$ và $x_1 x_2 = m^2 - 1$.\nKhi đó: $x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1 x_2 = 4m^2 - 2(m^2 - 1) = 2m^2 + 2$.\nYêu cầu bài toán $\\Leftrightarrow 2m^2 + 2 = 10 \\Leftrightarrow m^2 = 4 \\Leftrightarrow m = \\pm 2$.",
-              solutionImage: ""
-            }
-          ]
-        }
-      ],
+      exams: [],
       submissions: []
     };
-    // Hàm tổng hợp hiển thị giao diện khi có dữ liệu từ Database tải về
-    function renderAll() {
-      renderStudentLobby();
-      if (typeof loggedInParentStudent !== 'undefined' && loggedInParentStudent) {
-        if (typeof renderParentView === 'function') renderParentView();
-      }
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise().catch(() => {});
-      }
-    }
 
-    let draftQuestions = [];
-    let editingDraftQuestionIdx = null;
-    let editingPublishedExamId = null;
-    let currentDraftSolutionImage = "";
     let pendingStudentEssayImages = {};
-    let pendingSubmissionImages = {};
     let loggedInParentStudent = null;
     let pendingExamId = null;
     let currentExam = null;
@@ -425,38 +423,36 @@
     let isCurrentStudentGuest = false;
     let timerInterval = null;
     let secondsRemaining = 0;
+    let tabSwitchCount = 0;
 
-    // ==================== BỘ LỌC TỰ ĐỘNG SỬA LỖI HIỂN THỊ LATEX ====================
+    // ==================== BỘ LỌC TỰ ĐỘNG LÀM ĐẸP LATEX & PHÂN SỐ / HỆ PHƯƠNG TRÌNH ====================
     function formatMathText(str, stripPrefix = false) {
       if (str === null || str === undefined) return "";
       let s = String(str);
       if (stripPrefix) {
         s = s.replace(/^Câu\s+\d+\s*[:.]\s*/i, "");
       }
+      s = s.replace(/\\textbf\{([^}]*)\}/g, "<b>$1</b>");
+      s = s.replace(/\\textit\{([^}]*)\}/g, "<i>$1</i>");
+
+      // Tự động thêm \displaystyle vào các công thức có phân số \frac, giới hạn \lim, tích phân \int, tổng \sum hoặc hệ \begin{cases}
+      s = s.replace(/\$([^$]+)\$/g, (match, inner) => {
+        if (/\\(frac|lim|int|sum|prod|begin\{cases\}|begin\{aligned\}|begin\{matrix\})/.test(inner) && !/\\displaystyle/.test(inner)) {
+          return `$\\displaystyle ${inner}$`;
+        }
+        return match;
+      });
+
+      if (/\\begin\{(tikzpicture|tkz-tab)\}/i.test(s)) {
+        s = s.replace(/\\begin\{(tikzpicture|tkz-tab)\}[\s\S]*?\\end\{\1\}/gi, "");
+      }
       return s;
     }
 
-    function sanitizeQuestionObject(q) {
-      if (!q) return q;
-      q.text = formatMathText(q.text || "", true);
-      q.solution = formatMathText(q.solution || "", false);
-      if (Array.isArray(q.options)) {
-        q.options = q.options.map(opt => formatMathText(opt, false));
-      }
-      if (Array.isArray(q.statements)) {
-        q.statements = q.statements.map(st => ({
-          ...st,
-          text: formatMathText(st.text || "", false)
-        }));
-      }
-      return q;
-    }
-
-    // ==================== CHẤM ĐÁP ÁN NGẮN LINH HOẠT (CHẤP NHẬN THIẾU DẤU CÂU & NHIỀU ĐÁP ÁN) ====================
+    // ==================== CHẤM ĐÁP ÁN NGẮN LINH HOẠT ====================
     function normalizeShortString(str) {
       if (str === null || str === undefined) return "";
       let s = String(str).trim().toLowerCase();
-      // Bỏ dấu câu ở đầu/cuối và các dấu chấm, phẩy, chấm than, hỏi chấm, ngoặc... khi học sinh gõ thiếu hoặc thừa
       s = s.replace(/[.,!?;:"'()\[\]{}]/g, " ");
       s = s.replace(/\s+/g, " ").trim();
       return s;
@@ -468,7 +464,6 @@
       const sNorm = normalizeShortString(studentVal);
       const sNumber = sRaw.replace(/,/g, ".");
 
-      // Cho phép giáo viên nhập nhiều đáp án cách nhau bởi ; hoặc | hoặc /
       let variants = String(correctText).split(/[;|/]/).map(v => v.trim()).filter(Boolean);
       if (variants.length === 1 && correctText.includes(",") && !/^-?\d+,\d+$/.test(correctText.trim())) {
         variants = String(correctText).split(",").map(v => v.trim()).filter(Boolean);
@@ -485,7 +480,7 @@
       return false;
     }
 
-    // ==================== GỬI MAIL TỰ ĐỘNG & MỞ ỨNG DỤNG MAIL ====================
+    // ==================== GỬI MAIL TỰ ĐỘNG QUA FORMSUBMIT ====================
     function createMailTextFromSub(sub, includeSolutions = true) {
       const lines = [];
       lines.push(`KẾT QUẢ LÀM BÀI: ${sub.examTitle} (${sub.subject})`);
@@ -519,7 +514,6 @@
       return lines.join("\n");
     }
 
-        // Mã đã kích hoạt của bạn lấy từ mail FormSubmit
     const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
     const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
 
@@ -528,8 +522,6 @@
       const target = toEmail.trim();
       const isTeacher = (target.toLowerCase() === ACTIVATED_TEACHER_EMAIL.toLowerCase());
 
-      // Luôn gửi qua mã Token đã kích hoạt của giáo viên để KHÔNG bao giờ gửi mail Activate nữa.
-      // Nếu người nhận là học sinh vãng lai hoặc phụ huynh thì thêm _cc để gửi thẳng tới mail của họ.
       const payload = {
         _subject: subject,
         _captcha: "false",
@@ -554,34 +546,31 @@
       }
     }
 
-
-    function openMailApp(toEmail, subject, messageText) {
-      if (!toEmail) return;
-      const link = `mailto:${encodeURIComponent(toEmail.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageText)}`;
-      window.open(link, "_blank");
-    }
-
-        window.onload = async () => {
-      // Xóa sạch các dữ liệu cũ/rác trong Local Storage nhưng GIỮ LẠI link database cấu hình của bạn
-      const dbUrlCache = localStorage.getItem('edusmart_custom_db_url');
-      localStorage.clear();
-      if (dbUrlCache) {
-        localStorage.setItem('edusmart_custom_db_url', dbUrlCache);
+    window.onload = async () => {
+      // Tự động xóa sạch các ký tự khoảng trắng ẩn (\u00A0) giữa các thẻ HTML gây lệch cột Grid/Flex
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+      const badTextNodes = [];
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.parentElement && !['SCRIPT', 'STYLE', 'TEXTAREA', 'PRE', 'CODE'].includes(node.parentElement.tagName)) {
+          if (/^[\s\u00A0]+$/.test(node.nodeValue)) {
+            badTextNodes.push(node);
+          } else if (node.nodeValue.includes('\u00A0')) {
+            node.nodeValue = node.nodeValue.replace(/\u00A0+/g, ' ');
+          }
+        }
       }
+      badTextNodes.forEach(n => n.remove());
 
-      fillRosterFromParentAccounts();
-      updateDbUrlUI();
+      localStorage.clear();
       renderAll();
       await initDatabase();
 
-
-            setInterval(() => {
+      setInterval(() => {
         const activeEl = document.activeElement;
         const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
         const inExam = !document.getElementById('studentExamRoom').classList.contains('hidden');
-        const inTeacherView = !document.getElementById('view-teacher').classList.contains('hidden');
-        // Không tự động vẽ lại giao diện khi Giáo viên đang mở bảng quản trị hoặc đang gõ phím
-        if (!inExam && !isTyping && !inTeacherView) {
+        if (!inExam && !isTyping) {
           syncFromCloud(false);
         }
       }, 7000);
@@ -625,7 +614,6 @@
       reader.readAsDataURL(file);
     }
 
-    // ==================== HÀM TÍNH ĐIỂM ĐÚNG/SAI THEO SỐ LƯỢNG Ý ĐÚNG ====================
     function getTfScoreByCount(q, correctCount) {
       const rules = (q.tfRules && q.tfRules.length === 5)
         ? q.tfRules
@@ -633,10 +621,7 @@
       return parseFloat(rules[correctCount] || 0);
     }
 
-    // ==================== ĐIỀU HƯỚNG & ĐĂNG NHẬP PHỤ HUYNH ====================
     // ==================== ĐIỀU HƯỚNG HỌC SINH & ĐĂNG NHẬP PHỤ HUYNH ====================
-    function fillRosterFromParentAccounts() {}
-
     function switchRole(role) {
       ['student', 'parent'].forEach(r => {
         const el = document.getElementById('view-' + r);
@@ -669,7 +654,6 @@
         return stored === enteredPass.toLowerCase() || stored === enteredHash;
       });
 
-
       if (matchedAccount) {
         loggedInParentStudent = matchedAccount.name;
         document.getElementById('parentLockScreen').classList.add('hidden');
@@ -677,7 +661,7 @@
         document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
         renderParentView();
       } else {
-        alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con.");
+        alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con, nếu phụ huynh không nhớ xin vui lòng nhắn lại giáo viên phụ trách môn học của con.");
       }
     }
 
@@ -687,7 +671,6 @@
       document.getElementById('parentUnlockedContent').classList.add('hidden');
       document.getElementById('parentLockScreen').classList.remove('hidden');
     }
-
 
     // ==================== HỌC SINH LÀM BÀI (CÓ HỌC SINH VÃNG LAI NHẬP MAIL) ====================
     function openStudentModal(examId) {
@@ -778,8 +761,6 @@
       if (previewBox) previewBox.classList.add('hidden');
     }
 
-    let tabSwitchCount = 0;
-
     function startExamExecution(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
@@ -787,7 +768,6 @@
       currentExam = exam;
       pendingStudentEssayImages = {};
       tabSwitchCount = 0;
-
 
       document.getElementById('studentLobby').classList.add('hidden');
       document.getElementById('guestResultRoom').classList.add('hidden');
@@ -799,19 +779,26 @@
 
       const qContainer = document.getElementById('activeQuestionsContainer');
       qContainer.innerHTML = exam.questions.map((q, idx) => {
-        const cleanQText = formatMathText(q.text, true);
+        const cleanQText = formatMathText(q.text, true).replace(/\n/g, '<br>');
+        const qImgHtml = q.questionImage ? `
+          <div class="my-2">
+            <img src="${q.questionImage}" onclick="zoomImage(this.src)" class="max-h-64 rounded-xl border shadow-sm cursor-zoom-in mx-auto sm:mx-0">
+          </div>
+        ` : '';
+
         if (q.type === 'mcq') {
           return `
             <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
-              <div class="font-bold text-slate-800 text-sm">
+              <div class="font-bold text-slate-800 text-sm math-content">
                 <span class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                 <span class="text-blue-700 font-semibold">(Trắc nghiệm - ${q.points} điểm):</span> ${cleanQText}
               </div>
+              ${qImgHtml}
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 ${q.options.map((opt, oIdx) => `
                   <label class="flex items-center gap-2.5 p-3 rounded-xl border bg-white cursor-pointer hover:border-blue-500 transition">
                     <input type="radio" name="ans_${idx}" value="${oIdx}" class="w-4 h-4 text-blue-600">
-                    <span class="text-sm text-slate-700"><b>${['A','B','C','D'][oIdx]}.</b> ${formatMathText(opt)}</span>
+                    <span class="text-sm text-slate-700 math-content"><b>${['A','B','C','D'][oIdx]}.</b> ${formatMathText(opt)}</span>
                   </label>
                 `).join('')}
               </div>
@@ -821,14 +808,15 @@
           const rules = (q.tfRules && q.tfRules.length === 5) ? q.tfRules : [0, 0.1, 0.25, 0.5, q.points || 1.0];
           return `
             <div class="p-5 rounded-2xl border border-amber-200 bg-amber-50/30 space-y-3">
-              <div class="font-bold text-slate-800 text-sm">
+              <div class="font-bold text-slate-800 text-sm math-content">
                 <span class="bg-amber-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                 <span class="text-amber-800 font-semibold">(Đúng / Sai - Tối đa ${rules[4]}đ: Đúng 1 ý ${rules[1]}đ, 2 ý ${rules[2]}đ, 3 ý ${rules[3]}đ, 4 ý ${rules[4]}đ):</span> ${cleanQText}
               </div>
+              ${qImgHtml}
               <div class="space-y-2">
                 ${(q.statements || []).map((st, sIdx) => `
                   <div class="flex flex-wrap justify-between items-center gap-2 p-3 bg-white rounded-xl border">
-                    <span class="text-sm text-slate-800 flex-1">
+                    <span class="text-sm text-slate-800 flex-1 math-content">
                       <b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}
                     </span>
                     <div class="flex gap-3">
@@ -847,10 +835,11 @@
         } else if (q.type === 'short') {
           return `
             <div class="p-5 rounded-2xl border border-emerald-200 bg-emerald-50/30 space-y-2.5">
-              <div class="font-bold text-slate-800 text-sm">
+              <div class="font-bold text-slate-800 text-sm math-content">
                 <span class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                 <span class="text-emerald-800 font-semibold">(Trả lời ngắn - ${q.points} điểm):</span> ${cleanQText}
               </div>
+              ${qImgHtml}
               <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn..." 
                 class="w-full sm:w-80 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:outline-none focus:border-emerald-600">
             </div>
@@ -859,7 +848,7 @@
           return `
             <div class="p-5 rounded-2xl border border-purple-200 bg-purple-50/30 space-y-3">
               <div class="flex flex-wrap justify-between items-start gap-2">
-                <div class="font-bold text-slate-800 text-sm flex-1">
+                <div class="font-bold text-slate-800 text-sm flex-1 math-content">
                   <span class="bg-purple-600 text-white text-xs px-2 py-0.5 rounded mr-1.5">Câu ${idx+1}</span>
                   <span class="text-purple-800 font-semibold">(Tự luận - ${q.points} điểm):</span> ${cleanQText}
                 </div>
@@ -868,7 +857,7 @@
                   <input type="file" id="student_essay_file_${idx}" accept="image/*" onchange="handleStudentEssayImage(event, ${idx})" class="hidden">
                 </label>
               </div>
-
+              ${qImgHtml}
               <textarea id="ans_essay_${idx}" rows="4" placeholder="Gõ lời giải của em vào đây HOẶC bấm nút 'Chụp / Tải ảnh bài làm' ở góc phải để gửi ảnh chụp vở..." 
                 class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-purple-600"></textarea>
 
@@ -942,7 +931,7 @@
           const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
-            type: 'mcq', question: cleanQText, chosen: chosenIdx, correct: q.correct,
+            type: 'mcq', question: cleanQText, questionImage: q.questionImage || "", chosen: chosenIdx, correct: q.correct,
             options: (q.options || []).map(o => formatMathText(o)), isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -960,7 +949,7 @@
           const earnedTf = Math.round(getTfScoreByCount(q, correctCount) * 100) / 100;
           autoScore += earnedTf;
           answers.push({
-            type: 'tf', question: cleanQText, statements: stDetails,
+            type: 'tf', question: cleanQText, questionImage: q.questionImage || "", statements: stDetails,
             correctCount, points: qMaxPts, earned: earnedTf,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -970,7 +959,7 @@
           const earned = isCorrect ? qMaxPts : 0;
           autoScore += earned;
           answers.push({
-            type: 'short', question: cleanQText, studentVal, correctText: q.correctText,
+            type: 'short', question: cleanQText, questionImage: q.questionImage || "", studentVal, correctText: q.correctText,
             isCorrect, points: qMaxPts, earned,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -979,7 +968,7 @@
           const essayText = document.getElementById(`ans_essay_${idx}`).value.trim();
           const essayImage = pendingStudentEssayImages[idx] || "";
           answers.push({
-            type: 'essay', question: cleanQText, essayText, essayImage,
+            type: 'essay', question: cleanQText, questionImage: q.questionImage || "", essayText, essayImage,
             points: qMaxPts, earned: 0,
             solution: solutionText, solutionImage: solutionImg
           });
@@ -1017,14 +1006,11 @@
       const mailSubject = `[Nộp bài] ${newSub.studentName} - ${newSub.examTitle}`;
       const mailBody = createMailTextFromSub(newSub, true);
 
-      // Khi học sinh nộp bài: chỉ gửi về mail giáo viên (nếu có), KHÔNG gửi cho phụ huynh
-            // Khi học sinh trong lớp nộp bài: gửi về mail giáo viên (nếu là HS vãng lai thì lệnh bên dưới đã gửi cho cả GV và HS rồi)
       if (appData.teacherEmail && !isCurrentStudentGuest) {
         sendEmailViaService(appData.teacherEmail, mailSubject, mailBody);
       }
 
-            if (isCurrentStudentGuest) {
-        // Học sinh vãng lai: gửi đáp án về mail đã đăng ký (không hiện trực tiếp)
+      if (isCurrentStudentGuest) {
         if (currentGuestEmail) {
           sendEmailViaService(currentGuestEmail, `[Kết quả & Đáp án] ${newSub.examTitle}`, mailBody);
         }
@@ -1032,13 +1018,11 @@
         return;
       }
 
-      // Học sinh có tên trong lớp: hiển thị ngay kết quả, đáp án và lời giải sau khi làm xong
       renderAll();
       renderGuestResultView(newSub);
       alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
     }
 
-    // Màn hình kết quả sau khi nộp bài (HS vãng lai chỉ hiện thông báo gửi mail, HS trong lớp hiện đầy đủ đáp án)
     function renderGuestResultView(s) {
       document.getElementById('guestResultRoom').classList.remove('hidden');
       document.getElementById('guestResultTitle').innerText = `📂 Đề kiểm tra: ${s.examTitle}`;
@@ -1061,15 +1045,14 @@
         return;
       }
 
-      // Hiển thị đáp án & lời giải cho học sinh chính thức trong lớp
       box.innerHTML = (s.answers || []).map((a, idx) => {
         let statusHtml = '';
         if (a.type === 'mcq') {
           const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${formatMathText((a.options || [])[a.chosen] || '')}` : 'Bỏ trống';
           const rightChar = `${['A','B','C','D'][a.correct]}. ${formatMathText((a.options || [])[a.correct] || '')}`;
           statusHtml = `
-            <div class="mt-1">Em chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
-            ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
+            <div class="mt-1 math-content">Em chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
+            ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold math-content">Đáp án đúng: ${rightChar}</div>` : ''}
           `;
         } else if (a.type === 'tf') {
           statusHtml = `
@@ -1077,7 +1060,7 @@
               <div class="font-bold text-amber-800 mb-1">Đúng ${a.correctCount}/4 ý — Đạt: ${a.earned} / ${a.points} điểm:</div>
               ${(a.statements || []).map((st, sIdx) => `
                 <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
-                  <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
+                  <span class="math-content"><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
                   <span>
                     Em chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
                     | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
@@ -1102,10 +1085,11 @@
 
         return `
           <div class="pt-3 first:pt-0 space-y-2">
-            <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
+            <div class="font-bold text-slate-800 text-sm math-content">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
+            ${a.questionImage ? `<div><img src="${a.questionImage}" onclick="zoomImage(this.src)" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in"></div>` : ''}
             ${statusHtml}
             <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-              <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Chưa có lời giải.')}</div>
+              <div class="whitespace-pre-wrap math-content"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Chưa có lời giải.')}</div>
               ${a.solutionImage ? `
                 <div>
                   <img src="${a.solutionImage}" onclick="zoomImage(this.src)" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in">
@@ -1119,7 +1103,7 @@
       triggerMathJax();
     }
 
-    // ==================== HIỂN THỊ GIAO DIỆN HỌC SINH ====================
+    // ==================== HIỂN THỊ GIAO DIỆN HỌC SINH & PHỤ HUYNH ====================
     function renderAll() {
       renderStudentLobby();
       if (loggedInParentStudent) renderParentView();
@@ -1156,14 +1140,11 @@
       }).join('');
     }
 
-    // ==================== HIỂN THỊ SỔ LIÊN LẠC CÁ NHÂN HÓA CHO PHỤ HUYNH ====================
-
     function renderParentView() {
       if (!loggedInParentStudent) return;
       const box = document.getElementById('parentResultsList');
 
       const subs = (appData.submissions || []).filter(s => {
-        if (loggedInParentStudent === "__ALL__") return true;
         return s.studentName.trim().toLowerCase() === loggedInParentStudent.trim().toLowerCase();
       });
 
@@ -1186,8 +1167,8 @@
               <div class="text-xs text-slate-700 bg-white p-3.5 rounded-xl border border-emerald-200 mt-2 space-y-2">
                 <div><b class="text-emerald-700"><i class="fa-solid fa-comment-dots mr-1"></i>Nhận xét của Giáo viên:</b> ${escapeAttr(s.teacherComment || 'Chưa có nhận xét.')}</div>
                 ${s.teacherCustomSolution ? `
-                  <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap">
-                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/ cô cho ${escapeAttr(s.studentName)}:</b>\n${formatMathText(s.teacherCustomSolution)}
+                  <div class="pt-2 border-t text-slate-800 whitespace-pre-wrap math-content">
+                    <b class="text-blue-700"><i class="fa-solid fa-pen-nib mr-1"></i>Bài chữa & hướng dẫn của thầy/cô cho ${escapeAttr(s.studentName)}:</b>\n${formatMathText(s.teacherCustomSolution)}
                   </div>
                 ` : ''}
                 ${s.teacherCustomImage ? `
@@ -1220,8 +1201,8 @@
                   const chosenChar = a.chosen >= 0 ? `${['A','B','C','D'][a.chosen]}. ${formatMathText((a.options || [])[a.chosen] || '')}` : 'Bỏ trống';
                   const rightChar = `${['A','B','C','D'][a.correct]}. ${formatMathText((a.options || [])[a.correct] || '')}`;
                   statusHtml = `
-                    <div class="mt-1">Con chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
-                    ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold">Đáp án đúng: ${rightChar}</div>` : ''}
+                    <div class="mt-1 math-content">Con chọn: <b class="${a.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${chosenChar}</b> — Đạt: <b>${a.earned}/${a.points} điểm</b></div>
+                    ${!a.isCorrect ? `<div class="text-emerald-700 font-semibold math-content">Đáp án đúng: ${rightChar}</div>` : ''}
                   `;
                 } else if (a.type === 'tf') {
                   statusHtml = `
@@ -1229,7 +1210,7 @@
                       <div class="font-bold text-amber-800 mb-1">Điểm câu Đúng/Sai của con: Đúng ${a.correctCount}/4 ý — Đạt ${a.earned} / ${a.points} điểm:</div>
                       ${(a.statements || []).map((st, sIdx) => `
                         <div class="flex flex-wrap justify-between gap-2 py-0.5 border-b last:border-0">
-                          <span><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
+                          <span class="math-content"><b>${['a)','b)','c)','d)'][sIdx]}</b> ${formatMathText(st.text)}</span>
                           <span>
                             Con chọn: <b class="${st.isRight ? 'text-emerald-600' : 'text-red-600'}">${st.chosen === null ? 'Trống' : (st.chosen ? 'Đúng' : 'Sai')}</b>
                             | Đ/A: <b>${st.answer ? 'Đúng' : 'Sai'}</b>
@@ -1260,10 +1241,11 @@
 
                 return `
                   <div class="pt-3 first:pt-0 space-y-2">
-                    <div class="font-bold text-slate-800 text-sm">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
+                    <div class="font-bold text-slate-800 text-sm math-content">Câu ${idx+1} (${a.points} điểm): ${formatMathText(a.question, true)}</div>
+                    ${a.questionImage ? `<div><img src="${a.questionImage}" onclick="zoomImage(this.src)" class="max-h-56 rounded-lg border shadow-sm cursor-zoom-in"></div>` : ''}
                     ${statusHtml}
                     <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl text-slate-800 space-y-2">
-                      <div class="whitespace-pre-wrap"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Xem trong phần nhận xét của Giáo viên.')}</div>
+                      <div class="whitespace-pre-wrap math-content"><b class="text-emerald-800"><i class="fa-solid fa-check-circle mr-1"></i>Bài chữa & Lời giải của thầy/cô:</b>\n${formatMathText(a.solution || 'Xem trong phần nhận xét của Giáo viên.')}</div>
                       ${a.solutionImage ? `
                         <div>
                           <div class="text-[11px] font-semibold text-emerald-700 mb-1">Hình ảnh bài giải của giáo viên (Bấm để phóng to):</div>
@@ -1282,7 +1264,7 @@
       triggerMathJax();
     }
 
-    // Chặn F12, Ctrl+Shift+I/J/C, Ctrl+U (xem nguồn), Ctrl+S (lưu trang) trên cả Windows và Mac
+    // Chặn F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+S
     document.addEventListener('keydown', function(e) {
       const key = (e.key || '').toLowerCase();
       const ctrlOrCmd = e.ctrlKey || e.metaKey;
@@ -1322,110 +1304,6 @@
         if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i>';
       }
     }
-
-    // Chọn hoặc bỏ chọn tất cả bài nộp trong 1 mục đề thi
-    function toggleSelectAllSubsInGroup(gIdx, isChecked) {
-      const checkboxes = document.querySelectorAll(`.sub-check-group-${gIdx}`);
-      checkboxes.forEach(cb => { cb.checked = isChecked; });
-    }
-
-    // Gửi mail đồng loạt cho Tất cả bài đã chấm hoặc Các bài được tích chọn trong đề
-    async function sendBatchEmailsForGroup(gIdx, mode = 'all') {
-      syncParentDomInputsToMemory();
-      const checkboxes = Array.from(document.querySelectorAll(`.sub-check-group-${gIdx}`));
-      if (checkboxes.length === 0) return;
-
-      let targetSubIds = [];
-      if (mode === 'selected') {
-        targetSubIds = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
-        if (targetSubIds.length === 0) {
-          alert("Vui lòng tích chọn ít nhất 1 bài làm của học sinh bên dưới để gửi mail!");
-          return;
-        }
-      } else {
-        targetSubIds = checkboxes.map(cb => cb.value);
-      }
-
-      // Lọc ra các bài đã chấm (hoặc đang chọn) và lưu điểm/nhận xét hiện tại trên màn hình trước khi gửi
-      const subsToSend = [];
-      for (const subId of targetSubIds) {
-        const sub = (appData.submissions || []).find(s => s.id === subId);
-        if (!sub) continue;
-
-        // Cập nhật điểm tự luận, nhận xét và bài chữa đang gõ trên giao diện
-        const gradeInput = document.getElementById('grade_essay_' + subId);
-        const commentInput = document.getElementById('comment_' + subId);
-        const customSolInput = document.getElementById('custom_sol_' + subId);
-        if (gradeInput) sub.essayScore = parseFloat(gradeInput.value) || 0;
-        sub.totalScore = Math.round(((parseFloat(sub.mcqScore) || 0) + (sub.essayScore || 0)) * 100) / 100;
-        if (commentInput) sub.teacherComment = commentInput.value.trim();
-        if (customSolInput) sub.teacherCustomSolution = formatMathText(customSolInput.value.trim());
-        if (pendingSubmissionImages[subId] !== undefined) {
-          sub.teacherCustomImage = pendingSubmissionImages[subId];
-        }
-
-        // Nếu chọn chế độ gửi "all" thì chỉ gửi các bài đã chấm hoàn tất (sub.graded === true)
-        if (mode === 'all' && !sub.graded) continue;
-
-        const cleanName = sub.studentName.replace(/\s*\(Vãng lai\)\s*$/i, "").trim().toLowerCase();
-        const matchedAcc = (appData.parentAccounts || []).find(
-          a => a.name.trim().toLowerCase() === cleanName || a.name.trim().toLowerCase() === sub.studentName.trim().toLowerCase()
-        );
-        const email = (matchedAcc && matchedAcc.parentEmail && matchedAcc.parentEmail.trim())
-          ? matchedAcc.parentEmail.trim()
-          : (sub.guestEmail ? sub.guestEmail.trim() : "");
-
-        subsToSend.push({ sub, email });
-      }
-
-      if (subsToSend.length === 0) {
-        alert("Không có bài nào đã chấm hoàn tất trong danh sách chọn!");
-        return;
-      }
-
-      const validList = subsToSend.filter(item => item.email && item.email.includes("@"));
-      const missingList = subsToSend.filter(item => !item.email || !item.email.includes("@")).map(item => item.sub.studentName);
-
-      if (validList.length === 0) {
-        alert(`Các học sinh được chọn (${missingList.join(", ")}) hiện chưa có mail phụ huynh trong Bảng quản trị phụ huynh (Tab 3).\nVui lòng nhập mail phụ huynh ở Tab 3 trước khi gửi hàng loạt!`);
-        return;
-      }
-
-      let confirmMsg = `Bạn chuẩn bị gửi mail kết quả & bài chữa đồng loạt cho ${validList.length} phụ huynh:\n- ${validList.map(i => `${i.sub.studentName} (${i.email})`).join("\n- ")}`;
-      if (missingList.length > 0) {
-        confirmMsg += `\n\n(Bỏ qua ${missingList.length} học sinh chưa có mail phụ huynh: ${missingList.join(", ")})`;
-      }
-      confirmMsg += `\n\nBấm OK để bắt đầu gửi tự động!`;
-
-      if (!confirm(confirmMsg)) return;
-
-      await syncToCloud();
-
-      let successCount = 0;
-      let failList = [];
-
-      for (const item of validList) {
-        const subject = `[Kết quả học tập] ${item.sub.studentName} - ${item.sub.examTitle}`;
-        const bodyText = createMailTextFromSub(item.sub, true);
-        const ok = await sendEmailViaService(item.email, subject, bodyText);
-        if (ok) {
-          successCount++;
-        } else {
-          failList.push(`${item.sub.studentName} (${item.email})`);
-        }
-        // Nghỉ 600ms giữa mỗi mail để tránh bị FormSubmit chặn vì gửi quá nhanh cùng lúc
-        await new Promise(r => setTimeout(r, 600));
-      }
-
-      renderAll();
-
-      let resultAlert = `🎉 Đã gửi mail thành công cho ${successCount}/${validList.length} phụ huynh!`;
-      if (failList.length > 0) {
-        resultAlert += `\n⚠️ Chưa gửi được cho: ${failList.join(", ")}`;
-      }
-      alert(resultAlert);
-    }
-
   </script>
 
 </body>
