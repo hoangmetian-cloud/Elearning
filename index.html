@@ -129,19 +129,41 @@
       <!-- ==================== 1. GIAO DIỆN HỌC SINH ==================== -->
       <section id="view-student" class="space-y-6">
         <div id="studentLobby" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
-          <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+          <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
             <div>
               <h2 class="font-bold text-lg text-slate-800">Danh sách đề kiểm tra và bài tập</h2>
-              <p class="text-xs text-slate-500">Chọn đề bài bên dưới, sau đó chọn đúng tên của em trong danh sách lớp để bắt đầu làm bài.</p>
+              <p class="text-xs text-slate-500">Chọn môn học và lớp bên dưới để lọc đề bài, sau đó chọn đúng tên của em để bắt đầu làm bài.</p>
             </div>
             <button onclick="syncFromCloud(true)" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-xl font-semibold transition">
               <i class="fa-solid fa-rotate mr-1"></i> Tải đề mới nhất
             </button>
           </div>
 
+          <!-- Thanh lọc Chọn Môn học & Chọn Lớp cho Học sinh -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-book text-blue-600 mr-1"></i> Chọn môn học:
+              </label>
+              <select id="studentSubjectFilter" onchange="renderStudentLobby()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white focus:outline-none focus:border-blue-600">
+                <option value="__ALL__">📚 Tất cả môn học</option>
+                <option value="Toán học">📐 Toán học</option>
+                <option value="Tiếng Anh">🇬🇧 Tiếng Anh</option>
+                <option value="Tổng hợp">📝 Tổng hợp</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-users-rectangle text-emerald-600 mr-1"></i> Chọn lớp / danh sách:
+              </label>
+              <select id="studentClassFilter" onchange="renderStudentLobby()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white focus:outline-none focus:border-emerald-600">
+                <option value="__ALL__">🏫 Tất cả các lớp</option>
+              </select>
+            </div>
+          </div>
+
           <div id="studentExamCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
-
         <!-- Hộp thoại chọn tên học sinh (Có thêm phần Học sinh vãng lai) -->
         <div id="studentSelectModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
@@ -673,14 +695,28 @@
     }
 
     // ==================== HỌC SINH LÀM BÀI (CÓ HỌC SINH VÃNG LAI NHẬP MAIL) ====================
-    function openStudentModal(examId) {
+        function openStudentModal(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
       pendingExamId = examId;
 
+      const selectedClass = document.getElementById('studentClassFilter')?.value || "__ALL__";
       document.getElementById('modalExamName').innerText = `📂 ${exam.title} (${exam.time} phút)`;
       const select = document.getElementById('modalStudentSelect');
-      const roster = (exam.roster && exam.roster.length > 0) ? exam.roster : appData.parentAccounts.map(a => a.name);
+      let roster = (exam.roster && exam.roster.length > 0) ? exam.roster : (appData.parentAccounts || []).map(a => a.name);
+
+      // Nếu học sinh đang lọc theo 1 lớp cụ thể ở ngoài, ưu tiên lọc đúng danh sách tên của lớp đó
+      if (selectedClass !== "__ALL__") {
+        const classNamesLower = new Set(
+          (appData.parentAccounts || [])
+            .filter(a => (a.className || "Lớp 1").trim() === selectedClass)
+            .map(a => a.name.trim().toLowerCase())
+        );
+        const filteredRoster = roster.filter(n => classNamesLower.has(n.trim().toLowerCase()));
+        if (filteredRoster.length > 0) {
+          roster = filteredRoster;
+        }
+      }
 
       select.innerHTML = `<option value="">-- Chọn đúng tên của em --</option>` +
         roster.map(name => `<option value="${escapeAttr(name)}">${escapeAttr(name)}</option>`).join('') +
@@ -1110,26 +1146,94 @@
       triggerMathJax();
     }
 
+    function updateStudentFilterDropdowns() {
+      const clsSelect = document.getElementById('studentClassFilter');
+      if (!clsSelect) return;
+      const currentVal = clsSelect.value || "__ALL__";
+      const classSet = new Set();
+      (appData.parentAccounts || []).forEach(a => {
+        if (a.className && a.className.trim()) {
+          classSet.add(a.className.trim());
+        }
+      });
+      // Lấy thêm tên lớp nếu đề thi có lưu targetClass
+      (appData.exams || []).forEach(ex => {
+        if (ex.targetClass && ex.targetClass !== "__ALL__") {
+          classSet.add(ex.targetClass.trim());
+        }
+      });
+      const classes = Array.from(classSet);
+      clsSelect.innerHTML = `<option value="__ALL__">🏫 Tất cả các lớp</option>` +
+        classes.map(c => `<option value="${escapeAttr(c)}">Lớp / Nhóm: ${escapeAttr(c)}</option>`).join('');
+      if (classes.includes(currentVal)) {
+        clsSelect.value = currentVal;
+      }
+    }
+
     function renderStudentLobby() {
+      updateStudentFilterDropdowns();
       const container = document.getElementById('studentExamCards');
-      const exams = appData.exams || [];
-      if (exams.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400">Hiện chưa có bài tập nào được giao.</div>`;
+      if (!container) return;
+
+      const selectedSubject = document.getElementById('studentSubjectFilter')?.value || "__ALL__";
+      const selectedClass = document.getElementById('studentClassFilter')?.value || "__ALL__";
+
+      // Danh sách tên học sinh thuộc lớp đang chọn
+      const studentsInSelectedClass = new Set(
+        (appData.parentAccounts || [])
+          .filter(a => (a.className || "Lớp 1").trim() === selectedClass)
+          .map(a => a.name.trim().toLowerCase())
+      );
+
+      const allExams = appData.exams || [];
+      const filteredExams = allExams.filter(ex => {
+        // 1. Lọc theo môn học
+        if (selectedSubject !== "__ALL__" && ex.subject !== selectedSubject) {
+          return false;
+        }
+        // 2. Lọc theo lớp
+        if (selectedClass !== "__ALL__") {
+          if (ex.targetClass && ex.targetClass !== "__ALL__") {
+            return ex.targetClass.trim() === selectedClass;
+          }
+          const roster = (ex.roster && ex.roster.length > 0) ? ex.roster : (appData.parentAccounts || []).map(a => a.name);
+          const hasStudentInClass = roster.some(name => studentsInSelectedClass.has(name.trim().toLowerCase()));
+          if (!hasStudentInClass) return false;
+        }
+        return true;
+      });
+
+      if (filteredExams.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400">Không có đề kiểm tra nào thuộc mục đang chọn.</div>`;
         return;
       }
-      container.innerHTML = exams.map(ex => {
-        const studentCount = (ex.roster && ex.roster.length) ? ex.roster.length : (appData.parentAccounts || []).length;
+
+      container.innerHTML = filteredExams.map(ex => {
+        const roster = (ex.roster && ex.roster.length) ? ex.roster : (appData.parentAccounts || []).map(a => a.name);
+        // Xác định các lớp tham gia đề này để hiển thị nhãn
+        const examClasses = new Set();
+        roster.forEach(rName => {
+          const acc = (appData.parentAccounts || []).find(a => a.name.trim().toLowerCase() === rName.trim().toLowerCase());
+          if (acc && acc.className) examClasses.add(acc.className.trim());
+        });
+        const classLabel = ex.targetClass && ex.targetClass !== "__ALL__"
+          ? ex.targetClass
+          : (examClasses.size > 0 ? Array.from(examClasses).join(", ") : "Tất cả lớp");
+
         return `
           <div class="p-5 rounded-2xl border border-slate-200 hover:border-blue-400 transition bg-slate-50/70 flex flex-col justify-between gap-4 shadow-sm">
             <div>
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">${escapeAttr(ex.subject)}</span>
+              <div class="flex flex-wrap justify-between items-center gap-1.5 mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">${escapeAttr(ex.subject)}</span>
+                  <span class="text-xs font-bold px-2.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-md"><i class="fa-solid fa-users-rectangle mr-1"></i>${escapeAttr(classLabel)}</span>
+                </div>
                 <span class="text-xs text-slate-500 font-semibold"><i class="fa-regular fa-clock mr-1"></i>${ex.time} phút</span>
               </div>
               <h4 class="font-bold text-slate-800 text-base">${escapeAttr(ex.title)}</h4>
               <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-2">
                 <span><i class="fa-solid fa-list-ol mr-1 text-blue-500"></i>${ex.questions.length} câu hỏi</span>
-                <span><i class="fa-solid fa-users mr-1 text-emerald-600"></i>Danh sách: ${studentCount} học sinh (+ Vãng lai)</span>
+                <span><i class="fa-solid fa-users mr-1 text-emerald-600"></i>Danh sách: ${roster.length} học sinh (+ Vãng lai)</span>
               </div>
             </div>
             <button onclick="openStudentModal('${ex.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition">
@@ -1139,6 +1243,7 @@
         `;
       }).join('');
     }
+
 
     function renderParentView() {
       if (!loggedInParentStudent) return;
