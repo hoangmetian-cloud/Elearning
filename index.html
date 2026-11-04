@@ -7,10 +7,10 @@
   <!-- 1. Chặn rò rỉ thông tin đường dẫn nguồn khi chuyển trang -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- 2. Chính sách bảo mật nội dung (Đã mở khóa font-src của cdn.jsdelivr.net cho MathJax hiển thị đẹp) -->
+  <!-- 2. Chính sách bảo mật nội dung (Mở khóa font-src của cdn.jsdelivr.net cho MathJax hiển thị đẹp) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebasedatabase.app https://*.firebaseio.com https://formsubmit.co https://cdn.jsdelivr.net;">
 
-  <!-- Icon tab trình duyệt chuẩn đẹp -->
+  <!-- Icon tab trình duyệt -->
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3445/3445175.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -46,7 +46,6 @@
     .pulse-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-    /* Chuẩn hóa hiển thị MathJax không bao giờ làm phình khung */
     mjx-container {
       font-size: 106% !important;
       line-height: 1.65 !important;
@@ -68,7 +67,6 @@
       max-width: 100%;
     }
 
-    /* Đảm bảo toàn bộ khung chính của HS, PH luôn căn giữa và không tràn ngang */
     body > div {
       width: 100%;
       max-width: 100%;
@@ -95,10 +93,9 @@
 <body class="min-h-screen flex flex-col justify-between">
 
   <div>
-    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG (DÀNH CHO HỌC SINH & PHỤ HUYNH) -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
       <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-        
         <div class="flex items-center gap-2.5 select-none">
           <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow">
             <i class="fa-solid fa-graduation-cap text-xl"></i>
@@ -112,7 +109,6 @@
           </div>
         </div>
 
-        <!-- Chỉ hiển thị Học Sinh & Phụ Huynh -->
         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button onclick="switchRole('student')" id="btn-student" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active">
             <i class="fa-solid fa-user-pen mr-1"></i> Học sinh
@@ -132,14 +128,14 @@
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
             <div>
               <h2 class="font-bold text-lg text-slate-800">Danh sách đề kiểm tra và bài tập</h2>
-              <p class="text-xs text-slate-500">Chọn môn học và lớp bên dưới để lọc đề bài, sau đó chọn đúng tên của em để bắt đầu làm bài.</p>
+              <p class="text-xs text-slate-500">Chọn môn học và lớp bên dưới để lọc đề bài, sau đó chọn đúng tên và nhập mật khẩu của em để bắt đầu làm bài.</p>
             </div>
             <button onclick="syncFromCloud(true)" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-xl font-semibold transition">
               <i class="fa-solid fa-rotate mr-1"></i> Tải đề mới nhất
             </button>
           </div>
 
-          <!-- Thanh lọc Chọn Môn học & Chọn Lớp cho Học sinh -->
+          <!-- Thanh lọc Chọn Môn học & Chọn Lớp -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1">
@@ -164,11 +160,12 @@
 
           <div id="studentExamCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
-        <!-- Hộp thoại chọn tên học sinh (Có thêm phần Học sinh vãng lai) -->
+
+        <!-- Hộp thoại xác thực tên + mật khẩu học sinh (Và chế độ Học sinh vãng lai riêng) -->
         <div id="studentSelectModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
           <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Chọn tên học sinh</h3>
+              <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Xác thực vào phòng thi</h3>
               <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="modalExamName" class="text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl"></div>
@@ -177,6 +174,24 @@
               <select id="modalStudentSelect" onchange="toggleGuestStudentInput()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:border-blue-600">
               </select>
             </div>
+
+            <!-- Khung nhập mật khẩu riêng dành cho học sinh chính thức trong lớp -->
+            <div id="regularStudentPassBox" class="hidden bg-blue-50/70 p-3.5 rounded-xl border border-blue-200 space-y-1.5">
+              <label class="block text-xs font-bold text-blue-800">
+                <i class="fa-solid fa-lock mr-1"></i> Mật khẩu vào làm bài của riêng em *:
+              </label>
+              <div class="relative">
+                <input type="password" id="studentExamPassInput" placeholder="Nhập mật khẩu học sinh do thầy cấp..."
+                  onkeydown="if(event.key==='Enter') confirmStartExam()"
+                  class="w-full px-3 py-2 pr-10 rounded-lg border border-blue-300 text-sm font-bold bg-white focus:outline-none focus:border-blue-600">
+                <button type="button" onclick="togglePasswordVisibility('studentExamPassInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+              <p class="text-[11px] text-blue-700">* Mật khẩu giúp bảo vệ tên của em, tránh bị bạn khác chọn nhầm hoặc nộp bài hộ.</p>
+            </div>
+
+            <!-- Khung dành riêng cho Học sinh vãng lai (Không cần mật khẩu lớp) -->
             <div id="guestStudentBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-2">
               <div>
                 <label class="block text-xs font-bold text-amber-800 mb-1">Nhập tên của em (Học sinh vãng lai):</label>
@@ -186,8 +201,9 @@
                 <label class="block text-xs font-bold text-amber-800 mb-1">Nhập mail để nhận đáp án:</label>
                 <input type="email" id="guestStudentEmailInput" placeholder="Nhập địa chỉ mail của em..." class="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm font-semibold bg-white">
               </div>
-              <p class="text-[11px] text-amber-700">* Học sinh vãng lai sau khi nộp bài sẽ được gửi điểm số, đáp án và lời giải qua mail.</p>
+              <p class="text-[11px] text-amber-700">* Học sinh vãng lai không cần mật khẩu lớp, sau khi nộp bài sẽ nhận điểm và lời giải qua mail.</p>
             </div>
+
             <div class="flex justify-end gap-2 pt-2">
               <button onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-600">Hủy</button>
               <button onclick="confirmStartExam()" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
@@ -197,9 +213,23 @@
           </div>
         </div>
 
+        <!-- ĐỒNG HỒ NỔI LUÔN ĐI CÙNG KHI HỌC SINH LƯỚT LÀM BÀI -->
+        <div id="floatingTimerBar" class="hidden fixed top-16 right-3 sm:right-6 z-50 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border-2 border-red-400 flex items-center gap-3 transition-all">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-600 pulse-dot"></span>
+            <div>
+              <div class="text-[10px] font-bold text-slate-500 uppercase leading-none">Còn lại</div>
+              <div id="floatingTimerDisplay" class="text-lg sm:text-xl font-black text-red-600 font-mono leading-tight">00:00</div>
+            </div>
+          </div>
+          <button type="button" onclick="submitStudentExam()" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow transition">
+            Nộp bài
+          </button>
+        </div>
+
         <!-- Phòng làm bài thi -->
         <div id="studentExamRoom" class="hidden bg-white p-6 rounded-2xl shadow-md border border-blue-200 space-y-6">
-          <div class="flex flex-wrap justify-between items-center gap-3 bg-blue-50 p-4 rounded-xl border border-blue-100 sticky top-16 z-40">
+          <div class="flex flex-wrap justify-between items-center gap-3 bg-blue-50 p-4 rounded-xl border border-blue-100">
             <div>
               <span id="activeExamSubject" class="text-xs font-bold uppercase px-2.5 py-0.5 bg-blue-600 text-white rounded-md">Toán</span>
               <h2 id="activeExamTitle" class="font-bold text-slate-800 text-lg mt-1">Tên bài kiểm tra</h2>
@@ -245,10 +275,8 @@
         </div>
       </section>
 
-      <!-- ==================== 2. GIAO DIỆN PHỤ HUYNH (MỖI PH 1 PASS RIÊNG) ==================== -->
+      <!-- ==================== 2. GIAO DIỆN PHỤ HUYNH ==================== -->
       <section id="view-parent" class="hidden space-y-6">
-        
-        <!-- Màn hình đăng nhập bằng Mật khẩu riêng của từng Phụ huynh -->
         <div id="parentLockScreen" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md mx-auto text-center space-y-4 my-8">
           <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
             <i class="fa-solid fa-user-lock"></i>
@@ -260,10 +288,9 @@
           </p>
           <div class="space-y-3 pt-2">
             <div class="relative">
-              <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..." 
+              <input type="password" id="parentPassInput" placeholder="Nhập mật khẩu riêng của Phụ huynh..."
                 onkeydown="if(event.key==='Enter') unlockParentView()"
                 class="w-full px-4 py-3 pr-10 rounded-xl border border-slate-300 text-center text-sm font-bold focus:outline-none focus:border-emerald-600">
-              <!-- Nút bấm hiện/ẩn mật khẩu -->
               <button type="button" onclick="togglePasswordVisibility('parentPassInput', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
                 <i class="fa-solid fa-eye"></i>
               </button>
@@ -274,7 +301,6 @@
           </div>
         </div>
 
-        <!-- Nội dung Sổ liên lạc riêng của Học sinh sau khi Phụ huynh đăng nhập -->
         <div id="parentUnlockedContent" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4">
             <div class="flex items-center gap-3">
@@ -314,7 +340,7 @@
 
   <script>
     // =========================================================================
-    // CẤU HÌNH KẾT NỐI FIREBASE DÀNH CHO HỌC SINH & PHỤ HUYNH
+    // KẾT NỐI DATABASE FIREBASE DÀNH CHO HỌC SINH & PHỤ HUYNH
     // =========================================================================
     const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
     let activeDatabaseUrl = DEFAULT_DATABASE_URL;
@@ -341,9 +367,6 @@
       return `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data.json`;
     }
 
-    // =========================================================================
-    // ĐỒNG BỘ DỮ LIỆU FIREBASE TRỰC TUYẾN
-    // =========================================================================
     async function initDatabase() {
       await syncFromCloud(false);
     }
@@ -370,6 +393,7 @@
             if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
               appData.parentAccounts = remoteData.parentAccounts.map((acc, idx) => ({
                 name: acc.name || "",
+                studentPass: acc.studentPass !== undefined ? acc.studentPass : ("hs" + (idx + 1)),
                 pass: acc.pass || ("ph" + (idx + 1)),
                 className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
                 parentEmail: acc.parentEmail || ""
@@ -401,7 +425,7 @@
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
-      // Học sinh chỉ đẩy bài nộp vào nhánh submissions để bảo mật đề thi và tài khoản phụ huynh
+      // Chỉ ghi vào nhánh submissions để đảm bảo an toàn cho đề thi và mật khẩu
       const subEndpoint = `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data/submissions.json`;
       try {
         const res = await fetch(subEndpoint, {
@@ -427,11 +451,9 @@
       }
     }
 
-    const INITIAL_PARENT_ACCOUNTS = [];
-
     let appData = {
       teacherEmail: "",
-      parentAccounts: [...INITIAL_PARENT_ACCOUNTS],
+      parentAccounts: [],
       exams: [],
       submissions: []
     };
@@ -446,8 +468,9 @@
     let timerInterval = null;
     let secondsRemaining = 0;
     let tabSwitchCount = 0;
+    let hadLockedScheduledExam = false;
 
-    // ==================== BỘ LỌC TỰ ĐỘNG LÀM ĐẸP LATEX & PHÂN SỐ / HỆ PHƯƠNG TRÌNH ====================
+    // ==================== BỘ LỌC LÀM ĐẸP LATEX ====================
     function formatMathText(str, stripPrefix = false) {
       if (str === null || str === undefined) return "";
       let s = String(str);
@@ -457,7 +480,6 @@
       s = s.replace(/\\textbf\{([^}]*)\}/g, "<b>$1</b>");
       s = s.replace(/\\textit\{([^}]*)\}/g, "<i>$1</i>");
 
-      // Tự động thêm \displaystyle vào các công thức có phân số \frac, giới hạn \lim, tích phân \int, tổng \sum hoặc hệ \begin{cases}
       s = s.replace(/\$([^$]+)\$/g, (match, inner) => {
         if (/\\(frac|lim|int|sum|prod|begin\{cases\}|begin\{aligned\}|begin\{matrix\})/.test(inner) && !/\\displaystyle/.test(inner)) {
           return `$\\displaystyle ${inner}$`;
@@ -469,6 +491,24 @@
         s = s.replace(/\\begin\{(tikzpicture|tkz-tab)\}[\s\S]*?\\end\{\1\}/gi, "");
       }
       return s;
+    }
+
+    // ==================== KIỂM TRA HẸN GIỜ MỞ ĐỀ ====================
+    function isExamUnlockedNow(ex) {
+      if (!ex || !ex.scheduledAt) return true;
+      const unlockTime = new Date(ex.scheduledAt).getTime();
+      if (isNaN(unlockTime)) return true;
+      return Date.now() >= unlockTime;
+    }
+
+    function formatScheduledTimeVN(isoStr) {
+      if (!isoStr) return "";
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      return d.toLocaleString('vi-VN', {
+        hour: '2-digit', minute: '2-digit',
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
     }
 
     // ==================== CHẤM ĐÁP ÁN NGẮN LINH HOẠT ====================
@@ -502,7 +542,7 @@
       return false;
     }
 
-    // ==================== GỬI MAIL TỰ ĐỘNG QUA FORMSUBMIT ====================
+    // ==================== GỬI MAIL KẾT QUẢ QUA FORMSUBMIT ====================
     function createMailTextFromSub(sub, includeSolutions = true) {
       const lines = [];
       lines.push(`KẾT QUẢ LÀM BÀI: ${sub.examTitle} (${sub.subject})`);
@@ -569,7 +609,7 @@
     }
 
     window.onload = async () => {
-      // Tự động xóa sạch các ký tự khoảng trắng ẩn (\u00A0) giữa các thẻ HTML gây lệch cột Grid/Flex
+      // Dọn sạch ký tự khoảng trắng ẩn (\u00A0) nếu có
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
       const badTextNodes = [];
       while (walker.nextNode()) {
@@ -588,14 +628,28 @@
       renderAll();
       await initDatabase();
 
+      // Đồng bộ đề mới mỗi 7 giây khi không làm bài
       setInterval(() => {
         const activeEl = document.activeElement;
         const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
         const inExam = !document.getElementById('studentExamRoom').classList.contains('hidden');
-        if (!inExam && !isTyping) {
+        const modalOpen = !document.getElementById('studentSelectModal').classList.contains('hidden');
+        if (!inExam && !isTyping && !modalOpen) {
           syncFromCloud(false);
         }
       }, 7000);
+
+      // Kiểm tra mỗi giây: nếu có đề hẹn giờ vừa chạm đúng mốc giờ mở thì tự động mở khóa ngay trên màn hình
+      setInterval(() => {
+        const inLobby = !document.getElementById('view-student').classList.contains('hidden') &&
+                        !document.getElementById('studentLobby').classList.contains('hidden');
+        if (inLobby && hadLockedScheduledExam) {
+          const stillLocked = (appData.exams || []).some(ex => !isExamUnlockedNow(ex));
+          if (!stillLocked || Math.floor(Date.now() / 1000) % 5 === 0) {
+            renderStudentLobby();
+          }
+        }
+      }, 1000);
     };
 
     function triggerMathJax() {
@@ -643,19 +697,22 @@
       return parseFloat(rules[correctCount] || 0);
     }
 
-    // ==================== ĐIỀU HƯỚNG HỌC SINH & ĐĂNG NHẬP PHỤ HUYNH ====================
+    // ==================== ĐIỀU HƯỚNG & SỔ PHỤ HUYNH ====================
     function switchRole(role) {
+      if (role !== 'student' || document.getElementById('studentExamRoom').classList.contains('hidden')) {
+        document.getElementById('floatingTimerBar')?.classList.add('hidden');
+      } else {
+        document.getElementById('floatingTimerBar')?.classList.remove('hidden');
+      }
+
       ['student', 'parent'].forEach(r => {
-        const el = document.getElementById('view-' + r);
-        if (el) el.classList.add('hidden');
+        document.getElementById('view-' + r)?.classList.add('hidden');
       });
       document.getElementById('btn-student').className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600";
       document.getElementById('btn-parent').className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600";
 
-      const target = document.getElementById('view-' + role);
-      if (target) target.classList.remove('hidden');
-      const btn = document.getElementById('btn-' + role);
-      if (btn) btn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active";
+      document.getElementById('view-' + role)?.classList.remove('hidden');
+      document.getElementById('btn-' + role).className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition tab-active";
       renderAll();
     }
 
@@ -694,10 +751,17 @@
       document.getElementById('parentLockScreen').classList.remove('hidden');
     }
 
-    // ==================== HỌC SINH LÀM BÀI (CÓ HỌC SINH VÃNG LAI NHẬP MAIL) ====================
-        function openStudentModal(examId) {
+    // ==================== HỌC SINH XÁC THỰC MẬT KHẨU & LÀM BÀI ====================
+    function openStudentModal(examId) {
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
+
+      if (!isExamUnlockedNow(exam)) {
+        alert(`⏰ Đề kiểm tra "${exam.title}" đang ở chế độ hẹn giờ!\nHệ thống sẽ tự động mở bài vào lúc: ${formatScheduledTimeVN(exam.scheduledAt)}`);
+        renderStudentLobby();
+        return;
+      }
+
       pendingExamId = examId;
 
       const selectedClass = document.getElementById('studentClassFilter')?.value || "__ALL__";
@@ -705,7 +769,6 @@
       const select = document.getElementById('modalStudentSelect');
       let roster = (exam.roster && exam.roster.length > 0) ? exam.roster : (appData.parentAccounts || []).map(a => a.name);
 
-      // Nếu học sinh đang lọc theo 1 lớp cụ thể ở ngoài, ưu tiên lọc đúng danh sách tên của lớp đó
       if (selectedClass !== "__ALL__") {
         const classNamesLower = new Set(
           (appData.parentAccounts || [])
@@ -722,7 +785,9 @@
         roster.map(name => `<option value="${escapeAttr(name)}">${escapeAttr(name)}</option>`).join('') +
         `<option value="__GUEST__">✨ Học sinh vãng lai (Tự nhập tên & nhận đáp án qua mail)</option>`;
 
+      document.getElementById('regularStudentPassBox').classList.add('hidden');
       document.getElementById('guestStudentBox').classList.add('hidden');
+      document.getElementById('studentExamPassInput').value = '';
       document.getElementById('guestStudentNameInput').value = '';
       document.getElementById('guestStudentEmailInput').value = '';
       document.getElementById('studentSelectModal').classList.remove('hidden');
@@ -730,7 +795,19 @@
 
     function toggleGuestStudentInput() {
       const val = document.getElementById('modalStudentSelect').value;
-      document.getElementById('guestStudentBox').classList.toggle('hidden', val !== '__GUEST__');
+      const passBox = document.getElementById('regularStudentPassBox');
+      const guestBox = document.getElementById('guestStudentBox');
+      if (val === '__GUEST__') {
+        passBox.classList.add('hidden');
+        guestBox.classList.remove('hidden');
+      } else if (val !== '') {
+        guestBox.classList.add('hidden');
+        passBox.classList.remove('hidden');
+        setTimeout(() => document.getElementById('studentExamPassInput')?.focus(), 50);
+      } else {
+        passBox.classList.add('hidden');
+        guestBox.classList.add('hidden');
+      }
     }
 
     function closeStudentModal() {
@@ -738,10 +815,18 @@
       pendingExamId = null;
     }
 
-    function confirmStartExam() {
+    async function confirmStartExam() {
       const selected = document.getElementById('modalStudentSelect').value;
       if (!selected) {
         alert("Em vui lòng chọn tên của mình trong danh sách!");
+        return;
+      }
+
+      const exam = appData.exams.find(e => e.id === pendingExamId);
+      if (!exam || !isExamUnlockedNow(exam)) {
+        alert("Đề kiểm tra này hiện chưa tới giờ mở!");
+        closeStudentModal();
+        renderStudentLobby();
         return;
       }
 
@@ -760,6 +845,29 @@
         currentGuestEmail = guestMail;
         isCurrentStudentGuest = true;
       } else {
+        const enteredPass = (document.getElementById('studentExamPassInput')?.value || '').trim();
+        const matchedAcc = (appData.parentAccounts || []).find(
+          a => a.name.trim().toLowerCase() === selected.trim().toLowerCase()
+        );
+
+        if (matchedAcc && matchedAcc.studentPass && matchedAcc.studentPass.trim() !== "") {
+          if (!enteredPass) {
+            alert(`Em vui lòng nhập mật khẩu riêng của ${selected} để vào làm bài!`);
+            document.getElementById('studentExamPassInput')?.focus();
+            return;
+          }
+          const expected = matchedAcc.studentPass.trim().toLowerCase();
+          const msgBuffer = new TextEncoder().encode(enteredPass.toLowerCase());
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+          const enteredHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+          if (enteredPass.toLowerCase() !== expected && enteredHash !== expected) {
+            alert("❌ Mật khẩu học sinh không đúng!\nMỗi bạn trong lớp có mật khẩu riêng để tránh vào nhầm tên của nhau. Nếu quên mật khẩu, em nhắn thầy cấp lại nhé!");
+            document.getElementById('studentExamPassInput')?.focus();
+            return;
+          }
+        }
+
         currentStudentName = selected;
         currentGuestEmail = "";
         isCurrentStudentGuest = false;
@@ -808,6 +916,7 @@
       document.getElementById('studentLobby').classList.add('hidden');
       document.getElementById('guestResultRoom').classList.add('hidden');
       document.getElementById('studentExamRoom').classList.remove('hidden');
+      document.getElementById('floatingTimerBar')?.classList.remove('hidden');
 
       document.getElementById('activeExamSubject').innerText = exam.subject;
       document.getElementById('activeExamTitle').innerText = exam.title;
@@ -876,7 +985,7 @@
                 <span class="text-emerald-800 font-semibold">(Trả lời ngắn - ${q.points} điểm):</span> ${cleanQText}
               </div>
               ${qImgHtml}
-              <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn..." 
+              <input type="text" id="ans_short_${idx}" placeholder="Nhập đáp số hoặc câu trả lời ngắn gọn..."
                 class="w-full sm:w-80 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:outline-none focus:border-emerald-600">
             </div>
           `;
@@ -894,7 +1003,7 @@
                 </label>
               </div>
               ${qImgHtml}
-              <textarea id="ans_essay_${idx}" rows="4" placeholder="Gõ lời giải của em vào đây HOẶC bấm nút 'Chụp / Tải ảnh bài làm' ở góc phải để gửi ảnh chụp vở..." 
+              <textarea id="ans_essay_${idx}" rows="4" placeholder="Gõ lời giải của em vào đây HOẶC bấm nút 'Chụp / Tải ảnh bài làm' ở góc phải để gửi ảnh chụp vở..."
                 class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-purple-600"></textarea>
 
               <div id="student_essay_img_box_${idx}" class="hidden bg-white p-3 rounded-xl border border-purple-200 space-y-1.5">
@@ -912,6 +1021,7 @@
       }).join('');
 
       triggerMathJax();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       secondsRemaining = exam.time * 60;
       updateTimerUI();
@@ -930,12 +1040,27 @@
     function updateTimerUI() {
       const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
       const s = (secondsRemaining % 60).toString().padStart(2, '0');
-      document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+      const timeStr = `${m}:${s}`;
+      document.getElementById('timerDisplay').innerText = timeStr;
+
+      const floatDisp = document.getElementById('floatingTimerDisplay');
+      const floatBar = document.getElementById('floatingTimerBar');
+      if (floatDisp) floatDisp.innerText = timeStr;
+      if (floatBar && !floatBar.classList.contains('hidden')) {
+        if (secondsRemaining <= 120) {
+          floatBar.className = "fixed top-16 right-3 sm:right-6 z-50 bg-red-600 text-white px-3.5 py-2 rounded-2xl shadow-2xl border-2 border-red-200 flex items-center gap-3 animate-pulse";
+          if (floatDisp) floatDisp.className = "text-lg sm:text-xl font-black text-white font-mono leading-tight";
+        } else {
+          floatBar.className = "fixed top-16 right-3 sm:right-6 z-50 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border-2 border-red-400 flex items-center gap-3";
+          if (floatDisp) floatDisp.className = "text-lg sm:text-xl font-black text-red-600 font-mono leading-tight";
+        }
+      }
     }
 
     function cancelExam() {
       if (!confirm("Nếu thoát bây giờ bài làm sẽ không được lưu. Em chắc chắn chứ?")) return;
       clearInterval(timerInterval);
+      document.getElementById('floatingTimerBar')?.classList.add('hidden');
       document.getElementById('studentExamRoom').classList.add('hidden');
       document.getElementById('studentLobby').classList.remove('hidden');
     }
@@ -1033,6 +1158,7 @@
       };
 
       document.getElementById('studentExamRoom').classList.add('hidden');
+      document.getElementById('floatingTimerBar')?.classList.add('hidden');
 
       await syncFromCloud(false);
       if (!appData.submissions) appData.submissions = [];
@@ -1074,7 +1200,7 @@
               <i class="fa-solid fa-envelope-circle-check mr-1"></i> Đáp án và lời giải đã được gửi về mail: <span class="text-blue-700">${escapeAttr(s.guestEmail)}</span>
             </div>
             <p class="text-xs text-slate-600">
-              Để tránh gian lận cho các bạn học sinh đang làm bài, hệ thống không hiển thị trực tiếp đáp án trên màn hình. Em vui lòng kiểm tra hộp thư mail (bao gồm cả mục thư rác / spam) để xem đáp án và lời giải. Với học sinh lần đầu nhận mail, vui lòng bấm "ACTIVATE FORM" trong thư được gửi về để nhận kết quả của mình. Xin chân thành cảm ơn!
+              Để tránh gian lận cho các bạn học sinh đang làm bài, hệ thống không hiển thị trực tiếp đáp án trên màn hình. Em vui lòng kiểm tra hộp thư mail (bao gồm cả mục thư rác / spam) để xem đáp án và lời giải. Xin chân thành cảm ơn!
             </p>
           </div>
         `;
@@ -1139,7 +1265,7 @@
       triggerMathJax();
     }
 
-    // ==================== HIỂN THỊ GIAO DIỆN HỌC SINH & PHỤ HUYNH ====================
+    // ==================== HIỂN THỊ DANH SÁCH ĐỀ & SỔ PHỤ HUYNH ====================
     function renderAll() {
       renderStudentLobby();
       if (loggedInParentStudent) renderParentView();
@@ -1156,7 +1282,6 @@
           classSet.add(a.className.trim());
         }
       });
-      // Lấy thêm tên lớp nếu đề thi có lưu targetClass
       (appData.exams || []).forEach(ex => {
         if (ex.targetClass && ex.targetClass !== "__ALL__") {
           classSet.add(ex.targetClass.trim());
@@ -1178,7 +1303,6 @@
       const selectedSubject = document.getElementById('studentSubjectFilter')?.value || "__ALL__";
       const selectedClass = document.getElementById('studentClassFilter')?.value || "__ALL__";
 
-      // Danh sách tên học sinh thuộc lớp đang chọn
       const studentsInSelectedClass = new Set(
         (appData.parentAccounts || [])
           .filter(a => (a.className || "Lớp 1").trim() === selectedClass)
@@ -1186,12 +1310,12 @@
       );
 
       const allExams = appData.exams || [];
+      hadLockedScheduledExam = allExams.some(ex => !isExamUnlockedNow(ex));
+
       const filteredExams = allExams.filter(ex => {
-        // 1. Lọc theo môn học
         if (selectedSubject !== "__ALL__" && ex.subject !== selectedSubject) {
           return false;
         }
-        // 2. Lọc theo lớp
         if (selectedClass !== "__ALL__") {
           if (ex.targetClass && ex.targetClass !== "__ALL__") {
             return ex.targetClass.trim() === selectedClass;
@@ -1204,13 +1328,12 @@
       });
 
       if (filteredExams.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400">Không có đề kiểm tra nào thuộc mục đang chọn.</div>`;
+        container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400">Hiện chưa có đề kiểm tra nào thuộc mục đang chọn.</div>`;
         return;
       }
 
       container.innerHTML = filteredExams.map(ex => {
         const roster = (ex.roster && ex.roster.length) ? ex.roster : (appData.parentAccounts || []).map(a => a.name);
-        // Xác định các lớp tham gia đề này để hiển thị nhãn
         const examClasses = new Set();
         roster.forEach(rName => {
           const acc = (appData.parentAccounts || []).find(a => a.name.trim().toLowerCase() === rName.trim().toLowerCase());
@@ -1220,8 +1343,10 @@
           ? ex.targetClass
           : (examClasses.size > 0 ? Array.from(examClasses).join(", ") : "Tất cả lớp");
 
+        const unlocked = isExamUnlockedNow(ex);
+
         return `
-          <div class="p-5 rounded-2xl border border-slate-200 hover:border-blue-400 transition bg-slate-50/70 flex flex-col justify-between gap-4 shadow-sm">
+          <div class="p-5 rounded-2xl border ${unlocked ? 'border-slate-200 hover:border-blue-400 bg-slate-50/70' : 'border-amber-300 bg-amber-50/40'} transition flex flex-col justify-between gap-4 shadow-sm">
             <div>
               <div class="flex flex-wrap justify-between items-center gap-1.5 mb-2">
                 <div class="flex items-center gap-1.5">
@@ -1232,18 +1357,28 @@
               </div>
               <h4 class="font-bold text-slate-800 text-base">${escapeAttr(ex.title)}</h4>
               <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-2">
-                <span><i class="fa-solid fa-list-ol mr-1 text-blue-500"></i>${ex.questions.length} câu hỏi</span>
+                <span><i class="fa-solid fa-list-ol mr-1 text-blue-500"></i>${unlocked ? (ex.questions || []).length + ' câu hỏi' : 'Đề đang niêm phong'}</span>
                 <span><i class="fa-solid fa-users mr-1 text-emerald-600"></i>Danh sách: ${roster.length} học sinh (+ Vãng lai)</span>
               </div>
+              ${!unlocked ? `
+                <div class="mt-2.5 px-3 py-1.5 rounded-lg bg-amber-100/80 border border-amber-300 text-amber-900 text-xs font-bold">
+                  <i class="fa-solid fa-hourglass-half mr-1"></i> Mở đề lúc: ${escapeAttr(formatScheduledTimeVN(ex.scheduledAt))}
+                </div>
+              ` : ''}
             </div>
-            <button onclick="openStudentModal('${ex.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition">
-              Chọn tên & vào làm bài <i class="fa-solid fa-arrow-right ml-1"></i>
-            </button>
+            ${unlocked ? `
+              <button onclick="openStudentModal('${ex.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition">
+                Chọn tên & nhập mật khẩu làm bài <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            ` : `
+              <button disabled class="w-full bg-amber-200 text-amber-800 font-bold py-2.5 rounded-xl text-xs cursor-not-allowed">
+                <i class="fa-solid fa-lock mr-1"></i> Chưa tới giờ giao bài (Tự động mở khi đến giờ)
+              </button>
+            `}
           </div>
         `;
       }).join('');
     }
-
 
     function renderParentView() {
       if (!loggedInParentStudent) return;
@@ -1383,12 +1518,10 @@
       }
     });
 
-    // Chặn click chuột phải
     document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
     });
 
-    // Cảnh báo và đếm số lần học sinh chuyển tab hoặc thoát màn hình khi đang làm bài
     document.addEventListener('visibilitychange', function() {
       const examRoom = document.getElementById('studentExamRoom');
       if (document.hidden && examRoom && !examRoom.classList.contains('hidden')) {
@@ -1397,7 +1530,6 @@
       }
     });
 
-    // Hàm bấm vào nút con mắt để ẩn/hiện mật khẩu
     function togglePasswordVisibility(inputId, btnEl) {
       const input = document.getElementById(inputId);
       if (!input) return;
