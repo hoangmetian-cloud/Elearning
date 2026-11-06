@@ -387,9 +387,12 @@
           if (remoteData && typeof remoteData === 'object') {
             appData.exams = remoteData.exams || [];
             appData.submissions = remoteData.submissions || [];
-            if (remoteData.teacherEmail !== undefined) {
-              appData.teacherEmail = remoteData.teacherEmail;
-            }
+                  if (remoteData.teacherEmail && remoteData.teacherEmail.trim() !== "") {
+        appData.teacherEmail = remoteData.teacherEmail.trim();
+      } else {
+        appData.teacherEmail = ACTIVATED_TEACHER_EMAIL;
+      }
+
             if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
               appData.parentAccounts = remoteData.parentAccounts.map((acc, idx) => ({
                 name: acc.name || "",
@@ -542,59 +545,76 @@
       return false;
     }
 
-    // ==================== GỬI MAIL KẾT QUẢ QUA FORMSUBMIT ====================
-    function createMailTextFromSub(sub, includeSolutions = true) {
-      const lines = [];
-      lines.push(`KẾT QUẢ LÀM BÀI: ${sub.examTitle} (${sub.subject})`);
-      lines.push(`Học sinh: ${sub.studentName}`);
-      lines.push(`Thời gian nộp: ${sub.submittedAt}`);
-      lines.push(`Tổng điểm: ${sub.totalScore} / ${sub.maxScore}`);
-      if (sub.teacherComment) {
-        lines.push(`Nhận xét của Giáo viên: ${sub.teacherComment}`);
+      // Làm sạch thẻ HTML trước khi đưa vào nội dung Email để không bị FormSubmit chặn
+  function cleanMailString(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\\displaystyle\s*/g, "")
+      .trim();
+  }
+
+  function createMailTextFromSub(sub, includeSolutions = true) {
+    const lines = [];
+    lines.push(`KẾT QUẢ LÀM BÀI: ${sub.examTitle} (${sub.subject})`);
+    lines.push(`Học sinh: ${sub.studentName}`);
+    lines.push(`Thời gian nộp: ${sub.submittedAt}`);
+    lines.push(`Tổng điểm: ${sub.totalScore} / ${sub.maxScore}`);
+    if (sub.teacherComment) {
+      lines.push(`Nhận xét của Giáo viên: ${sub.teacherComment}`);
+    }
+    if (sub.teacherCustomSolution) {
+      lines.push(`Bài chữa riêng của Giáo viên: ${cleanMailString(sub.teacherCustomSolution)}`);
+    }
+    lines.push(`-------------------------------------------`);
+    (sub.answers || []).forEach((a, idx) => {
+      lines.push(`Câu ${idx + 1} (${a.points} điểm): ${cleanMailString(a.question)}`);
+      if (a.type === 'mcq') {
+        const cChar = a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Bỏ trống';
+        const rChar = ['A','B','C','D'][a.correct];
+        lines.push(`  + Chọn: ${cChar} (${a.earned}/${a.points}đ) | Đáp án đúng: ${rChar}`);
+      } else if (a.type === 'tf') {
+        lines.push(`  + Đúng ${a.correctCount}/4 ý (${a.earned}/${a.points}đ)`);
+      } else if (a.type === 'short') {
+        lines.push(`  + Trả lời: "${a.studentVal || 'Bỏ trống'}" (${a.earned}/${a.points}đ) | Đáp án chuẩn: ${a.correctText}`);
+      } else {
+        lines.push(`  + Bài làm tự luận: ${a.essayText || (a.essayImage ? '(Đã đính kèm ảnh chụp bài làm trên web)' : '(Bỏ trống)')}`);
       }
-      if (sub.teacherCustomSolution) {
-        lines.push(`Bài chữa riêng của Giáo viên: ${sub.teacherCustomSolution}`);
+      if (includeSolutions && a.solution) {
+        lines.push(`  + Lời giải: ${cleanMailString(a.solution)}`);
       }
-      lines.push(`-------------------------------------------`);
-      (sub.answers || []).forEach((a, idx) => {
-        lines.push(`Câu ${idx + 1} (${a.points} điểm): ${a.question}`);
-        if (a.type === 'mcq') {
-          const cChar = a.chosen >= 0 ? ['A','B','C','D'][a.chosen] : 'Bỏ trống';
-          const rChar = ['A','B','C','D'][a.correct];
-          lines.push(`  + Chọn: ${cChar} (${a.earned}/${a.points}đ) | Đáp án đúng: ${rChar}`);
-        } else if (a.type === 'tf') {
-          lines.push(`  + Đúng ${a.correctCount}/4 ý (${a.earned}/${a.points}đ)`);
-        } else if (a.type === 'short') {
-          lines.push(`  + Trả lời: "${a.studentVal || 'Bỏ trống'}" (${a.earned}/${a.points}đ) | Đáp án chuẩn: ${a.correctText}`);
-        } else {
-          lines.push(`  + Bài làm tự luận: ${a.essayText || (a.essayImage ? '(Nộp ảnh chụp bài làm)' : '(Bỏ trống)')}`);
-        }
-        if (includeSolutions && a.solution) {
-          lines.push(`  + Lời giải: ${a.solution}`);
-        }
-      });
-      return lines.join("\n");
+    });
+    return lines.join("\n");
+  }
+
+  const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
+  const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
+
+  async function sendEmailViaService(toEmail, subject, messageText) {
+    const target = (toEmail && toEmail.includes("@")) ? toEmail.trim() : ACTIVATED_TEACHER_EMAIL;
+    const isTeacher = (target.toLowerCase() === ACTIVATED_TEACHER_EMAIL.toLowerCase());
+
+    const payload = {
+      name: "Hệ thống Học tập Online",
+      _subject: subject,
+      _template: "box",
+      _captcha: "false",
+      message: messageText
+    };
+    if (!isTeacher) {
+      payload._cc = target;
     }
 
-    const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
-    const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
+    // Thử gửi qua Token kích hoạt trước; nếu khác tên miền khiến Token báo success:false thì tự động gửi qua địa chỉ mail gốc
+    const endpoints = [
+      `https://formsubmit.co/ajax/${FORMSUBMIT_TOKEN}`,
+      `https://formsubmit.co/ajax/${encodeURIComponent(ACTIVATED_TEACHER_EMAIL)}`
+    ];
 
-    async function sendEmailViaService(toEmail, subject, messageText) {
-      if (!toEmail || !toEmail.includes("@")) return false;
-      const target = toEmail.trim();
-      const isTeacher = (target.toLowerCase() === ACTIVATED_TEACHER_EMAIL.toLowerCase());
-
-      const payload = {
-        _subject: subject,
-        _captcha: "false",
-        message: messageText
-      };
-      if (!isTeacher) {
-        payload._cc = target;
-      }
-
+    for (const url of endpoints) {
       try {
-        const res = await fetch(`https://formsubmit.co/ajax/${FORMSUBMIT_TOKEN}`, {
+        const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -602,11 +622,17 @@
           },
           body: JSON.stringify(payload)
         });
-        return res.ok;
-      } catch (e) {
-        return false;
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.success === "true" || data.success === true)) {
+          return true;
+        }
+        console.warn("FormSubmit phản hồi:", data);
+      } catch (err) {
+        console.warn("Lỗi kết nối FormSubmit:", err);
       }
     }
+    return false;
+  }
 
     window.onload = async () => {
       // Dọn sạch ký tự khoảng trắng ẩn (\u00A0) nếu có
@@ -1165,25 +1191,32 @@
       appData.submissions.unshift(newSub);
       await syncToCloud();
 
-      const mailSubject = `[Nộp bài] ${newSub.studentName} - ${newSub.examTitle}`;
-      const mailBody = createMailTextFromSub(newSub, true);
+          const notifyTeacherEmail = (appData.teacherEmail && appData.teacherEmail.trim())
+      ? appData.teacherEmail.trim()
+      : ACTIVATED_TEACHER_EMAIL;
 
-      if (appData.teacherEmail && !isCurrentStudentGuest) {
-        sendEmailViaService(appData.teacherEmail, mailSubject, mailBody);
+    const mailSubject = `[Nộp bài] ${newSub.studentName} - ${newSub.examTitle} (${newSub.totalScore}/${newSub.maxScore}đ)`;
+    const mailBody = createMailTextFromSub(newSub, true);
+
+    if (isCurrentStudentGuest) {
+      // Học sinh vãng lai: gửi đồng thời về mail Giáo viên (tài khoản gốc) và CC kết quả cho mail học sinh vãng lai
+      if (currentGuestEmail) {
+        await sendEmailViaService(currentGuestEmail, `[Kết quả & Đáp án] ${newSub.examTitle} - ${newSub.studentName}`, mailBody);
+      } else {
+        await sendEmailViaService(notifyTeacherEmail, mailSubject, mailBody);
       }
-
-      if (isCurrentStudentGuest) {
-        if (currentGuestEmail) {
-          sendEmailViaService(currentGuestEmail, `[Kết quả & Đáp án] ${newSub.examTitle}`, mailBody);
-        }
-        renderGuestResultView(newSub);
-        return;
-      }
-
-      renderAll();
       renderGuestResultView(newSub);
-      alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
+      return;
     }
+
+    // Học sinh trong lớp: Đợi gửi mail về cho Giáo viên hoàn tất rồi mới bật thông báo để không bị ngắt kết nối
+    await sendEmailViaService(notifyTeacherEmail, mailSubject, mailBody);
+
+    renderAll();
+    renderGuestResultView(newSub);
+    alert(`🎉 Nộp bài thành công!\nHọc sinh: ${currentStudentName}\nĐiểm chấm tự động: ${newSub.mcqScore} / ${newSub.maxScore} điểm.`);
+  }
+
 
     function renderGuestResultView(s) {
       document.getElementById('guestResultRoom').classList.remove('hidden');
