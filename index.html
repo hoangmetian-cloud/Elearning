@@ -407,41 +407,83 @@
       }
     }
 
-    async function initDatabase() {
-      await syncFromCloud(false);
+    const STUDENT_CACHE_KEY = "edusmart_student_bootstrap_v2";
+    let cloudSyncInProgress = false;
+
+    function toFirebaseList(value, addKeyAsId = false) {
+      if (Array.isArray(value)) return value.filter(Boolean);
+      if (value && typeof value === "object") {
+        return Object.entries(value).filter(([, item]) => item != null).map(([key, item]) => {
+          if (!addKeyAsId || !item || typeof item !== "object" || item.id) return item;
+          return { ...item, id: key };
+        });
+      }
+      return [];
     }
 
-    // Đọc node gốc theo đúng cấu trúc mà bản học sinh ban đầu và bản giáo viên
-    // đang sử dụng: /edusmart_data.json. Một số Firebase Rules chỉ cho phép đọc
-    // node này; đọc từng node con riêng lẻ có thể trả về rỗng/lỗi dù dữ liệu vẫn có.
-    // Không đưa submissions vào appData ở màn học sinh để tránh tải ảnh bài tự luận.
+    function applyStudentBootstrap(data, fromCache = false) {
+      appData.exams = toFirebaseList(data?.exams, true);
+      appData.parentAccounts = normalizeParentAccounts(toFirebaseList(data?.parentAccounts));
+      appData.teacherEmail = (typeof data?.teacherEmail === "string" && data.teacherEmail.trim())
+        ? data.teacherEmail.trim() : ACTIVATED_TEACHER_EMAIL;
+      renderAll();
+      const statusText = document.getElementById('cloudStatusText');
+      if (fromCache && statusText) {
+        statusText.className = "text-amber-600 font-semibold";
+        statusText.innerText = "Đang cập nhật dữ liệu...";
+      }
+    }
+
+    function readStudentBootstrapCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(STUDENT_CACHE_KEY) || "null");
+        if (cached && Array.isArray(cached.exams)) {
+          applyStudentBootstrap(cached, true);
+          return true;
+        }
+      } catch (e) { console.warn("Không đọc được cache đề kiểm tra:", e); }
+      return false;
+    }
+
+    async function initDatabase() {
+      // Hiện đề đã lưu gần nhất ngay lập tức, không bắt học sinh chờ Firebase.
+      const hasCache = readStudentBootstrapCache();
+      if (!hasCache) {
+        const statusText = document.getElementById('cloudStatusText');
+        if (statusText) {
+          statusText.className = "text-amber-600 font-semibold";
+          statusText.innerText = "Đang tải đề lần đầu...";
+        }
+      }
+      syncFromCloud(false);
+    }
+
+    // Tải riêng đề và danh sách lớp trước để tránh tải cả submissions (có thể
+    // chứa hàng trăm ảnh tự luận). Chỉ dùng node gốc làm phương án dự phòng.
     async function syncFromCloud(showAlert = false) {
+      if (cloudSyncInProgress) return;
+      cloudSyncInProgress = true;
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
       try {
-        const remoteData = await fetchFirebaseJson("");
-        if (!remoteData || typeof remoteData !== "object") {
-          throw new Error("Dữ liệu Firebase không đúng cấu trúc edusmart_data");
-        }
+        // Chỉ tải các nhánh cần thiết cho học sinh. Không tải node gốc vì node
+        // này chứa toàn bộ bài nộp và ảnh tự luận, có thể rất nặng ở lần mở đầu.
+        const [remoteExams, remoteAccounts, remoteTeacherEmail] = await Promise.all([
+          fetchFirebaseJson("/exams"),
+          fetchFirebaseJson("/parentAccounts"),
+          fetchFirebaseJson("/teacherEmail")
+        ]);
+        const bootstrap = {
+          exams: remoteExams,
+          parentAccounts: remoteAccounts,
+          teacherEmail: remoteTeacherEmail
+        };
 
-        const remoteExams = remoteData.exams;
-        const remoteAccounts = remoteData.parentAccounts;
-        appData.exams = Array.isArray(remoteExams)
-          ? remoteExams
-          : (remoteExams && typeof remoteExams === "object" ? Object.values(remoteExams) : []);
-        appData.parentAccounts = normalizeParentAccounts(
-          Array.isArray(remoteAccounts)
-            ? remoteAccounts
-            : (remoteAccounts && typeof remoteAccounts === "object" ? Object.values(remoteAccounts) : [])
-        );
-        appData.teacherEmail = (typeof remoteData.teacherEmail === "string" && remoteData.teacherEmail.trim())
-          ? remoteData.teacherEmail.trim()
-          : ACTIVATED_TEACHER_EMAIL;
+        applyStudentBootstrap(bootstrap, false);
+        try { localStorage.setItem(STUDENT_CACHE_KEY, JSON.stringify(bootstrap)); }
+        catch (cacheError) { console.warn("Không lưu được cache đề kiểm tra:", cacheError); }
 
-        if (loggedInParentStudent) {
-          await syncParentSubmissions(false);
-        }
-        renderAll();
+        if (loggedInParentStudent) await syncParentSubmissions(false);
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
         if (statusText) {
           statusText.className = "text-emerald-700 font-semibold";
@@ -453,9 +495,11 @@
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
-          statusText.innerText = "Lỗi kết nối Database";
+          statusText.innerText = appData.exams.length ? "Đang dùng dữ liệu đã lưu" : "Lỗi kết nối Database";
         }
         if (showAlert) alert("Không thể tải dữ liệu bài kiểm tra. Vui lòng kiểm tra kết nối hoặc quyền đọc Firebase!");
+      } finally {
+        cloudSyncInProgress = false;
       }
     }
 
@@ -788,7 +832,8 @@
       badTextNodes.forEach(n => n.remove());
 
       renderAll();
-      await initDatabase();
+      // Không chặn giao diện: cache hiện ngay, Firebase cập nhật nền.
+      initDatabase();
 
       setInterval(() => {
         const activeEl = document.activeElement;
