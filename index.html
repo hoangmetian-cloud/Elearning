@@ -346,7 +346,7 @@
     const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
     let activeDatabaseUrl = localStorage.getItem('edusmart_custom_db_url') || DEFAULT_DATABASE_URL;
 
-    const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
+    const FORMSUBMIT_TOKEN = ""; // Không nhúng token dịch vụ email vào mã frontend.
     const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
 
     function escapeAttr(str) {
@@ -421,12 +421,20 @@
       return [];
     }
 
+    let studentBootstrapReady = false;
+    let studentBootstrapFresh = false;
+    function normalizeExamForRuntime(exam) {
+      if (!exam || typeof exam !== "object") return null;
+      return { ...exam, questions: Array.isArray(exam.questions) ? exam.questions.filter(q => q && typeof q === "object") : [] };
+    }
     function applyStudentBootstrap(data, fromCache = false) {
-      appData.exams = toFirebaseList(data?.exams, true);
+      appData.exams = toFirebaseList(data?.exams, true).map(normalizeExamForRuntime).filter(Boolean);
       appData.parentAccounts = normalizeParentAccounts(toFirebaseList(data?.parentAccounts));
       appData.teacherEmail = (typeof data?.teacherEmail === "string" && data.teacherEmail.trim())
         ? data.teacherEmail.trim() : ACTIVATED_TEACHER_EMAIL;
       renderAll();
+      studentBootstrapReady = true;
+      if (!fromCache) studentBootstrapFresh = true;
       const statusText = document.getElementById('cloudStatusText');
       if (fromCache && statusText) {
         statusText.className = "text-amber-600 font-semibold";
@@ -455,7 +463,12 @@
           statusText.innerText = "Đang tải đề lần đầu...";
         }
       }
-      syncFromCloud(false);
+      syncFromCloud(false).then(async () => {
+        if (pendingSubmissionToSave) {
+          const recovered = await syncToCloud();
+          if (recovered) console.info("Đã đồng bộ bài nộp còn chờ từ phiên trước.");
+        }
+      });
     }
 
     // Tải riêng đề và danh sách lớp trước để tránh tải cả submissions (có thể
@@ -506,7 +519,9 @@
     // Ghi bài nộp bằng ETag/If-Match để giảm nguy cơ hai học sinh nộp gần
     // như đồng thời làm ghi đè danh sách bài của nhau. Chỉ thêm bài mới vào
     // danh sách mới nhất trên Firebase; không gửi lại bản submissions cũ của máy.
+    const PENDING_SUBMISSION_KEY = "edusmart_pending_submission_v1";
     let pendingSubmissionToSave = null;
+    try { pendingSubmissionToSave = JSON.parse(localStorage.getItem(PENDING_SUBMISSION_KEY) || "null"); } catch (_) {}
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
@@ -543,6 +558,7 @@
         if (!saved) throw new Error("Xung đột đồng bộ, đã vượt số lần thử");
 
         pendingSubmissionToSave = null;
+        try { localStorage.removeItem(PENDING_SUBMISSION_KEY); } catch (_) {}
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
         if (statusText) {
           statusText.className = "text-emerald-700 font-semibold";
@@ -575,6 +591,7 @@
     let isCurrentStudentGuest = false;
     let timerInterval = null;
     let secondsRemaining = 0;
+    let examEndAt = 0;
     let tabSwitchCount = 0;
     let hadLockedScheduledExam = false;
 
@@ -790,7 +807,6 @@
       }
 
       const endpoints = [
-        `https://formsubmit.co/ajax/${FORMSUBMIT_TOKEN}`,
         `https://formsubmit.co/ajax/${encodeURIComponent(primaryTeacher)}`,
         `https://formsubmit.co/ajax/${encodeURIComponent(ACTIVATED_TEACHER_EMAIL)}`
       ];
@@ -857,22 +873,23 @@
       }, 1000);
     };
 
-    let mathJaxTypesetPending = false;
+    let mathJaxTypesetQueue = Promise.resolve();
     function triggerMathJax(root = null) {
-      if (!window.MathJax || !window.MathJax.typesetPromise || mathJaxTypesetPending) return;
+      if (!window.MathJax || !window.MathJax.typesetPromise) return;
       const activeRoot = root ||
+        document.querySelector('#view-teacher:not(.hidden) #teacher-tab-grading:not(.hidden)') ||
+        document.querySelector('#view-teacher:not(.hidden) #teacher-tab-exams:not(.hidden)') ||
+        document.querySelector('#view-parent:not(.hidden) #parentUnlockedContent:not(.hidden)') ||
         document.querySelector('#view-student:not(.hidden) #studentExamRoom:not(.hidden)') ||
         document.querySelector('#view-student:not(.hidden) #studentExamCards') ||
-        document.querySelector('#view-parent:not(.hidden) #parentUnlockedContent:not(.hidden)') ||
         document.querySelector('#guestResultRoom:not(.hidden)') || document.body;
-      mathJaxTypesetPending = true;
-      requestAnimationFrame(() => {
-        mathJaxTypesetPending = false;
-        try {
-          window.MathJax.typesetClear?.([activeRoot]);
-          window.MathJax.typesetPromise([activeRoot]).catch(() => {});
-        } catch (_) {}
-      });
+      mathJaxTypesetQueue = mathJaxTypesetQueue
+        .then(() => new Promise(resolve => requestAnimationFrame(resolve)))
+        .then(async () => {
+          if (!activeRoot || !activeRoot.isConnected) return;
+          try { window.MathJax.typesetClear?.([activeRoot]); await window.MathJax.typesetPromise([activeRoot]); }
+          catch (err) { console.warn("MathJax chưa thể định dạng một phần nội dung:", err); }
+        }).catch(err => console.warn("MathJax queue error:", err));
     }
 
     function zoomImage(src) {
@@ -970,6 +987,10 @@
     }
 
     function openStudentModal(examId) {
+      if (!studentBootstrapReady || !studentBootstrapFresh) {
+        alert("Dữ liệu đề chưa được xác nhận tải mới nhất từ máy chủ. Em vui lòng chờ trạng thái trực tuyến hoặc bấm Tải đề mới nhất rồi thử lại.");
+        return;
+      }
       const exam = appData.exams.find(e => e.id === examId);
       if (!exam) return;
 
@@ -1033,6 +1054,10 @@
     }
 
     async function confirmStartExam() {
+      if (!studentBootstrapReady || !studentBootstrapFresh) {
+        alert("Chưa tải xác nhận dữ liệu mới nhất. Không thể bắt đầu bài để tránh làm nhầm đề cũ. Hãy đồng bộ lại rồi thử.");
+        return;
+      }
       const selected = document.getElementById('modalStudentSelect').value;
       if (!selected) {
         alert("Em vui lòng chọn tên của mình trong danh sách!");
@@ -1156,8 +1181,15 @@
     }
 
     function startExamExecution(examId) {
+      if (!studentBootstrapReady || !studentBootstrapFresh) { alert("Dữ liệu đề chưa đồng bộ xong. Không thể mở phòng làm bài."); return; }
       const exam = appData.exams.find(e => e.id === examId);
-      if (!exam) return;
+      if (!exam || !Array.isArray(exam.questions) || exam.questions.length === 0) {
+        alert("Đề này không có câu hỏi hợp lệ nên không thể hiển thị. Vui lòng báo giáo viên kiểm tra lại nội dung đề."); return;
+      }
+      const invalidQuestion = exam.questions.findIndex(q => !q || typeof q.text !== "string" || !q.text.trim());
+      if (invalidQuestion >= 0) {
+        alert(`Đề có nội dung câu hỏi bị trống hoặc sai định dạng tại Câu ${invalidQuestion + 1}. Vui lòng báo giáo viên sửa đề.`); return;
+      }
 
       currentExam = exam;
       pendingStudentEssayImages = {};
@@ -1279,21 +1311,23 @@
       triggerMathJax();
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      secondsRemaining = exam.time * 60;
+      secondsRemaining = Math.max(1, Number(exam.time) || 0) * 60;
+      examEndAt = Date.now() + secondsRemaining * 1000;
       updateTimerUI();
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
-        secondsRemaining--;
+        secondsRemaining = Math.max(0, Math.ceil((examEndAt - Date.now()) / 1000));
         updateTimerUI();
         if (secondsRemaining <= 0) {
           clearInterval(timerInterval);
           alert("Đã hết thời gian làm bài! Hệ thống tự động thu bài.");
           submitStudentExam(true);
         }
-      }, 1000);
+      }, 500);
     }
 
     function updateTimerUI() {
+      if (examEndAt && secondsRemaining > 0) secondsRemaining = Math.max(0, Math.ceil((examEndAt - Date.now()) / 1000));
       const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
       const s = (secondsRemaining % 60).toString().padStart(2, '0');
       const timeStr = `${m}:${s}`;
@@ -1429,11 +1463,16 @@
       };
 
       try {
-        pendingSubmissionToSave = newSub;
+        if (!pendingSubmissionToSave || pendingSubmissionToSave.examId !== newSub.examId || pendingSubmissionToSave.studentName !== newSub.studentName) pendingSubmissionToSave = newSub;
+        try { localStorage.setItem(PENDING_SUBMISSION_KEY, JSON.stringify(pendingSubmissionToSave)); }
+        catch (storageError) { console.warn("Không lưu được bản chờ nộp vào bộ nhớ trình duyệt:", storageError); }
         const savedToCloud = await syncToCloud();
         if (!savedToCloud) {
-          pendingSubmissionToSave = null;
-          alert("Không thể lưu bài nộp lên máy chủ. Bài làm chưa được xác nhận đã nộp. Em vui lòng kiểm tra mạng và thử lại.");
+          alert("Không thể xác nhận lưu bài trên máy chủ. Bản bài nộp đang được giữ trong bộ nhớ trình duyệt; em hãy giữ trang này, kiểm tra mạng và bấm nộp lại. Không xóa dữ liệu trình duyệt.");
+          if (examEndAt > Date.now()) {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => { secondsRemaining = Math.max(0, Math.ceil((examEndAt - Date.now()) / 1000)); updateTimerUI(); if (secondsRemaining <= 0) { clearInterval(timerInterval); submitStudentExam(true); } }, 500);
+          }
           return;
         }
 
