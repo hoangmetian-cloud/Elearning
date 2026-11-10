@@ -344,7 +344,7 @@
 
   <script>
     const DEFAULT_DATABASE_URL = "https://teachingassisstant-default-rtdb.asia-southeast1.firebasedatabase.app/";
-    let activeDatabaseUrl = DEFAULT_DATABASE_URL;
+    let activeDatabaseUrl = localStorage.getItem('edusmart_custom_db_url') || DEFAULT_DATABASE_URL;
 
     const FORMSUBMIT_TOKEN = "d0b8b55c8f8922b9f7113de03d9ba677";
     const ACTIVATED_TEACHER_EMAIL = "vuongtranminh6@gmail.com";
@@ -367,92 +367,151 @@
         .replace(/\/+$/, "");
     }
 
-    function getDatabaseEndpoint() {
-      return `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data.json`;
+    function getDatabaseEndpoint(path = "") {
+      const base = normalizeDbBaseUrl(activeDatabaseUrl);
+      const suffix = path ? `/${path.replace(/^\/+/, "")}` : "";
+      return `${base}/edusmart_data${suffix}.json`;
+    }
+
+    async function fetchFirebaseJson(path, options = {}) {
+      const endpoint = getDatabaseEndpoint(path);
+      const sep = endpoint.includes('?') ? '&' : '?';
+      const res = await fetch(`${endpoint}${sep}t=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store",
+        ...options
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    function normalizeParentAccounts(remoteAccounts) {
+      if (!Array.isArray(remoteAccounts)) return [];
+      return remoteAccounts.map((acc, idx) => ({
+        name: acc.name || "",
+        studentPass: acc.studentPass !== undefined ? acc.studentPass : ("hs" + (idx + 1)),
+        pass: acc.pass || ("ph" + (idx + 1)),
+        className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
+        parentEmail: acc.parentEmail || ""
+      }));
+    }
+
+    async function syncParentSubmissions(showError = false) {
+      try {
+        const remoteSubs = await fetchFirebaseJson("/submissions");
+        appData.submissions = Array.isArray(remoteSubs) ? remoteSubs : [];
+        return true;
+      } catch (e) {
+        if (showError) alert("Không tải được sổ kết quả. Vui lòng kiểm tra kết nối rồi thử lại.");
+        return false;
+      }
     }
 
     async function initDatabase() {
       await syncFromCloud(false);
     }
 
+    // Đọc node gốc theo đúng cấu trúc mà bản học sinh ban đầu và bản giáo viên
+    // đang sử dụng: /edusmart_data.json. Một số Firebase Rules chỉ cho phép đọc
+    // node này; đọc từng node con riêng lẻ có thể trả về rỗng/lỗi dù dữ liệu vẫn có.
+    // Không đưa submissions vào appData ở màn học sinh để tránh tải ảnh bài tự luận.
     async function syncFromCloud(showAlert = false) {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
-      const endpoint = getDatabaseEndpoint();
-      const sep = endpoint.includes('?') ? '&' : '?';
       try {
-        const res = await fetch(`${endpoint}${sep}t=${Date.now()}`, {
-          method: "GET",
-          cache: "no-store"
-        });
-
-        if (res.ok) {
-          const remoteData = await res.json();
-          if (remoteData && typeof remoteData === 'object') {
-            appData.exams = remoteData.exams || [];
-            appData.submissions = remoteData.submissions || [];
-            if (remoteData.teacherEmail && remoteData.teacherEmail.trim() !== "") {
-              appData.teacherEmail = remoteData.teacherEmail.trim();
-            } else {
-              appData.teacherEmail = ACTIVATED_TEACHER_EMAIL;
-            }
-            if (remoteData.parentAccounts && remoteData.parentAccounts.length > 0) {
-              appData.parentAccounts = remoteData.parentAccounts.map((acc, idx) => ({
-                name: acc.name || "",
-                studentPass: acc.studentPass !== undefined ? acc.studentPass : ("hs" + (idx + 1)),
-                pass: acc.pass || ("ph" + (idx + 1)),
-                className: acc.className || (idx < 11 ? "Lớp 1" : "Lớp 2"),
-                parentEmail: acc.parentEmail || ""
-              }));
-            }
-            renderAll();
-          }
-          if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
-          if (statusText) {
-            statusText.className = "text-emerald-700 font-semibold";
-            statusText.innerText = "Đang trực tuyến";
-          }
-          if (showAlert) alert("Đã đồng bộ đề thi và dữ liệu mới nhất!");
-        } else {
-          throw new Error("HTTP " + res.status);
+        const remoteData = await fetchFirebaseJson("");
+        if (!remoteData || typeof remoteData !== "object") {
+          throw new Error("Dữ liệu Firebase không đúng cấu trúc edusmart_data");
         }
+
+        const remoteExams = remoteData.exams;
+        const remoteAccounts = remoteData.parentAccounts;
+        appData.exams = Array.isArray(remoteExams)
+          ? remoteExams
+          : (remoteExams && typeof remoteExams === "object" ? Object.values(remoteExams) : []);
+        appData.parentAccounts = normalizeParentAccounts(
+          Array.isArray(remoteAccounts)
+            ? remoteAccounts
+            : (remoteAccounts && typeof remoteAccounts === "object" ? Object.values(remoteAccounts) : [])
+        );
+        appData.teacherEmail = (typeof remoteData.teacherEmail === "string" && remoteData.teacherEmail.trim())
+          ? remoteData.teacherEmail.trim()
+          : ACTIVATED_TEACHER_EMAIL;
+
+        if (loggedInParentStudent) {
+          await syncParentSubmissions(false);
+        }
+        renderAll();
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
+        if (statusText) {
+          statusText.className = "text-emerald-700 font-semibold";
+          statusText.innerText = "Đang trực tuyến";
+        }
+        if (showAlert) alert(`Đã đồng bộ dữ liệu! Tìm thấy ${appData.exams.length} bài kiểm tra.`);
       } catch (e) {
+        console.error("Lỗi tải dữ liệu học sinh:", e);
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
           statusText.innerText = "Lỗi kết nối Database";
         }
-        if (showAlert) {
-          alert("Không thể kết nối tới Database. Vui lòng kiểm tra kết nối mạng!");
-        }
+        if (showAlert) alert("Không thể tải dữ liệu bài kiểm tra. Vui lòng kiểm tra kết nối hoặc quyền đọc Firebase!");
       }
     }
 
+    // Ghi bài nộp bằng ETag/If-Match để giảm nguy cơ hai học sinh nộp gần
+    // như đồng thời làm ghi đè danh sách bài của nhau. Chỉ thêm bài mới vào
+    // danh sách mới nhất trên Firebase; không gửi lại bản submissions cũ của máy.
+    let pendingSubmissionToSave = null;
     async function syncToCloud() {
       const dot = document.getElementById('cloudDot');
       const statusText = document.getElementById('cloudStatusText');
-      const subEndpoint = `${normalizeDbBaseUrl(activeDatabaseUrl)}/edusmart_data/submissions.json`;
+      const endpoint = getDatabaseEndpoint("/submissions");
       try {
-        const res = await fetch(subEndpoint, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(appData.submissions || [])
-        });
-        if (res.ok) {
-          if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
-          if (statusText) {
-            statusText.className = "text-emerald-700 font-semibold";
-            statusText.innerText = "Đang trực tuyến";
-          }
-        } else {
-          throw new Error("HTTP " + res.status);
+        if (!pendingSubmissionToSave) throw new Error("Không có bài nộp đang chờ lưu");
+
+        let saved = false;
+        for (let attempt = 0; attempt < 6 && !saved; attempt++) {
+          const readRes = await fetch(endpoint, {
+            method: "GET",
+            cache: "no-store",
+            headers: { "X-Firebase-ETag": "true" }
+          });
+          if (!readRes.ok) throw new Error("HTTP " + readRes.status);
+          const latest = await readRes.json();
+          const latestSubs = Array.isArray(latest) ? latest : [];
+          const alreadyExists = latestSubs.some(s => s && s.id === pendingSubmissionToSave.id);
+          const merged = alreadyExists ? latestSubs : [pendingSubmissionToSave, ...latestSubs];
+          const etag = readRes.headers.get("ETag");
+          const writeHeaders = { "Content-Type": "application/json" };
+          if (etag) writeHeaders["if-match"] = etag;
+
+          const writeRes = await fetch(endpoint, {
+            method: "PUT",
+            headers: writeHeaders,
+            body: JSON.stringify(merged)
+          });
+          if (writeRes.status === 412) continue;
+          if (!writeRes.ok) throw new Error("HTTP " + writeRes.status);
+          appData.submissions = merged;
+          saved = true;
         }
+        if (!saved) throw new Error("Xung đột đồng bộ, đã vượt số lần thử");
+
+        pendingSubmissionToSave = null;
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot";
+        if (statusText) {
+          statusText.className = "text-emerald-700 font-semibold";
+          statusText.innerText = "Đang trực tuyến";
+        }
+        return true;
       } catch (e) {
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
         if (statusText) {
           statusText.className = "text-red-600 font-semibold";
           statusText.innerText = "Chưa đẩy được bài nộp lên Database";
         }
+        return false;
       }
     }
 
@@ -728,7 +787,6 @@
       }
       badTextNodes.forEach(n => n.remove());
 
-      localStorage.clear();
       renderAll();
       await initDatabase();
 
@@ -740,7 +798,7 @@
         if (!inExam && !isTyping && !modalOpen) {
           syncFromCloud(false);
         }
-      }, 7000);
+      }, 12000);
 
       setInterval(() => {
         const inLobby = !document.getElementById('view-student').classList.contains('hidden') &&
@@ -754,10 +812,22 @@
       }, 1000);
     };
 
-    function triggerMathJax() {
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise().catch(() => {});
-      }
+    let mathJaxTypesetPending = false;
+    function triggerMathJax(root = null) {
+      if (!window.MathJax || !window.MathJax.typesetPromise || mathJaxTypesetPending) return;
+      const activeRoot = root ||
+        document.querySelector('#view-student:not(.hidden) #studentExamRoom:not(.hidden)') ||
+        document.querySelector('#view-student:not(.hidden) #studentExamCards') ||
+        document.querySelector('#view-parent:not(.hidden) #parentUnlockedContent:not(.hidden)') ||
+        document.querySelector('#guestResultRoom:not(.hidden)') || document.body;
+      mathJaxTypesetPending = true;
+      requestAnimationFrame(() => {
+        mathJaxTypesetPending = false;
+        try {
+          window.MathJax.typesetClear?.([activeRoot]);
+          window.MathJax.typesetPromise([activeRoot]).catch(() => {});
+        } catch (_) {}
+      });
     }
 
     function zoomImage(src) {
@@ -839,6 +909,8 @@
         document.getElementById('parentLockScreen').classList.add('hidden');
         document.getElementById('parentUnlockedContent').classList.remove('hidden');
         document.getElementById('parentStudentBanner').innerText = `Phụ huynh em: ${matchedAccount.name}`;
+        document.getElementById('parentResultsList').innerHTML = `<div class="py-8 text-center text-slate-500 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải sổ kết quả...</div>`;
+        await syncParentSubmissions(true);
         renderParentView();
       } else {
         alert("Mật khẩu không đúng! Mỗi phụ huynh có một mật khẩu riêng do giáo viên cấp để bảo mật điểm số của con.");
@@ -1312,10 +1384,13 @@
       };
 
       try {
-        await syncFromCloud(false);
-        if (!appData.submissions) appData.submissions = [];
-        appData.submissions.unshift(newSub);
-        await syncToCloud();
+        pendingSubmissionToSave = newSub;
+        const savedToCloud = await syncToCloud();
+        if (!savedToCloud) {
+          pendingSubmissionToSave = null;
+          alert("Không thể lưu bài nộp lên máy chủ. Bài làm chưa được xác nhận đã nộp. Em vui lòng kiểm tra mạng và thử lại.");
+          return;
+        }
 
         const notifyTeacherEmail = (appData.teacherEmail && appData.teacherEmail.trim())
           ? appData.teacherEmail.trim()
